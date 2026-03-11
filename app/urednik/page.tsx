@@ -30,6 +30,12 @@ export default async function UrednikPage() {
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link
+              href="/urednik/osnutki"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-4 py-1.5 text-sm font-medium text-gold-foreground transition-all hover:bg-gold/20"
+            >
+              Osnutki
+            </Link>
+            <Link
               href="/urednik/viri"
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20"
             >
