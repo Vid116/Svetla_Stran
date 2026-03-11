@@ -76,44 +76,9 @@ export function StoryCard({
   onRefresh?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [writing, setWriting] = useState(false);
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-
-  const isBusy = writing || researching;
-
-  async function handleWrite() {
-    setWriting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/write", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          headlineId: dbStory.id,
-          rawTitle: dbStory.raw_title,
-          rawContent: dbStory.full_content || dbStory.raw_content,
-          source_name: dbStory.source_name,
-          source_url: dbStory.source_url,
-          ai_category: dbStory.ai_category,
-          ai_emotions: dbStory.ai_emotions,
-          ai_headline: dbStory.ai_headline,
-          ai_antidote: dbStory.ai_antidote,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Napaka pri pisanju");
-      }
-      setDone(true);
-      onRefresh?.();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setWriting(false);
-    }
-  }
 
   async function handleResearchWrite() {
     setResearching(true);
@@ -165,7 +130,7 @@ export function StoryCard({
       className={`group cursor-pointer border-border/50 bg-card/80 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg hover:shadow-primary/5 ${
         (dbStory.ai_score || 0) >= 8 ? "ring-1 ring-gold/30" : ""
       } ${isNew ? "border-l-2 border-l-nature" : ""}`}
-      onClick={() => !isBusy && setExpanded(!expanded)}
+      onClick={() => !researching && setExpanded(!expanded)}
     >
       <CardContent className="p-5">
         {/* Status badges */}
@@ -176,13 +141,13 @@ export function StoryCard({
                 <span className="h-1.5 w-1.5 rounded-full bg-nature" /> Nova
               </span>
             )}
-            {(researching || writing) && (
+            {researching && (
               <span className="inline-flex items-center gap-1 rounded-full bg-sky/10 px-2 py-0.5 text-xs font-semibold text-sky-foreground">
                 <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
                   <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
                 </svg>
-                {researching ? "Raziskujem" : "AI pise"}
+                Raziskujem
               </span>
             )}
           </div>
@@ -251,7 +216,7 @@ export function StoryCard({
             <div className="flex flex-wrap gap-2 pt-1">
               <button
                 onClick={(e) => { e.stopPropagation(); handleResearchWrite(); }}
-                disabled={isBusy}
+                disabled={researching}
                 className="rounded-lg bg-nature px-4 py-2 text-xs font-medium text-nature-foreground shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
               >
                 {researching ? (
@@ -263,21 +228,6 @@ export function StoryCard({
                     Raziskujem...
                   </span>
                 ) : "Raziskaj in napisi"}
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleWrite(); }}
-                disabled={isBusy}
-                className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
-              >
-                {writing ? (
-                  <span className="flex items-center gap-1.5">
-                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-                    </svg>
-                    AI pise...
-                  </span>
-                ) : "Hitro napisi"}
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onStatusChange?.("dismissed"); }}
