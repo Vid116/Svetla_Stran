@@ -68,9 +68,11 @@ export function SourcesManager() {
   const [newLinkPattern, setNewLinkPattern] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"sources" | "suggestions">("sources");
+
   // Suggestions state
   const [suggestions, setSuggestions] = useState<SourceSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
   const fetchSuggestions = useCallback(async () => {
@@ -241,41 +243,77 @@ export function SourcesManager() {
 
   return (
     <div>
-      {/* Source suggestions */}
-      {suggestions.length > 0 && (
-        <div className="mb-6">
-          <button
-            onClick={() => setShowSuggestions(!showSuggestions)}
-            className="flex w-full items-center gap-3 rounded-xl border border-nature/30 bg-nature/5 px-5 py-3 text-left transition-all hover:bg-nature/10"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-nature text-sm font-bold text-nature-foreground">
+      {/* Tabs */}
+      <div className="mb-6 flex items-center gap-1 rounded-full bg-secondary p-1 w-fit">
+        <button
+          onClick={() => setActiveTab("sources")}
+          className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === "sources"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Aktivni viri
+          <span className="ml-1.5 text-xs text-muted-foreground">
+            ({allSources.filter((s) => s.active).length})
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab("suggestions")}
+          className={`relative rounded-full px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === "suggestions"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Predlogi
+          {suggestions.length > 0 && (
+            <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-nature text-[10px] font-bold text-nature-foreground">
               {suggestions.length}
             </span>
-            <div className="flex-1">
-              <span className="text-sm font-semibold text-foreground">
-                Predlogi novih virov
-              </span>
-              <span className="ml-2 text-xs text-muted-foreground">
-                AI je med raziskovanjem nasla potencialne vire
-              </span>
-            </div>
-            <span className="text-muted-foreground transition-transform" style={{ transform: showSuggestions ? 'rotate(180deg)' : 'none' }}>
-              ▾
-            </span>
-          </button>
+          )}
+        </button>
+      </div>
 
-          {showSuggestions && (
-            <div className="mt-2 space-y-2">
+      {/* ── Suggestions tab ── */}
+      {activeTab === "suggestions" && (
+        <div>
+          {suggestions.length === 0 ? (
+            <div className="py-20 text-center text-muted-foreground">
+              <div className="text-4xl mb-4" aria-hidden>🔍</div>
+              <p className="text-base font-light mb-2">Se ni predlogov</p>
+              <p className="text-sm text-muted-foreground/60">
+                Ko AI raziskuje zgodbe, samodejno isca nove vire. Predlogi se pojavijo tukaj.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="mb-4 text-xs text-muted-foreground/60">
+                AI je med raziskovanjem zgodb nasla te potencialne vire. Odobri jih ali zavrni.
+              </p>
               {suggestions.map((s) => {
                 const catInfo = CATEGORIES[s.category || ""] || { label: s.category || "—", color: "bg-muted text-muted-foreground" };
+                const confidencePct = Math.round((s.confidence || 0) * 100);
                 return (
                   <div
                     key={s.id}
-                    className="flex items-start gap-3 rounded-lg border border-border/50 bg-card px-4 py-3"
+                    className="flex items-start gap-4 rounded-xl border border-border/50 bg-card px-5 py-4"
                   >
+                    {/* Confidence indicator */}
+                    <div className="flex flex-col items-center gap-1 pt-0.5">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                        confidencePct >= 70 ? "bg-nature/15 text-nature-foreground" :
+                        confidencePct >= 40 ? "bg-gold/15 text-gold-foreground" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {confidencePct}
+                      </div>
+                      <span className="text-[9px] text-muted-foreground/40">%</span>
+                    </div>
+
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           {s.name || s.domain}
                         </span>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${catInfo.color}`}>
@@ -286,28 +324,37 @@ export function SourcesManager() {
                             RSS
                           </span>
                         )}
-                        <span className="text-[10px] text-muted-foreground/50">
-                          {Math.round((s.confidence || 0) * 100)}% zaupanje
-                        </span>
+                        {s.suggested_type === "html" && !s.rss_url && (
+                          <span className="rounded-full bg-gold/10 px-1.5 py-0.5 text-[10px] font-semibold text-gold-foreground">
+                            HTML
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{s.url}</p>
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline underline-offset-2"
+                      >
+                        {s.url} <span aria-hidden>↗</span>
+                      </a>
                       {s.reason && (
-                        <p className="mt-1 text-xs text-muted-foreground/70 italic">{s.reason}</p>
+                        <p className="mt-1.5 text-xs text-muted-foreground/70 leading-relaxed">{s.reason}</p>
                       )}
                     </div>
 
-                    <div className="flex shrink-0 gap-1.5">
+                    <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
                       <button
                         onClick={() => handleSuggestionAction(s.id, "approve")}
                         disabled={actioningId === s.id}
-                        className="rounded-lg bg-nature/10 px-3 py-1.5 text-xs font-medium text-nature-foreground transition-all hover:bg-nature/20 disabled:opacity-50"
+                        className="rounded-lg bg-nature px-4 py-2 text-xs font-medium text-nature-foreground shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
                       >
                         Dodaj
                       </button>
                       <button
                         onClick={() => handleSuggestionAction(s.id, "dismiss")}
                         disabled={actioningId === s.id}
-                        className="rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        className="rounded-lg bg-muted px-4 py-2 text-xs font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                       >
                         Zavrni
                       </button>
@@ -320,6 +367,8 @@ export function SourcesManager() {
         </div>
       )}
 
+      {/* ── Sources tab ── */}
+      {activeTab === "sources" && (<>
       {/* Category filter */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <button
@@ -560,6 +609,7 @@ export function SourcesManager() {
       <div className="mt-8 rounded-lg bg-muted/50 p-4 text-center text-xs text-muted-foreground">
         {sources.rss.filter((s) => s.active).length} RSS virov + {sources.html.filter((s) => s.active).length} HTML virov = {allSources.filter((s) => s.active).length} aktivnih virov
       </div>
+      </>)}
     </div>
   );
 }
