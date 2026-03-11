@@ -213,10 +213,33 @@ export const HTML_SOURCES: HTMLSource[] = [
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
+import { readFileSync, existsSync } from 'fs';
+import path from 'path';
+
+const SOURCES_JSON = path.join(process.cwd(), 'output', 'sources.json');
+
+/**
+ * Load sources from output/sources.json (editable via /viri UI).
+ * Falls back to the hardcoded arrays above if the file doesn't exist.
+ */
+function loadFromJSON(): { rss: RSSSource[]; html: HTMLSource[] } | null {
+  try {
+    if (!existsSync(SOURCES_JSON)) return null;
+    const raw = readFileSync(SOURCES_JSON, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export function getActiveRSSSources(): RSSSource[] {
-  return RSS_SOURCES.filter(s => s.active !== false);
+  const json = loadFromJSON();
+  const list = json ? json.rss : RSS_SOURCES;
+  return list.filter(s => s.active !== false);
 }
 
 export function getActiveHTMLSources(): HTMLSource[] {
-  return HTML_SOURCES.filter(s => s.active !== false);
+  const json = loadFromJSON();
+  const list = json ? json.html : HTML_SOURCES;
+  return list.filter(s => s.active !== false);
 }

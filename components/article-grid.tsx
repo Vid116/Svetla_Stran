@@ -1,0 +1,218 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import type { PublishedArticle } from "@/app/page";
+import {
+  CATEGORY_ICONS,
+  CATEGORY_PILL,
+  CATEGORY_ACCENT_BAR,
+  formatDate,
+} from "@/lib/article-helpers";
+
+function getExcerpt(text: string, chars = 120) {
+  const plain = text.replace(/\n+/g, " ").trim();
+  if (plain.length <= chars) return plain;
+  return plain.slice(0, chars).replace(/\s+\S*$/, "") + " …";
+}
+
+/** Gradient fallback when no image available */
+function CategoryGradient({ category }: { category: string }) {
+  const gradients: Record<string, string> = {
+    SPORT: "from-sky/20 to-sky-soft/40",
+    ZIVALI: "from-warmth/20 to-gold-soft/40",
+    SKUPNOST: "from-lavender/20 to-lavender-soft/40",
+    NARAVA: "from-nature/20 to-nature-soft/40",
+    INFRASTRUKTURA: "from-gold/20 to-gold-soft/40",
+    PODJETNISTVO: "from-gold/20 to-gold-soft/40",
+    SLOVENIJA_V_SVETU: "from-sky/20 to-lavender-soft/40",
+    JUNAKI: "from-rose/20 to-rose-soft/40",
+    KULTURA: "from-lavender/20 to-rose-soft/40",
+  };
+  return (
+    <div className={`absolute inset-0 bg-gradient-to-br ${gradients[category] ?? "from-muted to-muted/50"}`}>
+      <span className="absolute inset-0 flex items-center justify-center text-5xl opacity-30">
+        {CATEGORY_ICONS[category] ?? "📰"}
+      </span>
+    </div>
+  );
+}
+
+export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const categories = useMemo(() => {
+    const seen = new Set<string>();
+    articles.forEach((a) => seen.add(a.ai.category));
+    return Array.from(seen);
+  }, [articles]);
+
+  const filtered = activeCategory
+    ? articles.filter((a) => a.ai.category === activeCategory)
+    : articles;
+
+  const [featured, ...rest] = filtered;
+
+  return (
+    <>
+      {/* ── Category filter pills ── */}
+      {categories.length > 1 && (
+        <nav
+          aria-label="Filtriraj po kategoriji"
+          className="flex flex-wrap gap-2 justify-center mb-12"
+        >
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`px-3.5 py-2 rounded-full text-sm border transition-all cursor-pointer ${
+              activeCategory === null
+                ? "bg-foreground text-background border-foreground shadow-sm"
+                : "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground"
+            }`}
+          >
+            ✦
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+              className={`px-3 py-1.5 rounded-full text-lg border transition-all cursor-pointer ${
+                activeCategory === cat
+                  ? (CATEGORY_PILL[cat] ?? "bg-primary text-primary-foreground border-primary") +
+                    " shadow-sm scale-105"
+                  : (CATEGORY_PILL[cat] ?? "bg-muted text-muted-foreground border-border") +
+                    " opacity-60 hover:opacity-100"
+              }`}
+            >
+              {CATEGORY_ICONS[cat] ?? "📰"}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      {filtered.length === 0 && (
+        <p className="py-20 text-center text-muted-foreground">
+          Ni zgodb v tej kategoriji.
+        </p>
+      )}
+
+      {/* ── Featured hero article (with image) ── */}
+      {featured && (
+        <Link href={`/clanki/${featured.slug}`} className="group block mb-14">
+          <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
+            {/* Image or gradient background */}
+            <div className="relative h-64 sm:h-80 md:h-96 overflow-hidden">
+              {featured.imageUrl ? (
+                <img
+                  src={featured.imageUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                />
+              ) : (
+                <CategoryGradient category={featured.ai.category} />
+              )}
+              {/* Dark gradient overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              {/* Content over image */}
+              <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-10">
+                {/* Category + date */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-lg">
+                    {CATEGORY_ICONS[featured.ai.category] ?? "📰"}
+                  </span>
+                  <time className="text-xs text-white/70">
+                    {formatDate(featured.publishedAt)}
+                  </time>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors">
+                  {featured.title}
+                </h2>
+
+                {/* Subtitle */}
+                <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4">
+                  {featured.subtitle}
+                </p>
+
+                {/* CTA */}
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
+                  <span>Preberi zgodbo</span>
+                  <span aria-hidden>→</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </Link>
+      )}
+
+      {/* ── Article card grid ── */}
+      {rest.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rest.map((article) => (
+            <Link
+              key={article.slug}
+              href={`/clanki/${article.slug}`}
+              className="group block"
+            >
+              <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                {/* Card image */}
+                <div className="relative h-44 overflow-hidden">
+                  {article.imageUrl ? (
+                    <img
+                      src={article.imageUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                    />
+                  ) : (
+                    <CategoryGradient category={article.ai.category} />
+                  )}
+                  {/* Category icon overlay */}
+                  <div className="absolute top-3 left-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-sm border backdrop-blur-sm bg-white/80 ${
+                        CATEGORY_PILL[article.ai.category] ?? "bg-muted text-foreground border-border"
+                      }`}
+                    >
+                      {CATEGORY_ICONS[article.ai.category] ?? "📰"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col flex-1 p-5">
+                  {/* Date */}
+                  <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
+                    {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </time>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
+                    {article.title}
+                  </h3>
+
+                  {/* Excerpt */}
+                  <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
+                    {getExcerpt(article.subtitle || article.body)}
+                  </p>
+
+                  {/* Card footer */}
+                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground/50 truncate max-w-[60%]">
+                      {article.source.sourceName}
+                    </span>
+                    <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      Preberi →
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}

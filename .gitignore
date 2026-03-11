@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# env files
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# build
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# IDE / OS
+.history/
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# output / data (migrated to Supabase)
+output/
+
+# debug
+npm-debug.log*
