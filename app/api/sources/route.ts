@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthAPI } from "@/lib/require-auth-api";
-import { getSources, addSource, updateSource, deleteSource } from "@/lib/db";
+import { getSources, getSourceStats, addSource, updateSource, deleteSource } from "@/lib/db";
 
 export async function GET() {
   const denied = await requireAuthAPI();
   if (denied) return denied;
   try {
-    const sources = await getSources();
+    const [sources, stats] = await Promise.all([getSources(), getSourceStats()]);
     // Group into rss/html for backwards compat with the UI
     const rss = sources.filter((s: any) => s.type === "rss");
     const html = sources.filter((s: any) => s.type === "html");
-    return NextResponse.json({ rss, html });
+    return NextResponse.json({ rss, html, stats });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

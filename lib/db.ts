@@ -225,6 +225,38 @@ export async function deleteSource(url: string) {
   if (error) throw error;
 }
 
+// ── Source stats ─────────────────────────────────────────────────────────────
+
+export async function getSourceStats() {
+  const supabase = getSupabaseAdmin();
+
+  // Count headlines per source_name
+  const { data: headlineCounts } = await supabase
+    .from("headlines")
+    .select("source_name")
+    .then(({ data }) => {
+      const counts: Record<string, number> = {};
+      for (const h of data || []) {
+        counts[h.source_name] = (counts[h.source_name] || 0) + 1;
+      }
+      return { data: counts };
+    });
+
+  // Count published articles per source_name
+  const { data: articleCounts } = await supabase
+    .from("articles")
+    .select("source_name")
+    .then(({ data }) => {
+      const counts: Record<string, number> = {};
+      for (const a of data || []) {
+        counts[a.source_name] = (counts[a.source_name] || 0) + 1;
+      }
+      return { data: counts };
+    });
+
+  return { headlines: headlineCounts || {}, articles: articleCounts || {} };
+}
+
 // ── Source suggestion queries ────────────────────────────────────────────────
 
 export async function getSourceSuggestions(status: string = "pending") {

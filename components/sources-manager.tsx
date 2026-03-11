@@ -31,9 +31,15 @@ interface SourceSuggestion {
   created_at: string;
 }
 
+interface SourceStats {
+  headlines: Record<string, number>;
+  articles: Record<string, number>;
+}
+
 interface SourcesData {
   rss: RSSSource[];
   html: HTMLSource[];
+  stats?: SourceStats;
 }
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {
@@ -569,7 +575,7 @@ export function SourcesManager() {
 
                     {/* Info */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-foreground">{source.name}</span>
                         <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                           source._type === "rss"
@@ -586,6 +592,28 @@ export function SourcesManager() {
                         </p>
                       )}
                     </div>
+
+                    {/* Stats */}
+                    {sources?.stats && (
+                      <div className="flex shrink-0 gap-3 text-center">
+                        <div title="Najdeni naslovi">
+                          <p className="text-sm font-semibold text-foreground">
+                            {sources.stats.headlines[source.name] || 0}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-wide">naslovi</p>
+                        </div>
+                        <div title="Objavljeni clanki">
+                          <p className={`text-sm font-semibold ${
+                            (sources.stats.articles[source.name] || 0) > 0
+                              ? "text-nature-foreground"
+                              : "text-muted-foreground/40"
+                          }`}>
+                            {sources.stats.articles[source.name] || 0}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-wide">clanki</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Delete */}
                     <button
