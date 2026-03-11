@@ -225,6 +225,51 @@ export async function deleteSource(url: string) {
   if (error) throw error;
 }
 
+// ── Source suggestion queries ────────────────────────────────────────────────
+
+export async function getSourceSuggestions(status: string = "pending") {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("source_suggestions")
+    .select("*")
+    .eq("status", status)
+    .order("confidence", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addSourceSuggestion(suggestion: {
+  domain: string;
+  name?: string;
+  url: string;
+  rss_url?: string;
+  suggested_type?: string;
+  category?: string;
+  reason?: string;
+  confidence?: number;
+  headline_id?: string;
+}) {
+  const supabase = getSupabaseAdmin();
+  // upsert — if domain already pending, update with newer info
+  const { error } = await supabase
+    .from("source_suggestions")
+    .upsert(suggestion, { onConflict: "domain" })
+    .eq("status", "pending");
+
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function updateSuggestionStatus(id: string, status: "approved" | "dismissed") {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("source_suggestions")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
 // ── Editors queries ──────────────────────────────────────────────────────────
 
 export async function getEditors() {

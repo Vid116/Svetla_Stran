@@ -18,6 +18,19 @@ interface HTMLSource {
   active: boolean;
 }
 
+interface SourceSuggestion {
+  id: string;
+  domain: string;
+  name: string;
+  url: string;
+  rss_url: string | null;
+  suggested_type: string;
+  category: string | null;
+  reason: string | null;
+  confidence: number;
+  created_at: string;
+}
+
 interface SourcesData {
   rss: RSSSource[];
   html: HTMLSource[];
@@ -55,6 +68,42 @@ export function SourcesManager() {
   const [newLinkPattern, setNewLinkPattern] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Suggestions state
+  const [suggestions, setSuggestions] = useState<SourceSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+
+  const fetchSuggestions = useCallback(async () => {
+    try {
+      const res = await fetch("/api/source-suggestions");
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data);
+      }
+    } catch {}
+  }, []);
+
+  async function handleSuggestionAction(id: string, action: "approve" | "dismiss") {
+    setActioningId(id);
+    try {
+      const res = await fetch("/api/source-suggestions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Napaka");
+      } else {
+        await Promise.all([fetchSources(), fetchSuggestions()]);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActioningId(null);
+    }
+  }
+
   const fetchSources = useCallback(async () => {
     try {
       const res = await fetch("/api/sources");
@@ -70,7 +119,8 @@ export function SourcesManager() {
 
   useEffect(() => {
     fetchSources();
-  }, [fetchSources]);
+    fetchSuggestions();
+  }, [fetchSources, fetchSuggestions]);
 
   async function toggleActive(url: string, active: boolean) {
     try {
@@ -191,6 +241,85 @@ export function SourcesManager() {
 
   return (
     <div>
+      {/* Source suggestions */}
+      {suggestions.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={() => setShowSuggestions(!showSuggestions)}
+            className="flex w-full items-center gap-3 rounded-xl border border-nature/30 bg-nature/5 px-5 py-3 text-left transition-all hover:bg-nature/10"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-nature text-sm font-bold text-nature-foreground">
+              {suggestions.length}
+            </span>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-foreground">
+                Predlogi novih virov
+              </span>
+              <span className="ml-2 text-xs text-muted-foreground">
+                AI je med raziskovanjem nasla potencialne vire
+              </span>
+            </div>
+            <span className="text-muted-foreground transition-transform" style={{ transform: showSuggestions ? 'rotate(180deg)' : 'none' }}>
+              ▾
+            </span>
+          </button>
+
+          {showSuggestions && (
+            <div className="mt-2 space-y-2">
+              {suggestions.map((s) => {
+                const catInfo = CATEGORIES[s.category || ""] || { label: s.category || "—", color: "bg-muted text-muted-foreground" };
+                return (
+                  <div
+                    key={s.id}
+                    className="flex items-start gap-3 rounded-lg border border-border/50 bg-card px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-foreground">
+                          {s.name || s.domain}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${catInfo.color}`}>
+                          {catInfo.label}
+                        </span>
+                        {s.rss_url && (
+                          <span className="rounded-full bg-sky/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-foreground">
+                            RSS
+                          </span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground/50">
+                          {Math.round((s.confidence || 0) * 100)}% zaupanje
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{s.url}</p>
+                      {s.reason && (
+                        <p className="mt-1 text-xs text-muted-foreground/70 italic">{s.reason}</p>
+                      )}
+                    </div>
+
+                    <div className="flex shrink-0 gap-1.5">
+                      <button
+                        onClick={() => handleSuggestionAction(s.id, "approve")}
+                        disabled={actioningId === s.id}
+                        className="rounded-lg bg-nature/10 px-3 py-1.5 text-xs font-medium text-nature-foreground transition-all hover:bg-nature/20 disabled:opacity-50"
+                      >
+                        Dodaj
+                      </button>
+                      <button
+                        onClick={() => handleSuggestionAction(s.id, "dismiss")}
+                        disabled={actioningId === s.id}
+                        className="rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                      >
+                        Zavrni
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Category filter */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <button

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthAPI } from "@/lib/require-auth-api";
-import { createDraft, pickHeadline } from "@/lib/db";
+import { createDraft, pickHeadline, getSources, addSourceSuggestion } from "@/lib/db";
 
 export const maxDuration = 300; // up to 5 minutes for full research pipeline
 
@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Pass known source domains so discovery can skip them
+    const sources = await getSources();
+    const knownDomains = sources.map((s: any) => {
+      try { return new URL(s.url).hostname.replace(/^www\./, ''); } catch { return ''; }
+    }).filter(Boolean);
+    story._knownDomains = knownDomains;
 
     const result = await runResearchScript(story) as any;
 
@@ -45,6 +52,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Save source suggestions (fire and forget, non-blocking)
+    if (result.suggestions?.length) {
+      for (const s of result.suggestions) {
+        try { await addSourceSuggestion(s); } catch {}
+      }
+    }
+
     return NextResponse.json(result);
   } catch (err: any) {
     console.error("Research-write API error:", err);
@@ -61,7 +75,7 @@ async function runResearchScript(story: Record<string, unknown>): Promise<unknow
   const cwd = process.cwd();
 
   return new Promise((resolve, reject) => {
-    const script = ["scripts", "research-write.mjs"].join("/");
+    const script = ["lib", "research-write", "run.mjs"].join("/");
     const child = spawn("node", [script], {
       cwd,
       stdio: ["pipe", "pipe", "pipe"],
