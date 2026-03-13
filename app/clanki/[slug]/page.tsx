@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
   CATEGORY_ICONS,
@@ -9,6 +10,7 @@ import {
   CATEGORY_ACCENT_BAR,
   formatDate,
 } from "@/lib/article-helpers";
+import { ResearchDetails } from "@/components/research-details";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,7 @@ function rowToArticle(s: any): PublishedArticle {
     imageUrl: s.image_url || undefined,
     publishedAt: s.published_at || s.created_at,
     source: {
+      rawTitle: s.raw_title || undefined,
       sourceUrl: s.source_url,
       sourceName: s.source_name,
     },
@@ -29,6 +32,18 @@ function rowToArticle(s: any): PublishedArticle {
       category: s.category || "",
       emotions: s.emotions || [],
       antidote_for: s.antidote || null,
+    },
+    references: s.research_references || undefined,
+    imagePosition: s.image_position ?? 33,
+    verification: {
+      passed: s.verification_passed ?? null,
+      summary: s.verification_summary || null,
+      claims: s.verification_claims || [],
+    },
+    research: {
+      queries: s.research_queries || [],
+      sourcesFound: s.research_sources_found ?? null,
+      sourcesUsed: s.research_sources_used ?? null,
     },
   };
 }
@@ -85,6 +100,7 @@ export default async function ArticlePage({
             src={article.imageUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: `center ${article.imagePosition ?? 33}%` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           <div className="absolute top-0 left-0 right-0 p-6">
@@ -199,7 +215,19 @@ export default async function ArticlePage({
               ))}
           </ol>
         </div>
+
+        {/* Expandable research & verification details */}
+        <ResearchDetails
+          verification={article.verification}
+          research={article.research}
+          references={article.references}
+        />
       </main>
+
+      {/* Newsletter signup (after article) */}
+      <div className="mx-auto max-w-3xl px-6 pb-8">
+        <NewsletterSignup variant="inline" />
+      </div>
 
       {/* Related articles */}
       {related.length > 0 && (

@@ -102,13 +102,13 @@ export function InboxView() {
     });
   }, [headlines]);
 
-  const handleDismiss = useCallback(async (id: string) => {
+  const handleDismiss = useCallback(async (id: string, reason?: string) => {
     setHeadlines((prev) => prev.filter((s) => s.id !== id));
     try {
       await fetch("/api/stories", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: "dismissed" }),
+        body: JSON.stringify({ id, status: "dismissed", reason }),
       });
     } catch {}
   }, []);
@@ -246,8 +246,8 @@ export function InboxView() {
             }
             isNew={!reviewed.has(headline.id)}
             onToggleReviewed={() => toggleReviewed(headline.id)}
-            onStatusChange={(status) => {
-              if (status === "dismissed") handleDismiss(headline.id);
+            onStatusChange={(status, reason) => {
+              if (status === "dismissed") handleDismiss(headline.id, reason);
             }}
             onRefresh={fetchHeadlines}
           />

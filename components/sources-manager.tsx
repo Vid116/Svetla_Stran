@@ -2,20 +2,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-interface RSSSource {
+interface SourceBase {
   name: string;
   url: string;
   category?: string;
   active: boolean;
+  scrape_tier?: number;
+  consecutive_failures?: number;
+  last_failure_at?: string;
+  last_success_at?: string;
+  last_scraped_at?: string;
 }
 
-interface HTMLSource {
-  name: string;
-  url: string;
+interface RSSSource extends SourceBase {}
+
+interface HTMLSource extends SourceBase {
   linkSelector: string;
   linkPattern: string;
-  category?: string;
-  active: boolean;
 }
 
 interface SourceSuggestion {
@@ -584,6 +587,18 @@ export function SourcesManager() {
                         }`}>
                           {source._type}
                         </span>
+                        {source.scrape_tier && source.scrape_tier <= 2 && (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                            source.scrape_tier === 1 ? "bg-rose/10 text-rose-foreground" : "bg-lavender/10 text-lavender-foreground"
+                          }`}>
+                            T{source.scrape_tier}
+                          </span>
+                        )}
+                        {(source.consecutive_failures || 0) >= 3 && (
+                          <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive" title={`${source.consecutive_failures} zaporednih napak${source.last_failure_at ? `, zadnja: ${new Date(source.last_failure_at).toLocaleDateString("sl-SI")}` : ""}`}>
+                            {source.consecutive_failures}x napaka
+                          </span>
+                        )}
                       </div>
                       <p className="truncate text-xs text-muted-foreground">{source.url}</p>
                       {source._type === "html" && (

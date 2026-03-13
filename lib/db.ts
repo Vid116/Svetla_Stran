@@ -19,11 +19,11 @@ export async function getInboxHeadlines(categories?: string[]) {
   return data || [];
 }
 
-export async function dismissHeadline(id: string) {
+export async function dismissHeadline(id: string, reason?: string) {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("headlines")
-    .update({ status: "dismissed" })
+    .update({ status: "dismissed", dismissed_reason: reason || null })
     .eq("id", id);
 
   if (error) throw error;
@@ -37,6 +37,57 @@ export async function pickHeadline(id: string) {
     .eq("id", id);
 
   if (error) throw error;
+}
+
+export async function setHeadlineProcessing(id: string) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("headlines")
+    .update({ status: "processing" })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function getProcessedHeadlines(categories?: string[]) {
+  const supabase = getSupabaseAdmin();
+  let query = supabase
+    .from("headlines")
+    .select("*, drafts(id, title, slug, status, created_at, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
+    .in("status", ["processing", "picked"])
+    .order("scraped_at", { ascending: false });
+
+  if (categories && categories.length > 0) {
+    query = query.in("ai_category", categories);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function deleteDraftsByHeadlineId(headlineId: string) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("drafts")
+    .delete()
+    .eq("headline_id", headlineId);
+
+  if (error) throw error;
+}
+
+export async function getDraftByHeadlineId(headlineId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("drafts")
+    .select("id, title, slug, status, created_at, verification_passed, verification_summary")
+    .eq("headline_id", headlineId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) return null;
+  return data;
 }
 
 export async function getHeadlineById(id: string) {
@@ -155,10 +206,27 @@ export async function publishDraft(draftId: string) {
     antidote: draft.antidote,
     source_name: draft.source_name,
     source_url: draft.source_url,
-    ai_score: null, // will be looked up from headline if needed
+    image_position: draft.image_position ?? 33,
+    research_references: draft.research_references || [],
+    raw_title: draft.raw_title || null,
+    ai_score: null,
+    verification_passed: draft.verification_passed ?? null,
+    verification_summary: draft.verification_summary || null,
+    verification_claims: draft.verification_claims || [],
+    research_queries: draft.research_queries || [],
+    research_sources_found: draft.research_sources_found ?? null,
+    research_sources_used: draft.research_sources_used ?? null
   });
 
   if (insertErr) throw insertErr;
+
+  // Mark headline as published so it leaves "V obdelavi"
+  if (draft.headline_id) {
+    await supabase
+      .from("headlines")
+      .update({ status: "published" })
+      .eq("id", draft.headline_id);
+  }
 
   // Remove the draft
   await supabase.from("drafts").delete().eq("id", draftId);
@@ -283,11 +351,31 @@ export async function addSourceSuggestion(suggestion: {
   headline_id?: string;
 }) {
   const supabase = getSupabaseAdmin();
-  // upsert — if domain already pending, update with newer info
+
+  // Check if domain already exists (any status)
+  const { data: existing } = await supabase
+    .from("source_suggestions")
+    .select("id, status, confidence")
+    .eq("domain", suggestion.domain)
+    .single();
+
+  if (existing) {
+    // If pending, bump confidence (seen in more researches = stronger signal)
+    if (existing.status === "pending") {
+      const newConfidence = Math.min(1.0, (existing.confidence || 0) + 0.15);
+      await supabase
+        .from("source_suggestions")
+        .update({ confidence: newConfidence, reason: suggestion.reason })
+        .eq("id", existing.id);
+    }
+    // If approved or dismissed, skip — editor already decided
+    return;
+  }
+
+  // New domain — insert
   const { error } = await supabase
     .from("source_suggestions")
-    .upsert(suggestion, { onConflict: "domain" })
-    .eq("status", "pending");
+    .insert(suggestion);
 
   if (error && error.code !== "23505") throw error;
 }

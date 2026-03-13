@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthAPI } from "@/lib/require-auth-api";
-import { createDraft, pickHeadline, getSources, addSourceSuggestion } from "@/lib/db";
+import { createDraft, pickHeadline, setHeadlineProcessing, deleteDraftsByHeadlineId, getSources, addSourceSuggestion } from "@/lib/db";
 
 export const maxDuration = 300; // up to 5 minutes for full research pipeline
 
 export async function POST(req: NextRequest) {
   const denied = await requireAuthAPI();
   if (denied) return denied;
+
+  let headlineId: string | undefined;
   try {
     const story = await req.json();
 
-    if (!story.rawTitle || !(story.rawContent || story.fullContent)) {
+    if (!story.rawTitle) {
       return NextResponse.json(
-        { error: "Manjkata rawTitle in rawContent/fullContent" },
+        { error: "Manjka rawTitle" },
         { status: 400 }
       );
+    }
+
+    // Set headline to processing immediately
+    headlineId = story.headlineId || story.storyId;
+    if (headlineId) {
+      // Delete old drafts if re-running
+      await deleteDraftsByHeadlineId(headlineId);
+      await setHeadlineProcessing(headlineId);
     }
 
     // Pass known source domains so discovery can skip them
@@ -27,7 +37,6 @@ export async function POST(req: NextRequest) {
     const result = await runResearchScript(story) as any;
 
     // Save as draft and mark headline as picked
-    const headlineId = story.headlineId || story.storyId;
     if (headlineId && result.article) {
       await pickHeadline(headlineId);
       await createDraft({
@@ -62,6 +71,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (err: any) {
     console.error("Research-write API error:", err);
+
+    // Revert headline to "new" so it stays in inbox on failure
+    if (headlineId) {
+      try {
+        const { getSupabaseAdmin } = await import("@/lib/supabase");
+        await getSupabaseAdmin().from("headlines").update({ status: "new" }).eq("id", headlineId);
+      } catch {}
+    }
+
     return NextResponse.json(
       { error: err.message || "Napaka pri raziskovanju" },
       { status: 500 }
@@ -79,7 +97,9 @@ async function runResearchScript(story: Record<string, unknown>): Promise<unknow
     const child = spawn("node", [script], {
       cwd,
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env, CLAUDECODE: undefined },
+      env: Object.fromEntries(
+        Object.entries(process.env).filter(([k]) => k !== 'CLAUDECODE' && k !== 'ANTHROPIC_API_KEY')
+      ) as NodeJS.ProcessEnv,
     });
 
     // Send story as JSON to stdin

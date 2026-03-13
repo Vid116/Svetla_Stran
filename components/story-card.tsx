@@ -72,18 +72,20 @@ export function StoryCard({
   antidoteLabel: string | null;
   isNew?: boolean;
   onToggleReviewed?: () => void;
-  onStatusChange?: (status: string) => void;
+  onStatusChange?: (status: string, reason?: string) => void;
   onRefresh?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [showDismissReasons, setShowDismissReasons] = useState(false);
 
   async function handleResearchWrite() {
     setResearching(true);
     setError(null);
     try {
+      // Fire the request — API sets status to "processing" immediately
       const res = await fetch("/api/research-write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,7 +106,7 @@ export function StoryCard({
         const data = await res.json();
         throw new Error(data.error || "Napaka pri raziskovanju");
       }
-      setDone(true);
+      setSent(true);
       onRefresh?.();
     } catch (err: any) {
       setError(err.message);
@@ -113,12 +115,12 @@ export function StoryCard({
     }
   }
 
-  if (done) {
+  if (sent) {
     return (
       <Card className="border-nature/40 bg-nature/5">
         <CardContent className="p-5 text-center">
           <p className="text-sm font-medium text-nature">
-            Clanek ustvarjen — najdes ga med osnutki
+            Zakljuceno — najdes ga v sekciji &quot;V obdelavi&quot;
           </p>
         </CardContent>
       </Card>
@@ -230,12 +232,35 @@ export function StoryCard({
                 ) : "Raziskaj in napisi"}
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onStatusChange?.("dismissed"); }}
+                onClick={(e) => { e.stopPropagation(); setShowDismissReasons(!showDismissReasons); }}
                 className="rounded-lg bg-destructive/10 px-4 py-2 text-xs font-medium text-destructive transition-all hover:bg-destructive/20"
               >
                 Zavrni
               </button>
             </div>
+
+            {showDismissReasons && (
+              <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50" onClick={(e) => e.stopPropagation()}>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Zakaj zavrnis?</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: "ni_pozitivna", label: "Ni pozitivna" },
+                    { key: "prestara", label: "Prestara" },
+                    { key: "premalo_vsebine", label: "Premalo vsebine" },
+                    { key: "nepomembno", label: "Nepomembno" },
+                    { key: "duplikat", label: "Duplikat" },
+                  ].map((r) => (
+                    <button
+                      key={r.key}
+                      onClick={() => onStatusChange?.("dismissed", r.key)}
+                      className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive transition-all hover:bg-destructive/20"
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

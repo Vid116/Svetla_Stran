@@ -1,53 +1,99 @@
 #!/usr/bin/env node
 /**
- * SVETLA STRAN - Scrape Cycle
+ * SVETLA STRAN - Scrape Cycle v2
  *
- * Full pipeline: crawl → dedup → title filter → content → score → auto-write
- * Designed to run every 2h via Claude Code `/loop 2h` or cron.
+ * Full pipeline: crawl → dedup → title filter → eager content cache → score → save to DB
+ *
+ * Features:
+ *   - Tiered scraping: --tier 1 (15min), --tier 2 (30min), --tier 3 (60min), or all
+ *   - Conditional HTTP: ETag/Last-Modified for efficient polling
+ *   - Eager content caching: full article text saved immediately for title-filter passes
+ *   - Source failure tracking: consecutive failures flagged in DB
+ *   - Dual discovery: HTML backups for critical RSS sources (dedup prevents doubles)
+ *   - Writes to `headlines` table in Supabase (editorial inbox reads from there)
  *
  * Usage:
- *   node scripts/scrape-cycle.mjs            # full cycle
- *   node scripts/scrape-cycle.mjs --dry-run  # crawl + dedup only, no AI calls
+ *   node scripts/scrape-cycle.mjs                # all sources
+ *   node scripts/scrape-cycle.mjs --tier 1       # only tier 1 (critical, every 15min)
+ *   node scripts/scrape-cycle.mjs --tier 2       # only tier 2 (medium, every 30min)
+ *   node scripts/scrape-cycle.mjs --tier 3       # only tier 3 (low-volume, every 60min)
+ *   node scripts/scrape-cycle.mjs --dry-run      # crawl + dedup only, no AI
  */
-delete process.env.CLAUDECODE;
-
-import { query } from '@anthropic-ai/claude-agent-sdk';
+// Agent SDK loaded dynamically below (must clear CLAUDECODE before import)
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { createHash } from 'crypto';
 import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
+import { createClient } from '@supabase/supabase-js';
+import { config } from 'dotenv';
+
+// Load .env.local for standalone execution
+config({ path: '.env.local' });
+config({ path: '.env' });
 
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 const DRY_RUN = process.argv.includes('--dry-run');
+const TIER_ARG = process.argv.find(a => a.startsWith('--tier'));
+const TIER_FILTER = TIER_ARG ? parseInt(process.argv[process.argv.indexOf(TIER_ARG) + 1] || process.argv[process.argv.indexOf('--tier') + 1]) : null;
 const ARTICLES_DIR = './output/articles';
 const STATE_FILE = './output/scrape-state.json';
 const AUTO_WRITE_MIN_SCORE = 8;
 const CUTOFF_HOURS = 48;
 const USER_AGENT = 'SvetlaStran/1.0 (+https://svetlastran.si)';
 
-// ── SOURCES (loaded from sources.json — editable via /viri UI) ──────────────
-const SOURCES_FILE = './output/sources.json';
+// ── SUPABASE ────────────────────────────────────────────────────────────────
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-function loadSources() {
-  try {
-    const raw = readFileSync(SOURCES_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    return {
-      rss: (data.rss || []).filter(s => s.active !== false),
-      html: (data.html || []).filter(s => s.active !== false),
-    };
-  } catch (e) {
-    console.error(`[Sources] Failed to load ${SOURCES_FILE}: ${e.message}`);
-    console.error('[Sources] Falling back to empty sources');
+// ── AGENT SDK (dynamic import) ───────────────────────────────────────────────
+// Clear CLAUDECODE to allow nested CC subprocess, and ANTHROPIC_API_KEY so
+// the subprocess uses CC subscription auth instead of the (placeholder) API key.
+delete process.env.CLAUDECODE;
+delete process.env.ANTHROPIC_API_KEY;
+const { query } = await import('@anthropic-ai/claude-agent-sdk');
+
+// ── SOURCES (loaded from Supabase `sources` table) ──────────────────────────
+
+async function loadSources() {
+  const { data, error } = await supabase
+    .from('sources')
+    .select('*')
+    .eq('active', true)
+    .order('name');
+
+  if (error) {
+    console.error(`[Sources] DB load failed: ${error.message}`);
     return { rss: [], html: [] };
   }
-}
 
-const { rss: RSS_SOURCES, html: HTML_SOURCES } = loadSources();
+  let sources = data || [];
+
+  // Filter by tier if specified
+  if (TIER_FILTER) {
+    sources = sources.filter(s => s.scrape_tier === TIER_FILTER);
+  }
+
+  return {
+    rss: sources.filter(s => s.type === 'rss').map(s => ({
+      name: s.name, url: s.url, category: s.category || null,
+      _dbId: s.id, _etag: s.last_etag, _lastModified: s.last_modified,
+    })),
+    html: sources.filter(s => s.type === 'html').map(s => ({
+      name: s.name, url: s.url, category: s.category || null,
+      linkSelector: s.link_selector || 'a', linkPattern: s.link_pattern || '/.+/',
+      _dbId: s.id, _etag: s.last_etag, _lastModified: s.last_modified,
+    })),
+  };
+}
 
 // ── AI PROMPTS ──────────────────────────────────────────────────────────────
 
-const FILOZOFIJA = `SVETLA STRAN je slovenski portal dobrih novic. Naše poslanstvo:
+const FILOZOFIJA = `SVETLA STRAN je SLOVENSKI portal dobrih novic. Naše poslanstvo:
 Za vsak strup, ki ga mediji dajejo, imamo specifično zdravilo.
 
 | Strup medijev              | Naše zdravilo                                               |
@@ -59,27 +105,89 @@ Za vsak strup, ki ga mediji dajejo, imamo specifično zdravilo.
 | Obup (podnebje, vojna)    | Odpornost, obnova, narava ki se vrača                      |
 | Strah (nevarnost povsod)  | Pogum - običajni ljudje ki naredijo tihe izredne stvari    |
 
-9 KATEGORIJ: ZIVALI, SKUPNOST, SPORT, NARAVA, INFRASTRUKTURA, PODJETNISTVO, SLOVENIJA_V_SVETU, JUNAKI, KULTURA`;
+9 KATEGORIJ:
+- JUNAKI: Običajni ljudje ki naredijo izjemne stvari. Gasilci, reševalci, prostovoljci, učitelji, zdravniki, sosedje ki pomagajo. Tihi junaki brez slave. TO JE NAŠA NAJPOMEMBNEJŠA KATEGORIJA.
+- PODJETNISTVO: Slovenska inovacija, startupii, patenti, nova delovna mesta, izvozni uspehi, mladi podjetniki. Tudi obrtniki in kmetje z inovativnimi pristopi.
+- SKUPNOST: Skupnostni projekti, solidarnost, dobrodelnost, soseske ki delujejo skupaj.
+- SPORT: IZKLJUČNO slovenski športniki ali slovenske ekipe. Pogačar, Dončić, Kopitar, Prevc, slovenska reprezentanca itd. NIKOLI tuji športniki brez slovenske povezave.
+- NARAVA: SLOVENSKI naravni pojavi, obnova okolja, trajnostnost. Velikonočnice pri Ponikvi DA, Dolina smrti v Kaliforniji NE.
+- ZIVALI: Vse kar se tiče živali in ogreje srce. Rojstvo mladiča v živalskem vrtu = 8+. Rešena žival = 8+. Vrnitev vrste v naravo = 8+. Posvojitev = 7+. Te zgodbe so "instant smile" za bralca - ne potrebujejo globoke zgodbe, dovolj je da ogrejo srce.
+- INFRASTRUKTURA: Gradnja, obnova, novi objekti ki izboljšujejo življenje v Sloveniji.
+- SLOVENIJA_V_SVETU: Slovenija prepoznana mednarodno, nagrade, uvrstitve, diplomacija.
+- KULTURA: Umetnost, glasba, literatura, film, gledališče, festivali. Iščemo ZGODBE ne napovednike. Koncert prihodnji teden = napovednik (ocena 3). Skupnost ki živi skozi kulturo = zgodba (ocena 7+).`;
 
-const TITLE_FILTER_PROMPT = `Si uredniški asistent za Svetla Stran - portal pozitivnih novic iz Slovenije.
+const TITLE_FILTER_PROMPT = `Si uredniški asistent za Svetla Stran - SLOVENSKI portal pozitivnih novic.
 
 ${FILOZOFIJA}
 
 Dobiš seznam naslovov člankov (ID: naslov). Za vsakega odloči:
-- "DA" - naslov nakazuje potencialno pozitivno slovensko zgodbo
+- "DA" - naslov nakazuje potencialno pozitivno SLOVENSKO zgodbo
 - "NE" - naslov je očitno negativen, političen, kriminalen, vojni konflikt, nesreča ali nerelevanten
 
-Bodi LIBERALEN z DA - raje preveč kot premalo.
+ŠPORT: DA samo za SLOVENSKE športnike/ekipe. Tuji športniki (NBA, Premier League, La Liga) brez slovenske povezave = NE.
+PODJETNISTVO/JUNAKI: Bodi posebej pozoren da te ne izpustiš - inovacije, prostovoljstvo, reševanje.
+
+Bodi LIBERALEN z DA pri vseh kategorijah RAZEN pri tujem športu.
 
 Vrni SAMO JSON brez markdown:
 {"rezultati": [{"id": "string", "odlocitev": "DA" | "NE"}]}`;
 
-const SCORING_PROMPT = `Si uredniški agent za Svetla Stran.
+const SCORING_PROMPT = `Si uredniški agent za Svetla Stran - SLOVENSKI portal dobrih novic.
 
 ${FILOZOFIJA}
 
-Oceni zgodbo od 0 do 10. 5 čustev: PONOS, TOPLINA, OLAJSANJE, CUDESENJE, UPANJE.
-Ocena 0 če primarno zbudi: krivdo, jezo, žalost, tesnobo, zahteva denar, politiko, senzacionalizem.
+KRITIČNA PRAVILA ZA OCENJEVANJE:
+
+1. SLOVENSKA POVEZAVA JE OBVEZNA za visoko oceno.
+   - Šport BREZ slovenskega športnika/ekipe = ocena 0, rejected_because: "Ni slovenskega športnika"
+   - Tuji športniki (NBA, Premier League) nas NE zanimajo razen če je Slovenec protagonist
+   - Rutinski športni rezultati (tekma končana X:Y) = max ocena 5, tudi za slovenske ekipe
+   - Šport ocena 7+ samo za: mejnike (rekord, medalja, prvak), osebne zgodbe športnikov, prvi nastopi
+
+2. JUNAKI - NAJPOMEMBNEJŠA KATEGORIJA, iščemo AKTIVNO:
+   - Gasilci, reševalci, prostovoljci, učitelji, zdravniki, trenerji = ocena 7+ če je človeška zgodba
+   - Sosedje ki pomagajo, ljudje ki rešijo življenje, tihi dobrotniki = ocena 8+
+   - Paraolimpijci in športniki ki premagajo ovire (invalidnost, bolezen, revščino) = JUNAKI, ne SPORT
+   - Trener ki 20 let dela z mladimi brez slave = JUNAKI, ne SPORT
+   - Prostovoljci ki pomagajo živalim/naravi = JUNAKI, ne ZIVALI/NARAVA
+   - Študentje ki darujejo kri, občani ki pomagajo = JUNAKI, ne SKUPNOST
+   - Reševanje otrok iz poplav, reševanje življenj = JUNAKI, ne SKUPNOST
+   - PRAVILO: Če je v zgodbi OSEBA ki je naredila nekaj izjemnega → VEDNO kategorija JUNAKI
+     JUNAKI pregazi vse druge kategorije. Najprej preveri ali gre za junaka, šele potem za drugo.
+
+3. PODJETNISTVO - iščemo AKTIVNO:
+   - Inovacija, patent, nov produkt, izvozni uspeh = ocena 7+
+   - Startup, mladi podjetniki, obrtniki z zgodbo = ocena 7+
+   - Sij razvil jeklo za vesolje, nova tovarna, širitev podjetja = PODJETNISTVO (ne INFRASTRUKTURA)
+   - Robotizirana lekarna, AI ekosistem, nova tehnologija = PODJETNISTVO (ne INFRASTRUKTURA)
+
+4. INFRASTRUKTURA - strogo ločuj:
+   - ČLOVEŠKA ZGODBA za projektom (vrtec po poplavah, skupnost ki je zgradila) = ocena 7+
+   - Velik mejnik za Slovenijo (drugi tir, prva sončna elektrarna) = ocena 7+
+   - Vladni PR, tiskovne konference, minister prerezal trak = max ocena 4
+   - Korporativni PR (podjetje X gradi Y) brez človeške zgodbe = max ocena 4
+   - Rutinska lokalna infrastruktura (parkirišča, asfalt) = max ocena 3
+   - Mednarodna tehnologija brez slovenske povezave = ocena 0
+
+5. KULTURA - ločuj zgodbe od napovednikov:
+   - Napovedniki dogodkov (koncert bo, razstava se odpira, knjiga izide) = max ocena 3
+   - Zgodba O kulturnem dosežku, osebi, skupnosti = ocena 7+
+   - Ključno vprašanje: ali se je že ZGODILO nekaj posebnega, ali samo NAPOVEDUJEM dogodek?
+
+6. NARAVA - SLOVENSKA narava:
+   - Slovenski naravni pojavi (cvetenje, vrnitev vrst, obnova habitatov) = ocena 7+
+   - Tuje naravne zgodbe (Dolina smrti, Amazonka) brez slovenske povezave = ocena 0
+   - Suhoparni birokratski projekti (X milijonov za Y) = max ocena 5
+
+7. ZIVALI - ocenjuj ČUSTVENO, ne novinarsko:
+   - Rojstvo mladiča (v živalskem vrtu ali naravi) = ocena 8+, to je "instant smile" za bralca
+   - Rešena/posvojena žival = ocena 8+
+   - Vrnitev vrste v naravo, flamingoji na bajerju = ocena 8+
+   - NE potrebuje globoke zgodbe ali podrobnosti — že sam dogodek je pozitiven
+   - Izobraževalni/opozorilni teksti o živalih BREZ pozitivne zgodbe = ocena 2-3
+
+8. Čustva: PONOS, TOPLINA, OLAJSANJE, CUDESENJE, UPANJE
+   Ocena 0 če primarno zbudi: krivdo, jezo, žalost, tesnobo, zahteva denar, politiko, senzacionalizem.
 
 Vrni SAMO JSON brez markdown:
 {
@@ -134,6 +242,41 @@ function contentHash(title, content) {
   return createHash('sha256').update(normalized).digest('hex');
 }
 
+// ── SOURCE FAILURE TRACKING ──────────────────────────────────────────────────
+
+async function recordSuccess(source) {
+  if (!source._dbId) return;
+  await supabase.from('sources').update({
+    consecutive_failures: 0,
+    last_success_at: new Date().toISOString(),
+    last_scraped_at: new Date().toISOString(),
+  }).eq('id', source._dbId).then(() => {});
+}
+
+async function recordFailure(source, errorMsg) {
+  if (!source._dbId) return;
+  await supabase.from('sources').update({
+    consecutive_failures: supabase.rpc ? undefined : 1, // incremented below
+    last_failure_at: new Date().toISOString(),
+    last_scraped_at: new Date().toISOString(),
+  }).eq('id', source._dbId).then(() => {});
+  // Increment consecutive_failures
+  await supabase.rpc('increment_source_failures', { source_id: source._dbId }).catch(() => {
+    // Fallback: just set to 1 if RPC doesn't exist yet
+    supabase.from('sources').update({ consecutive_failures: 1 }).eq('id', source._dbId);
+  });
+}
+
+async function saveEtag(source, etag, lastModified) {
+  if (!source._dbId) return;
+  const updates = {};
+  if (etag) updates.last_etag = etag;
+  if (lastModified) updates.last_modified = lastModified;
+  if (Object.keys(updates).length > 0) {
+    await supabase.from('sources').update(updates).eq('id', source._dbId).then(() => {});
+  }
+}
+
 // ── CRAWLERS ────────────────────────────────────────────────────────────────
 
 const rssParser = new Parser({ timeout: 15000, headers: { 'User-Agent': USER_AGENT } });
@@ -141,7 +284,37 @@ const rssParser = new Parser({ timeout: 15000, headers: { 'User-Agent': USER_AGE
 async function crawlRSS(source) {
   const cutoff = new Date(Date.now() - CUTOFF_HOURS * 60 * 60 * 1000);
   try {
-    const feed = await rssParser.parseURL(source.url);
+    // Conditional HTTP: check ETag/Last-Modified before full download
+    const headers = { 'User-Agent': USER_AGENT };
+    if (source._etag) headers['If-None-Match'] = source._etag;
+    if (source._lastModified) headers['If-Modified-Since'] = source._lastModified;
+
+    const res = await fetch(source.url, {
+      headers,
+      signal: AbortSignal.timeout(15000),
+      redirect: 'follow',
+    });
+
+    // 304 Not Modified — nothing new
+    if (res.status === 304) {
+      console.log(`  ↺ ${source.name}: not modified`);
+      await recordSuccess(source);
+      return [];
+    }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Save new ETag/Last-Modified for next time
+    const newEtag = res.headers.get('etag');
+    const newLastMod = res.headers.get('last-modified');
+    await saveEtag(source, newEtag, newLastMod);
+
+    // Parse RSS from response body (not URL, since we already fetched)
+    const body = await res.text();
+    const feed = await rssParser.parseString(body);
+
+    await recordSuccess(source);
+
     return feed.items
       .filter(item => {
         const pub = item.pubDate ? new Date(item.pubDate) : null;
@@ -156,7 +329,8 @@ async function crawlRSS(source) {
         category: source.category || null,
       }));
   } catch (e) {
-    console.error(`  RSS fail [${source.name}]: ${e.message}`);
+    console.error(`  ✗ RSS fail [${source.name}]: ${e.message}`);
+    await recordFailure(source, e.message);
     return [];
   }
 }
@@ -164,12 +338,28 @@ async function crawlRSS(source) {
 async function crawlHTML(source) {
   const pattern = new RegExp(source.linkPattern);
   try {
+    const headers = { 'User-Agent': USER_AGENT };
+    if (source._etag) headers['If-None-Match'] = source._etag;
+    if (source._lastModified) headers['If-Modified-Since'] = source._lastModified;
+
     const res = await fetch(source.url, {
-      headers: { 'User-Agent': USER_AGENT },
+      headers,
       signal: AbortSignal.timeout(15000),
       redirect: 'follow',
     });
+
+    if (res.status === 304) {
+      console.log(`  ↺ ${source.name}: not modified`);
+      await recordSuccess(source);
+      return [];
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const newEtag = res.headers.get('etag');
+    const newLastMod = res.headers.get('last-modified');
+    await saveEtag(source, newEtag, newLastMod);
+
     const html = await res.text();
     const $ = cheerio.load(html);
     const origin = new URL(source.url).origin;
@@ -191,9 +381,12 @@ async function crawlHTML(source) {
         category: source.category || null,
       });
     });
+
+    await recordSuccess(source);
     return results;
   } catch (e) {
-    console.error(`  HTML fail [${source.name}]: ${e.message}`);
+    console.error(`  ✗ HTML fail [${source.name}]: ${e.message}`);
+    await recordFailure(source, e.message);
     return [];
   }
 }
@@ -211,13 +404,13 @@ async function fetchFullContent(url) {
       $('[class*="article-body"]').text() ||
       $('[class*="content"]').first().text() ||
       $('main p').map((_, el) => $(el).text()).get().join('\n');
-    return body.trim().slice(0, 3000);
+    return body.trim().slice(0, 5000);
   } catch {
     return '';
   }
 }
 
-// ── AI HELPERS (using Claude Agent SDK - subscription, not API credits) ─────
+// ── AI HELPERS (Claude Agent SDK — uses CC subscription auth) ────────────────
 
 async function askClaude(systemPrompt, userMessage) {
   let result = '';
@@ -238,6 +431,38 @@ function extractJSON(text) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+// ── SAVE HEADLINE TO DB ──────────────────────────────────────────────────────
+
+async function saveHeadlineToDB(story) {
+  const hash = contentHash(story.rawTitle, story.rawContent);
+  const row = {
+    raw_title: story.rawTitle,
+    raw_content: story.rawContent || null,
+    full_content: story.fullContent || null,
+    source_url: story.sourceUrl,
+    source_name: story.sourceName,
+    content_hash: hash,
+    ai_score: story.ai?.score ?? null,
+    ai_emotions: story.ai?.emotions || null,
+    ai_reason: story.ai?.reason || null,
+    ai_category: story.ai?.category || null,
+    ai_headline: story.ai?.headline_suggestion || null,
+    ai_antidote: story.ai?.antidote_for || null,
+    ai_rejected_because: story.ai?.rejected_because || null,
+    status: story.ai?.score >= 6 && !story.ai?.rejected_because ? 'new' : 'dismissed',
+    scraped_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from('headlines').upsert(row, {
+    onConflict: 'source_url',
+    ignoreDuplicates: true,
+  });
+
+  if (error && error.code !== '23505') {
+    console.error(`  DB save fail [${story.rawTitle.slice(0, 40)}]: ${error.message}`);
+  }
+}
+
 // ── MAIN PIPELINE ───────────────────────────────────────────────────────────
 
 async function main() {
@@ -246,15 +471,21 @@ async function main() {
   const urlSet = new Set(state.seenUrls);
   const hashSet = new Set(state.seenHashes);
 
+  // Load sources from DB
+  const { rss: RSS_SOURCES, html: HTML_SOURCES } = await loadSources();
+
+  const tierLabel = TIER_FILTER ? `tier ${TIER_FILTER}` : 'all tiers';
+
   console.log(`\n${'═'.repeat(60)}`);
-  console.log(`  SVETLA STRAN - Scrape Cycle`);
-  console.log(`  ${new Date().toLocaleString('sl-SI')}`);
+  console.log(`  SVETLA STRAN - Scrape Cycle v2`);
+  console.log(`  ${new Date().toLocaleString('sl-SI')} | ${tierLabel}`);
+  console.log(`  Sources: ${RSS_SOURCES.length} RSS + ${HTML_SOURCES.length} HTML`);
   console.log(`  Last run: ${state.lastRun || 'never'}`);
   if (DRY_RUN) console.log(`  ** DRY RUN - no AI calls **`);
   console.log(`${'═'.repeat(60)}`);
 
   // ── 1. CRAWL ──────────────────────────────────────────────────────────────
-  console.log(`\n[1/6] Crawling ${RSS_SOURCES.length} RSS + ${HTML_SOURCES.length} HTML sources...`);
+  console.log(`\n[1/6] Crawling...`);
 
   const allStories = [];
 
@@ -266,14 +497,22 @@ async function main() {
   }
   console.log(`  Found ${allStories.length} total items`);
 
-  // ── 2. DEDUP ──────────────────────────────────────────────────────────────
+  // ── 2. DEDUP (local state + DB check) ──────────────────────────────────────
   console.log(`\n[2/6] Deduplicating...`);
 
+  // Also check DB for existing URLs
+  const { data: existingHeadlines } = await supabase
+    .from('headlines')
+    .select('source_url, content_hash')
+    .then(({ data }) => ({ data: data || [] }));
+
+  const dbUrlSet = new Set(existingHeadlines.map(h => h.source_url));
+  const dbHashSet = new Set(existingHeadlines.map(h => h.content_hash).filter(Boolean));
+
   const newStories = allStories.filter(s => {
-    if (urlSet.has(s.sourceUrl)) return false;
+    if (urlSet.has(s.sourceUrl) || dbUrlSet.has(s.sourceUrl)) return false;
     const hash = contentHash(s.rawTitle, s.rawContent);
-    if (hashSet.has(hash)) return false;
-    // Mark as seen
+    if (hashSet.has(hash) || dbHashSet.has(hash)) return false;
     urlSet.add(s.sourceUrl);
     hashSet.add(hash);
     state.seenUrls.push(s.sourceUrl);
@@ -285,17 +524,17 @@ async function main() {
 
   if (newStories.length === 0 || DRY_RUN) {
     saveState(state);
-    console.log(DRY_RUN ? `\n  Dry run complete.` : `\n  Nothing new. Sleeping.`);
+    console.log(DRY_RUN ? `\n  Dry run complete.` : `\n  Nothing new.`);
     return;
   }
 
   // ── 3. TITLE FILTER ───────────────────────────────────────────────────────
   console.log(`\n[3/6] Title filter (${newStories.length} stories)...`);
 
-  // Give each story a temp ID for the filter
   const withIds = newStories.map((s, i) => ({ ...s, _id: `s${i}` }));
   const BATCH = 50;
   const passedStories = [];
+  const failedStories = [];
 
   for (let i = 0; i < withIds.length; i += BATCH) {
     const batch = withIds.slice(i, i + BATCH);
@@ -305,29 +544,42 @@ async function main() {
       const result = extractJSON(text);
       const daIds = new Set(result.rezultati.filter(r => r.odlocitev === 'DA').map(r => r.id));
       passedStories.push(...batch.filter(s => daIds.has(s._id)));
+      failedStories.push(...batch.filter(s => !daIds.has(s._id)));
     } catch (e) {
       console.error(`  Title filter batch error: ${e.message}`);
-      // On error, let all through rather than lose stories
       passedStories.push(...batch);
     }
   }
 
-  console.log(`  ${passedStories.length} passed title filter`);
+  console.log(`  ${passedStories.length} passed, ${failedStories.length} rejected`);
+
+  // ── 4. EAGER CONTENT CACHING ──────────────────────────────────────────────
+  // Fetch full article text NOW for all stories that passed title filter
+  // This is the key reliability feature — cache content before it disappears
+  console.log(`\n[4/6] Eager content caching for ${passedStories.length} stories...`);
+
+  const CONTENT_BATCH = 5;
+  for (let i = 0; i < passedStories.length; i += CONTENT_BATCH) {
+    const batch = passedStories.slice(i, i + CONTENT_BATCH);
+    await Promise.allSettled(batch.map(async (story) => {
+      const full = await fetchFullContent(story.sourceUrl);
+      if (full && full.length > 50) {
+        story.fullContent = full;
+        // Use full content for scoring if rawContent is short
+        if (!story.rawContent || story.rawContent.length < 100) {
+          story.rawContent = full;
+        }
+      }
+    }));
+  }
+
+  const cached = passedStories.filter(s => s.fullContent).length;
+  console.log(`  Cached ${cached}/${passedStories.length} full articles`);
 
   if (passedStories.length === 0) {
     saveState(state);
     console.log(`\n  No stories passed filter.`);
     return;
-  }
-
-  // ── 4. FULL CONTENT ───────────────────────────────────────────────────────
-  console.log(`\n[4/6] Fetching full content for ${passedStories.length} stories...`);
-
-  for (const story of passedStories) {
-    if (!story.rawContent || story.rawContent.length < 100) {
-      const full = await fetchFullContent(story.sourceUrl);
-      if (full) story.rawContent = full;
-    }
   }
 
   // ── 5. SCORING ────────────────────────────────────────────────────────────
@@ -336,7 +588,8 @@ async function main() {
   const scored = [];
   for (const story of passedStories) {
     try {
-      const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${story.rawContent}`;
+      const contentForScoring = story.fullContent || story.rawContent;
+      const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}`;
       const text = await askClaude(SCORING_PROMPT, userMsg);
       const result = extractJSON(text);
       scored.push({ ...story, ai: result });
@@ -347,67 +600,29 @@ async function main() {
     }
   }
 
-  // ── 6. AUTO-WRITE ─────────────────────────────────────────────────────────
-  const toWrite = scored.filter(s => s.ai.score >= AUTO_WRITE_MIN_SCORE);
-  console.log(`\n[6/6] Auto-writing ${toWrite.length} articles (score >= ${AUTO_WRITE_MIN_SCORE})...`);
+  // ── 6. SAVE TO DATABASE ───────────────────────────────────────────────────
+  console.log(`\n[6/6] Saving to database...`);
 
-  if (!existsSync(ARTICLES_DIR)) mkdirSync(ARTICLES_DIR, { recursive: true });
-  const existingFiles = new Set(readdirSync(ARTICLES_DIR).filter(f => f.endsWith('.json')).map(f => f.replace('.json', '')));
-
-  let written = 0;
-  for (const story of toWrite) {
-    try {
-      let userMsg = `Naslov vira: ${story.rawTitle}\n\nVsebina vira:\n${story.rawContent}`;
-      if (story.ai.headline_suggestion) userMsg += `\n\nPredlagani naslov: ${story.ai.headline_suggestion}`;
-      if (story.ai.category) userMsg += `\nKategorija: ${story.ai.category}`;
-
-      const text = await askClaude(WRITING_PROMPT, userMsg);
-      const article = extractJSON(text);
-
-      if (existingFiles.has(article.slug)) {
-        console.log(`  SKIP (exists) ${article.slug}`);
-        continue;
-      }
-
-      // Try to get OG image from source
-      let imageUrl = null;
-      try {
-        const res = await fetch(story.sourceUrl, {
-          headers: { 'User-Agent': USER_AGENT },
-          signal: AbortSignal.timeout(10000),
-        });
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        imageUrl = $('meta[property="og:image"]').attr('content') || null;
-      } catch {}
-
-      const record = {
-        ...article,
-        source: {
-          rawTitle: story.rawTitle,
-          sourceUrl: story.sourceUrl,
-          sourceName: story.sourceName,
-        },
-        ai: {
-          score: story.ai.score,
-          category: story.ai.category,
-          emotions: story.ai.emotions,
-          antidote_for: story.ai.antidote_for,
-        },
-        publishedAt: new Date().toISOString(),
-        ...(imageUrl && { imageUrl }),
-      };
-
-      writeFileSync(`${ARTICLES_DIR}/${article.slug}.json`, JSON.stringify(record, null, 2));
-      existingFiles.add(article.slug);
-      written++;
-      console.log(`  OK ${article.title}`);
-    } catch (e) {
-      console.error(`  Write fail: ${e.message.slice(0, 60)}`);
-    }
+  // Save scored stories (score 6+ go to inbox as 'new', rest as 'dismissed')
+  let dbSaved = 0;
+  for (const story of scored) {
+    await saveHeadlineToDB(story);
+    dbSaved++;
   }
 
-  // ── APPEND TO INBOX (score 6+ stories for editorial review) ────────────
+  // Also save rejected stories (title filter NE) as dismissed for tracking
+  for (const story of failedStories) {
+    story.ai = { rejected_because: 'Naslov ne ustreza' };
+    await saveHeadlineToDB(story);
+  }
+
+  const inInbox = scored.filter(s => s.ai.score >= 6 && !s.ai.rejected_because).length;
+  console.log(`  Saved ${dbSaved} scored + ${failedStories.length} rejected to DB`);
+  console.log(`  ${inInbox} stories in editor inbox (score >= 6)`);
+
+  // ── OPTIONAL: File backup (legacy compatibility) ──────────────────────────
+  if (!existsSync(ARTICLES_DIR)) mkdirSync(ARTICLES_DIR, { recursive: true });
+
   const INBOX_FILE = './output/inbox.json';
   const forInbox = scored.filter(s => s.ai.score >= 6);
   if (forInbox.length > 0) {
@@ -422,6 +637,7 @@ async function main() {
       inbox.push({
         rawTitle: s.rawTitle,
         rawContent: s.rawContent,
+        fullContent: s.fullContent || null,
         sourceUrl: s.sourceUrl,
         sourceName: s.sourceName,
         category: s.category,
@@ -432,7 +648,6 @@ async function main() {
     }
     if (added > 0) {
       writeFileSync(INBOX_FILE, JSON.stringify(inbox, null, 2));
-      console.log(`  Added ${added} stories to inbox.json`);
     }
   }
 
@@ -440,13 +655,11 @@ async function main() {
   saveState(state);
 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(0);
-  const inbox = scored.filter(s => s.ai.score >= 6 && s.ai.score < AUTO_WRITE_MIN_SCORE);
 
   console.log(`\n${'═'.repeat(60)}`);
-  console.log(`  DONE in ${elapsed}s`);
-  console.log(`  Crawled: ${allStories.length} | New: ${newStories.length} | Passed filter: ${passedStories.length}`);
-  console.log(`  Scored 8+: ${toWrite.length} | Written: ${written} | Inbox (6-7): ${inbox.length}`);
-  console.log(`  Total articles: ${existingFiles.size}`);
+  console.log(`  DONE in ${elapsed}s | ${tierLabel}`);
+  console.log(`  Crawled: ${allStories.length} | New: ${newStories.length} | Passed: ${passedStories.length}`);
+  console.log(`  Scored: ${scored.length} | In inbox: ${inInbox} | Cached content: ${cached}`);
   console.log(`${'═'.repeat(60)}\n`);
 }
 

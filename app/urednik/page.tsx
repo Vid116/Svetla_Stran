@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { InboxView } from "@/components/inbox-view";
+import { EditorTabs } from "@/components/editor-tabs";
 import { UserMenu } from "@/components/user-menu";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -20,7 +20,7 @@ export default async function UrednikPage() {
             <UserMenu />
           </div>
           <p className="mb-3 text-sm font-medium tracking-widest uppercase text-primary/60">
-            Uredniski Inbox
+            Urednistvo
           </p>
           <h1 className="text-4xl font-light tracking-tight text-foreground sm:text-5xl">
             Svetla Stran
@@ -55,19 +55,13 @@ export default async function UrednikPage() {
             >
               Profil
             </Link>
-            <Link
-              href="/clanki"
-              className="inline-flex items-center gap-1.5 rounded-full bg-nature/10 px-4 py-1.5 text-sm font-medium text-nature transition-all hover:bg-nature/20"
-            >
-              Objavljeni clanki &rarr;
-            </Link>
           </div>
         </div>
       </div>
 
-      {/* Stories — loaded client-side from /api/stories */}
+      {/* Tabbed content */}
       <div className="mx-auto max-w-5xl px-6 py-12">
-        <InboxView />
+        <EditorTabs />
       </div>
 
       {/* Footer */}

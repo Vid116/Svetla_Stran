@@ -26,5 +26,8 @@ Thumbs.db
 # output / data (migrated to Supabase)
 output/
 
+# skills (binary ZIP)
+K&M_Pisatelj/
+
 # debug
 npm-debug.log*

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArticleGrid } from "@/components/article-grid";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getPublishedArticles } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,17 @@ export interface PublishedArticle {
     antidote_for: string | null;
   };
   references?: { url: string; title: string }[];
+  imagePosition?: number;
+  verification?: {
+    passed: boolean | null;
+    summary: string | null;
+    claims: { claim: string; status: string; source?: string }[];
+  };
+  research?: {
+    queries: string[];
+    sourcesFound: number | null;
+    sourcesUsed: number | null;
+  };
 }
 
 function rowToArticle(s: any): PublishedArticle {
@@ -34,6 +46,7 @@ function rowToArticle(s: any): PublishedArticle {
     imageUrl: s.image_url || undefined,
     publishedAt: s.published_at || s.created_at,
     source: {
+      rawTitle: s.raw_title || undefined,
       sourceUrl: s.source_url,
       sourceName: s.source_name,
     },
@@ -42,6 +55,18 @@ function rowToArticle(s: any): PublishedArticle {
       category: s.category || "",
       emotions: s.emotions || [],
       antidote_for: s.antidote || null,
+    },
+    references: s.research_references || undefined,
+    imagePosition: s.image_position ?? 33,
+    verification: {
+      passed: s.verification_passed ?? null,
+      summary: s.verification_summary || null,
+      claims: s.verification_claims || [],
+    },
+    research: {
+      queries: s.research_queries || [],
+      sourcesFound: s.research_sources_found ?? null,
+      sourcesUsed: s.research_sources_used ?? null,
     },
   };
 }
@@ -121,6 +146,11 @@ export default async function HomePage() {
             <ArticleGrid articles={articles.slice(0, 6)} />
           </>
         )}
+      </div>
+
+      {/* Newsletter signup */}
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <NewsletterSignup variant="hero" />
       </div>
 
       {/* Footer */}
