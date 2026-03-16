@@ -5,12 +5,16 @@ import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
-  CATEGORY_ICONS,
   CATEGORY_PILL,
   CATEGORY_ACCENT_BAR,
   formatDate,
+  readingTime,
 } from "@/lib/article-helpers";
+import { CategoryIcon } from "@/lib/category-icons";
+import { ShareButton } from "@/components/share-button";
 import { ResearchDetails } from "@/components/research-details";
+import { LongFormSection } from "@/components/long-form-section";
+import { SiteFooter } from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +39,7 @@ function rowToArticle(s: any): PublishedArticle {
     },
     references: s.research_references || undefined,
     imagePosition: s.image_position ?? 33,
+    longForm: s.long_form || null,
     verification: {
       passed: s.verification_passed ?? null,
       summary: s.verification_summary || null,
@@ -105,7 +110,7 @@ export default async function ArticlePage({
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           <div className="absolute top-0 left-0 right-0 p-6">
             <Link
-              href="/clanki"
+              href="/"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-3 py-1.5"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
@@ -128,7 +133,7 @@ export default async function ArticlePage({
         <div className="relative mx-auto max-w-3xl px-6 pt-8 pb-10">
           {!article.imageUrl && (
             <Link
-              href="/clanki"
+              href="/"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group mb-8 block"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
@@ -137,12 +142,17 @@ export default async function ArticlePage({
           )}
 
           <div className="flex flex-wrap items-center gap-3 mb-6">
-            <span className="text-xl">
-              {CATEGORY_ICONS[article.ai.category] ?? "📰"}
-            </span>
+            <CategoryIcon category={article.ai.category} className="w-5 h-5 text-muted-foreground" />
             <time className="text-xs text-muted-foreground" dateTime={article.publishedAt}>
               {formatDate(article.publishedAt)}
             </time>
+            <span className="text-xs text-muted-foreground/50">·</span>
+            <span className="text-xs text-muted-foreground/50">
+              {readingTime(article.body)}
+            </span>
+            <div className="ml-auto">
+              <ShareButton title={article.title} />
+            </div>
           </div>
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight text-foreground mb-5">
@@ -171,6 +181,11 @@ export default async function ArticlePage({
             </p>
           ))}
         </div>
+
+        {/* Long-form deep read */}
+        {article.longForm && (
+          <LongFormSection longForm={article.longForm} accentBar={accentBar} />
+        )}
 
         {/* Sources */}
         <div className="mt-10 p-5 rounded-xl bg-muted/40 border border-border/40">
@@ -255,8 +270,8 @@ export default async function ArticlePage({
                         <div className={`absolute inset-0 bg-gradient-to-br ${
                           CATEGORY_ACCENT_BAR[rel.ai.category]?.replace("bg-", "from-") ?? "from-primary"
                         }/20 to-muted`}>
-                          <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-30">
-                            {CATEGORY_ICONS[rel.ai.category] ?? "📰"}
+                          <span className="absolute inset-0 flex items-center justify-center opacity-20">
+                            <CategoryIcon category={rel.ai.category} className="w-10 h-10" />
                           </span>
                         </div>
                       )}
@@ -271,7 +286,7 @@ export default async function ArticlePage({
                         <span className="text-xs text-muted-foreground/50 truncate max-w-[70%]">
                           {rel.source.sourceName}
                         </span>
-                        <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                           Preberi →
                         </span>
                       </div>
@@ -284,18 +299,7 @@ export default async function ArticlePage({
         </section>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-border/30 py-10 text-center space-y-1">
-        <Link
-          href="/clanki"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          ← Nazaj na vse zgodbe
-        </Link>
-        <p className="text-xs text-muted-foreground/50">
-          © {new Date().getFullYear()} Svetla Stran &middot; Portal pozitivnih novic iz Slovenije
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

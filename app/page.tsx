@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Sun } from "lucide-react";
 import { ArticleGrid } from "@/components/article-grid";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { SiteFooter } from "@/components/site-footer";
 import { getPublishedArticles } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ export interface PublishedArticle {
   };
   references?: { url: string; title: string }[];
   imagePosition?: number;
+  longForm?: { title: string; subtitle: string; body: string; slug: string } | null;
   verification?: {
     passed: boolean | null;
     summary: string | null;
@@ -46,7 +49,6 @@ function rowToArticle(s: any): PublishedArticle {
     imageUrl: s.image_url || undefined,
     publishedAt: s.published_at || s.created_at,
     source: {
-      rawTitle: s.raw_title || undefined,
       sourceUrl: s.source_url,
       sourceName: s.source_name,
     },
@@ -55,18 +57,6 @@ function rowToArticle(s: any): PublishedArticle {
       category: s.category || "",
       emotions: s.emotions || [],
       antidote_for: s.antidote || null,
-    },
-    references: s.research_references || undefined,
-    imagePosition: s.image_position ?? 33,
-    verification: {
-      passed: s.verification_passed ?? null,
-      summary: s.verification_summary || null,
-      claims: s.verification_claims || [],
-    },
-    research: {
-      queries: s.research_queries || [],
-      sourcesFound: s.research_sources_found ?? null,
-      sourcesUsed: s.research_sources_used ?? null,
     },
   };
 }
@@ -82,69 +72,33 @@ export default async function HomePage() {
       {/* Nav */}
       <nav className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-lg leading-none" aria-hidden>☀️</span>
-            <span className="text-sm font-semibold tracking-wide text-foreground">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Sun className="w-6 h-6 text-gold" aria-hidden />
+            <span className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-brand)' }}>
               Svetla Stran
             </span>
           </Link>
           <div className="flex items-center gap-4">
             <Link
-              href="/clanki"
+              href="/o-nas"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Vse zgodbe
+              O nas
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-sky-soft via-background to-background" />
-        <div className="absolute top-0 left-1/4 h-64 w-96 rounded-full bg-gold-soft/40 blur-3xl" />
-        <div className="absolute top-0 right-1/4 h-64 w-96 rounded-full bg-lavender-soft/40 blur-3xl" />
-        <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
-          <h1 className="text-5xl font-light tracking-tight text-foreground sm:text-6xl">
-            Svetla Stran
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground leading-relaxed">
-            Portal pozitivnih novic iz Slovenije. Za vsak strup, ki ga mediji dajejo, imamo zdravilo.
-          </p>
-          {articles.length > 0 && (
-            <Link
-              href="/clanki"
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-nature px-6 py-2.5 text-sm font-medium text-nature-foreground shadow-sm transition-all hover:opacity-90"
-            >
-              Preberi zgodbe &rarr;
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* Latest articles */}
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      {/* Articles */}
+      <div className="mx-auto max-w-6xl px-6 py-8">
         {articles.length === 0 ? (
-          <div className="py-24 text-center text-muted-foreground">
-            <div className="text-5xl mb-6" aria-hidden>🌤️</div>
-            <p className="text-xl font-light">Kmalu prihajajo zgodbe …</p>
+          <div className="py-32 text-center text-muted-foreground">
+            <Sun className="w-12 h-12 text-gold/40 mx-auto mb-6" aria-hidden />
+            <p className="text-xl font-light mb-3">Zgodbe se zbirajo …</p>
+            <p className="text-sm">Prve bodo tu kmalu. Vrni se čez dan ali dva.</p>
           </div>
         ) : (
-          <>
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                Zadnje zgodbe
-              </h2>
-              <span className="h-px flex-1 bg-border/50" />
-              <Link
-                href="/clanki"
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                Vse zgodbe &rarr;
-              </Link>
-            </div>
-            <ArticleGrid articles={articles.slice(0, 6)} />
-          </>
+          <ArticleGrid articles={articles} />
         )}
       </div>
 
@@ -153,15 +107,7 @@ export default async function HomePage() {
         <NewsletterSignup variant="hero" />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border/30 py-10 text-center space-y-1">
-        <p className="text-xs text-muted-foreground/60">
-          © {new Date().getFullYear()} Svetla Stran &middot; Portal pozitivnih novic iz Slovenije
-        </p>
-        <p className="text-xs text-muted-foreground/40">
-          Vsebino pregleduje uredniška ekipa. AI pomaga pri iskanju in pisanju zgodb.
-        </p>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

@@ -189,6 +189,14 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
 8. Čustva: PONOS, TOPLINA, OLAJSANJE, CUDESENJE, UPANJE
    Ocena 0 če primarno zbudi: krivdo, jezo, žalost, tesnobo, zahteva denar, politiko, senzacionalizem.
 
+DEDUP PRAVILO — KRITIČNO:
+Prejel boš tudi seznam OBSTOJEČIH zgodb (že v uredništvu ali objavljenih).
+Če je zgodba o ISTEM DOGODKU kot obstoječa (isti akter, isti dogodek, isti rezultat — čeprav z drugačnim naslovom ali iz drugega vira):
+- score: 0
+- rejected_because: "Duplikat: [naslov obstoječe zgodbe]"
+Primer: "Slivnik deveti na paraolimpijadi" in "Slivnik z najboljšim dosežkom" = ISTI DOGODEK = duplikat.
+Ne označi kot duplikat če gre za NOVEJŠI RAZVOJ iste teme (npr. kvalifikacije → finale).
+
 Vrni SAMO JSON brez markdown:
 {
   "score": number,
@@ -585,16 +593,44 @@ async function main() {
   // ── 5. SCORING ────────────────────────────────────────────────────────────
   console.log(`\n[5/6] Scoring...`);
 
+  // Fetch existing stories for semantic dedup
+  const [{ data: inboxHeadlines }, { data: recentArticles }, { data: recentDrafts }] = await Promise.all([
+    supabase.from('headlines').select('ai_headline, raw_title').in('status', ['new', 'picked']),
+    supabase.from('articles').select('title').order('published_at', { ascending: false }).limit(30),
+    supabase.from('drafts').select('title').order('created_at', { ascending: false }).limit(10),
+  ]);
+
+  const existingTitles = [
+    ...(inboxHeadlines || []).map(h => h.ai_headline || h.raw_title),
+    ...(recentArticles || []).map(a => a.title),
+    ...(recentDrafts || []).map(d => d.title),
+  ].filter(Boolean);
+
+  let dedupContext = existingTitles.length > 0
+    ? `\n\nOBSTOJEČE ZGODBE (preveri duplikate!):\n${existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}`
+    : '';
+
+  console.log(`  Dedup context: ${existingTitles.length} existing stories loaded`);
+
   const scored = [];
   for (const story of passedStories) {
     try {
       const contentForScoring = story.fullContent || story.rawContent;
-      const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}`;
+      const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}${dedupContext}`;
       const text = await askClaude(SCORING_PROMPT, userMsg);
       const result = extractJSON(text);
       scored.push({ ...story, ai: result });
-      const icon = result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
+      const isDup = result.rejected_because?.startsWith('Duplikat');
+      const icon = isDup ? '⊘' : result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
       console.log(`  ${icon} [${result.score}] ${story.rawTitle.slice(0, 60)}`);
+      if (isDup) console.log(`    ↳ ${result.rejected_because}`);
+      // Add to dedup context so next stories in this batch see it too
+      if (result.score >= 6 && !isDup) {
+        const newTitle = result.headline_suggestion || story.rawTitle;
+        dedupContext = dedupContext
+          ? `${dedupContext}\n${existingTitles.length + scored.length}. ${newTitle}`
+          : `\n\nOBSTOJEČE ZGODBE (preveri duplikate!):\n1. ${newTitle}`;
+      }
     } catch (e) {
       console.error(`  Score fail: ${story.rawTitle.slice(0, 40)} - ${e.message}`);
     }

@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
         verification_passed: result.verification?.passed ?? undefined,
         verification_summary: result.verification?.summary || undefined,
         verification_claims: result.verification?.claims || [],
+        long_form: result.longFormArticle || undefined,
       });
     }
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/article-helpers";
+import { Sun } from "lucide-react";
+import { CATEGORY_LABELS } from "@/lib/article-helpers";
+import { CategoryIcon } from "@/lib/category-icons";
 
 const CATEGORIES = [
   "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
@@ -59,7 +61,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
       }
 
       setStatus("success");
-      setMessage(data.message || "Uspešno! Dobrodošli.");
+      setMessage(data.message || "Ste znotraj. Dobrodošli.");
       setEmail("");
     } catch {
       setStatus("error");
@@ -71,14 +73,14 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
     return (
       <div className={variant === "hero" ? "text-center py-8" : "py-4"}>
         <div className="inline-flex items-center gap-2 rounded-xl bg-nature/10 px-5 py-3">
-          <span className="text-lg" aria-hidden>☀️</span>
+          <Sun className="w-4 h-4 text-gold" aria-hidden />
           <p className="text-sm font-medium text-nature">
             {message}
           </p>
         </div>
         {variant === "hero" && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Vsak ponedeljek zjutraj prejmete 5 dobrih zgodb.
+            Prvo pismo pride v ponedeljek zjutraj.
           </p>
         )}
       </div>
@@ -89,13 +91,13 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
     return (
       <div className="rounded-xl border border-border/50 bg-card p-6">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg" aria-hidden>☀️</span>
+          <Sun className="w-4 h-4 text-gold" aria-hidden />
           <h3 className="text-sm font-semibold text-foreground">
-            Dobre novice vsak ponedeljek
+            Pet zgodb vsak ponedeljek
           </h3>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-          5 zgodb ki vam bodo polepšale teden. Brez spama, brez politike.
+          Kratke, preverjene, brez clickbaita. Vsak ponedeljek zjutraj.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
@@ -122,7 +124,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
           onClick={() => setShowTopics(!showTopics)}
           className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          {showTopics ? "Skrij teme" : "Izberi teme ki te zanimajo"} {showTopics ? "↑" : "↓"}
+          {showTopics ? "Skrij teme" : "Izberi teme"} {showTopics ? "↑" : "↓"}
         </button>
         {showTopics && (
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -137,7 +139,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
                     : "bg-muted/50 text-muted-foreground hover:bg-muted"
                 }`}
               >
-                <span className="text-xs">{CATEGORY_ICONS[cat]}</span>
+                <CategoryIcon category={cat} className="w-3 h-3" />
                 {CATEGORY_LABELS[cat]}
               </button>
             ))}
@@ -155,10 +157,10 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
 
       <div className="relative text-center max-w-lg mx-auto">
         <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">
-          Začni teden z dobro novico
+          Pet zgodb za boljši ponedeljek
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          Vsak ponedeljek zjutraj. 5 zgodb ki ti bodo polepšale teden.
+          Vsak ponedeljek zjutraj v nabiralniku. Preverjene zgodbe, kratek bralni čas.
           <br />
           Brez clickbaita. Brez politike. Brez spama.
         </p>
@@ -190,7 +192,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
           onClick={() => setShowTopics(!showTopics)}
           className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          {showTopics ? "Skrij teme" : "Izberi teme ki te zanimajo"} {showTopics ? "↑" : "↓"}
+          {showTopics ? "Skrij teme" : "Izberi teme"} {showTopics ? "↑" : "↓"}
         </button>
 
         {showTopics && (
@@ -206,7 +208,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
                     : "bg-muted/50 text-muted-foreground hover:bg-muted opacity-60 hover:opacity-100"
                 }`}
               >
-                <span>{CATEGORY_ICONS[cat]}</span>
+                <CategoryIcon category={cat} className="w-3 h-3" />
                 {CATEGORY_LABELS[cat]}
               </button>
             ))}

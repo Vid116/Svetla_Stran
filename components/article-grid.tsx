@@ -4,11 +4,13 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { PublishedArticle } from "@/app/page";
 import {
-  CATEGORY_ICONS,
   CATEGORY_PILL,
   CATEGORY_ACCENT_BAR,
+  CATEGORY_LABELS,
   formatDate,
+  readingTime,
 } from "@/lib/article-helpers";
+import { CategoryIcon } from "@/lib/category-icons";
 
 function getExcerpt(text: string, chars = 120) {
   const plain = text.replace(/\n+/g, " ").trim();
@@ -31,8 +33,8 @@ function CategoryGradient({ category }: { category: string }) {
   };
   return (
     <div className={`absolute inset-0 bg-gradient-to-br ${gradients[category] ?? "from-muted to-muted/50"}`}>
-      <span className="absolute inset-0 flex items-center justify-center text-5xl opacity-30">
-        {CATEGORY_ICONS[category] ?? "📰"}
+      <span className="absolute inset-0 flex items-center justify-center opacity-20">
+        <CategoryIcon category={category} className="w-16 h-16" />
       </span>
     </div>
   );
@@ -69,13 +71,13 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                 : "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground"
             }`}
           >
-            ✦
+            Vse
           </button>
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-              className={`px-3 py-1.5 rounded-full text-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all cursor-pointer ${
                 activeCategory === cat
                   ? (CATEGORY_PILL[cat] ?? "bg-primary text-primary-foreground border-primary") +
                     " shadow-sm scale-105"
@@ -83,7 +85,8 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                     " opacity-60 hover:opacity-100"
               }`}
             >
-              {CATEGORY_ICONS[cat] ?? "📰"}
+              <CategoryIcon category={cat} className="w-3.5 h-3.5" />
+              {CATEGORY_LABELS[cat] ?? cat}
             </button>
           ))}
         </nav>
@@ -117,9 +120,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
               <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-10">
                 {/* Category + date */}
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-lg">
-                    {CATEGORY_ICONS[featured.ai.category] ?? "📰"}
-                  </span>
+                  <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
                   <time className="text-xs text-white/70">
                     {formatDate(featured.publishedAt)}
                   </time>
@@ -170,11 +171,12 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                   {/* Category icon overlay */}
                   <div className="absolute top-3 left-3">
                     <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-sm border backdrop-blur-sm bg-white/80 ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm bg-white/80 ${
                         CATEGORY_PILL[article.ai.category] ?? "bg-muted text-foreground border-border"
                       }`}
                     >
-                      {CATEGORY_ICONS[article.ai.category] ?? "📰"}
+                      <CategoryIcon category={article.ai.category} className="w-3 h-3" />
+                      {CATEGORY_LABELS[article.ai.category] ?? ""}
                     </span>
                   </div>
                 </div>
@@ -200,12 +202,17 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
                   {/* Card footer */}
                   <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground/50 truncate max-w-[60%]">
+                    <span className="text-xs text-muted-foreground/50 truncate max-w-[50%]">
                       {article.source.sourceName}
                     </span>
-                    <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      Preberi →
-                    </span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs text-muted-foreground/40">
+                        {readingTime(article.body)}
+                      </span>
+                      <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        Preberi →
+                      </span>
+                    </div>
                   </div>
                 </div>
               </article>

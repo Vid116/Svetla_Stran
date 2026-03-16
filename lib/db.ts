@@ -123,6 +123,7 @@ export async function createDraft(draft: {
   verification_passed?: boolean;
   verification_summary?: string;
   verification_claims?: any;
+  long_form?: { title: string; subtitle: string; body: string; slug: string };
 }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -215,7 +216,8 @@ export async function publishDraft(draftId: string) {
     verification_claims: draft.verification_claims || [],
     research_queries: draft.research_queries || [],
     research_sources_found: draft.research_sources_found ?? null,
-    research_sources_used: draft.research_sources_used ?? null
+    research_sources_used: draft.research_sources_used ?? null,
+    long_form: draft.long_form || null,
   });
 
   if (insertErr) throw insertErr;
