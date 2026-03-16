@@ -103,21 +103,23 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
         <Link href={`/clanki/${featured.slug}`} className="group block mb-14">
           <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
             {/* Image or gradient background */}
-            <div className="relative h-64 sm:h-80 md:h-96 overflow-hidden">
-              {featured.imageUrl ? (
-                <img
-                  src={featured.imageUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                />
-              ) : (
-                <CategoryGradient category={featured.ai.category} />
-              )}
+            <div className="relative h-64 sm:h-80 md:h-96">
+              <div className="absolute inset-0 overflow-hidden">
+                {featured.imageUrl ? (
+                  <img
+                    src={featured.imageUrl}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  />
+                ) : (
+                  <CategoryGradient category={featured.ai.category} />
+                )}
+              </div>
               {/* Dark gradient overlay for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-              {/* Content over image */}
-              <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-10">
+              {/* Content over image — anchored to bottom */}
+              <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
                 {/* Category + date */}
                 <div className="flex items-center gap-3 mb-4">
                   <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
@@ -127,12 +129,12 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                 </div>
 
                 {/* Title */}
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
                   {featured.title}
                 </h2>
 
                 {/* Subtitle */}
-                <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4">
+                <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
                   {featured.subtitle}
                 </p>
 
