@@ -37,7 +37,7 @@ export default function AboutPage() {
 
         <div className="space-y-6 text-foreground/85 leading-[1.85]">
           <p className="text-lg font-light">
-            Mediji pogosto vodijo s strahom, jezo in cinizmom. Svetla Stran vodi drugače. Zbiramo zgodbe iz Slovenije, ki jih je vredno prebrati do konca.
+            Svetla Stran je portal pozitivnih novic iz Slovenije. Verjamemo, da dobre zgodbe zaslužijo enako pozornost kot slabe — in da spreminjajo dan na bolje.
           </p>
 
           <p>
