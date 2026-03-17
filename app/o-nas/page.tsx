@@ -37,19 +37,19 @@ export default function AboutPage() {
 
         <div className="space-y-6 text-foreground/85 leading-[1.85]">
           <p className="text-lg font-light">
-            Svetla Stran je portal pozitivnih novic iz Slovenije. Verjamemo, da dobre zgodbe zaslužijo enako pozornost kot slabe — in da spreminjajo dan na bolje.
+            Svetla Stran zbira pozitivne novice iz Slovenije. Verjamemo, da dobre zgodbe zaslužijo enako pozornost kot slabe, in da spreminjajo dan na bolje.
           </p>
 
           <p>
-            Ljudje, ki pomagajo. Dosežki, ki presenetijo. Skupnosti, ki držijo skupaj. Narava, ki se vrača. Vsak dan prečešemo slovenske medije in poiščemo zgodbe, ki krepijo namesto slabijo.
+            Ljudje, ki pomagajo. Dosežki, ki presenetijo. Skupnosti, ki držijo skupaj. Narava, ki se vrača. Vsak dan prečešemo slovenske medije in poiščemo zgodbe, ki krepijo.
           </p>
 
           <p>
-            Pišemo dejstva, ne mnenja. Vsak članek gre skozi raziskovalni postopek, kjer preverimo trditve pri primarnih virih. Pod vsako zgodbo najdete vire in podrobnosti preverbe.
+            Pišemo dejstva, ne mnenja. Vsak članek preverimo pri primarnih virih, pod vsako zgodbo pa najdete vire in podrobnosti preverbe.
           </p>
 
           <p>
-            Pri iskanju in pisanju nam pomaga umetna inteligenca. Uredniška ekipa prebere in odobri vsako objavljeno zgodbo.
+            Pri iskanju in pisanju nam pomaga umetna inteligenca. Vsako objavljeno zgodbo prebere in odobri uredniška ekipa.
           </p>
         </div>
       </div>
