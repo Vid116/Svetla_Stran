@@ -612,28 +612,27 @@ async function main() {
 
   console.log(`  Dedup context: ${existingTitles.length} existing stories loaded`);
 
+  const PARALLEL = 4;
   const scored = [];
-  for (const story of passedStories) {
-    try {
-      const contentForScoring = story.fullContent || story.rawContent;
-      const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}${dedupContext}`;
-      const text = await askClaude(SCORING_PROMPT, userMsg);
-      const result = extractJSON(text);
-      scored.push({ ...story, ai: result });
-      const isDup = result.rejected_because?.startsWith('Duplikat');
-      const icon = isDup ? '⊘' : result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
-      console.log(`  ${icon} [${result.score}] ${story.rawTitle.slice(0, 60)}`);
-      if (isDup) console.log(`    ↳ ${result.rejected_because}`);
-      // Add to dedup context so next stories in this batch see it too
-      if (result.score >= 6 && !isDup) {
-        const newTitle = result.headline_suggestion || story.rawTitle;
-        dedupContext = dedupContext
-          ? `${dedupContext}\n${existingTitles.length + scored.length}. ${newTitle}`
-          : `\n\nOBSTOJEČE ZGODBE (preveri duplikate!):\n1. ${newTitle}`;
+  for (let i = 0; i < passedStories.length; i += PARALLEL) {
+    const chunk = passedStories.slice(i, i + PARALLEL);
+    const results = await Promise.all(chunk.map(async (story) => {
+      try {
+        const contentForScoring = story.fullContent || story.rawContent;
+        const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}${dedupContext}`;
+        const text = await askClaude(SCORING_PROMPT, userMsg);
+        const result = extractJSON(text);
+        const isDup = result.rejected_because?.startsWith('Duplikat');
+        const icon = isDup ? '⊘' : result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
+        console.log(`  ${icon} [${result.score}] ${story.rawTitle.slice(0, 60)}`);
+        if (isDup) console.log(`    ↳ ${result.rejected_because}`);
+        return { ...story, ai: result };
+      } catch (e) {
+        console.error(`  Score fail: ${story.rawTitle.slice(0, 40)} - ${e.message}`);
+        return null;
       }
-    } catch (e) {
-      console.error(`  Score fail: ${story.rawTitle.slice(0, 40)} - ${e.message}`);
-    }
+    }));
+    scored.push(...results.filter(Boolean));
   }
 
   // ── 6. SAVE TO DATABASE ───────────────────────────────────────────────────

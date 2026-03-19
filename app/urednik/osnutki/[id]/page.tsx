@@ -11,6 +11,7 @@ import { DraftActions } from "./draft-actions";
 import { ImagePosition } from "./image-position";
 import { ImageAdder } from "./image-adder";
 import { ResearchDetails } from "@/components/research-details";
+import { LongFormSection } from "@/components/long-form-section";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,11 @@ export default async function DraftPreviewPage({
             </p>
           ))}
         </div>
+
+        {/* Long-form article (if available) */}
+        {draft.long_form && (
+          <LongFormSection longForm={draft.long_form} accentBar={accentBar} />
+        )}
 
         {/* Sources */}
         {(draft.source_url || references.length > 0) && (

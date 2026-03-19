@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { Search, X } from "lucide-react";
 import Link from "next/link";
 import type { PublishedArticle } from "@/app/page";
 import {
@@ -40,8 +41,31 @@ function CategoryGradient({ category }: { category: string }) {
   );
 }
 
+/** Generate search variants for a word — trim last 1-2 chars for Slovenian declensions */
+function searchVariants(word: string): string[] {
+  const w = word.toLowerCase();
+  if (w.length < 3) return [];
+  const variants = [w];
+  if (w.length >= 5) variants.push(w.slice(0, -1));
+  if (w.length >= 6) variants.push(w.slice(0, -2));
+  return variants;
+}
+
+/** Check if text matches all search words (AND logic, with declension variants) */
+function matchesSearch(searchText: string, query: string): boolean {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const haystack = searchText.toLowerCase();
+  return words.every((word) => {
+    const variants = searchVariants(word);
+    if (variants.length === 0) return true;
+    return variants.some((v) => haystack.includes(v));
+  });
+}
+
 export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -49,14 +73,46 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     return Array.from(seen);
   }, [articles]);
 
-  const filtered = activeCategory
-    ? articles.filter((a) => a.ai.category === activeCategory)
-    : articles;
+  const filtered = useMemo(() => {
+    let result = activeCategory
+      ? articles.filter((a) => a.ai.category === activeCategory)
+      : articles;
+
+    if (searchQuery.trim().length >= 3) {
+      result = result.filter((a) => {
+        const searchText = `${a.title} ${a.subtitle} ${a.body}`;
+        return matchesSearch(searchText, searchQuery);
+      });
+    }
+
+    return result;
+  }, [articles, activeCategory, searchQuery]);
 
   const [featured, ...rest] = filtered;
 
   return (
     <>
+      {/* ── Search bar ── */}
+      <div className="relative max-w-md mx-auto mb-8">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Poišči zgodbe..."
+          className="w-full pl-10 pr-9 py-2.5 rounded-full bg-muted/40 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Počisti iskanje"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* ── Category filter pills ── */}
       {categories.length > 1 && (
         <nav
@@ -93,8 +149,8 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
       )}
 
       {filtered.length === 0 && (
-        <p className="py-20 text-center text-muted-foreground">
-          Ni zgodb v tej kategoriji.
+        <p className="py-12 text-center text-lg text-muted-foreground">
+          {searchQuery.trim().length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb v tej kategoriji."}
         </p>
       )}
 

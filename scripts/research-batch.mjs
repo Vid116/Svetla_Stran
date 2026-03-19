@@ -95,6 +95,7 @@ async function saveDraft(headline, result) {
     verification_passed: result.verification?.passed ?? null,
     verification_summary: result.verification?.summary || null,
     verification_claims: result.verification?.claims || [],
+    long_form: result.longFormArticle || null,
     status: 'ready',
   };
 
