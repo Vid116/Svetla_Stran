@@ -443,3 +443,77 @@ export async function deleteEditor(id: string) {
   const { error } = await supabase.from("editors").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ── Comments queries ─────────────────────────────────────────────────────────
+
+export async function getCommentsByArticle(articleId: string, includeAll = false) {
+  const supabase = getSupabaseAdmin();
+  let query = supabase
+    .from("comments")
+    .select("*")
+    .eq("article_id", articleId)
+    .order("created_at", { ascending: true });
+
+  if (!includeAll) {
+    query = query.eq("status", "approved");
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createComment(comment: {
+  article_id: string;
+  parent_id?: string | null;
+  author_name: string;
+  author_type: string;
+  editor_id?: string | null;
+  body: string;
+  status: string;
+}) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("comments")
+    .insert(comment)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function moderateComment(id: string, status: string, rejectionReason?: string) {
+  const supabase = getSupabaseAdmin();
+
+  const updates: Record<string, any> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  if (rejectionReason) {
+    updates.rejection_reason = rejectionReason;
+  }
+
+  const { error } = await supabase
+    .from("comments")
+    .update(updates)
+    .eq("id", id);
+
+  if (error) throw error;
+
+  // If rejected, also reject all child comments
+  if (status === "rejected") {
+    const { error: childErr } = await supabase
+      .from("comments")
+      .update({ status: "rejected", updated_at: new Date().toISOString() })
+      .eq("parent_id", id);
+
+    if (childErr) throw childErr;
+  }
+}
+
+export async function deleteComment(id: string) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("comments").delete().eq("id", id);
+  if (error) throw error;
+}
