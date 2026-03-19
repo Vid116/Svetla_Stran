@@ -141,8 +141,15 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
 1. SLOVENSKA POVEZAVA JE OBVEZNA za visoko oceno.
    - Šport BREZ slovenskega športnika/ekipe = ocena 0, rejected_because: "Ni slovenskega športnika"
    - Tuji športniki (NBA, Premier League) nas NE zanimajo razen če je Slovenec protagonist
-   - Rutinski športni rezultati (tekma končana X:Y) = max ocena 5, tudi za slovenske ekipe
-   - Šport ocena 7+ samo za: mejnike (rekord, medalja, prvak), osebne zgodbe športnikov, prvi nastopi
+   - ŠPORT — REZULTAT vs ZGODBA (KRITIČNO, beri pozorno):
+     ✗ REZULTAT = kdo je zmagal, koliko točk, kateri krog, kvalifikacije, uvrstitev → max ocena 4
+       Primeri: "ACH Volley premagal Fenerbahče 3:1", "Dončić z 38 točkami", "Cedevita v polfinalu",
+       "13 atletov na SP", "Fain z dvema normama", "Rakete v kvalifikacije" → VSE max 4
+     ✓ ZGODBA = osebna pot, premagana ovira, čustveni trenutek, slovo, rekord kariere, prvak → 7+
+       Primeri: "Kopitarjevo slovo: nasprotniki vstali in ploskali", "Kavtičnik pri 41 prvak ZDA",
+       "Cene Prevc: Moja največja zmaga je žena", "Eksplodirala mu je bomba, postal športnik"
+     Vprašaj se: Ali bi to bralca GANILO ali samo INFORMIRALO? Če samo informira → max 4.
+   - "Blizu rekorda", "napoveduje boj", "bo nastopil" = NAPOVED, nič se ni zgodilo → max 3
 
 2. JUNAKI - NAJPOMEMBNEJŠA KATEGORIJA, iščemo AKTIVNO:
    - Gasilci, reševalci, prostovoljci, učitelji, zdravniki, trenerji = ocena 7+ če je človeška zgodba
@@ -160,11 +167,12 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
    - Startup, mladi podjetniki, obrtniki z zgodbo = ocena 7+
    - Sij razvil jeklo za vesolje, nova tovarna, širitev podjetja = PODJETNISTVO (ne INFRASTRUKTURA)
    - Robotizirana lekarna, AI ekosistem, nova tehnologija = PODJETNISTVO (ne INFRASTRUKTURA)
+   - GENERIC "startup zbral X milijonov" brez konkretne zgodbe/inovacije = max ocena 5
 
 4. INFRASTRUKTURA - strogo ločuj:
    - ČLOVEŠKA ZGODBA za projektom (vrtec po poplavah, skupnost ki je zgradila) = ocena 7+
-   - Velik mejnik za Slovenijo (drugi tir, prva sončna elektrarna) = ocena 7+
-   - Vladni PR, tiskovne konference, minister prerezal trak = max ocena 4
+   - Vladni PR, tiskovne konference, minister prerezal trak, slavnostna otvoritev = max ocena 4
+   - Odprtje ceste/predora/proge brez človeške zgodbe = max ocena 4 (to so politične slovesnosti, ne zgodbe)
    - Korporativni PR (podjetje X gradi Y) brez človeške zgodbe = max ocena 4
    - Rutinska lokalna infrastruktura (parkirišča, asfalt) = max ocena 3
    - Mednarodna tehnologija brez slovenske povezave = ocena 0
@@ -178,24 +186,37 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
    - Slovenski naravni pojavi (cvetenje, vrnitev vrst, obnova habitatov) = ocena 7+
    - Tuje naravne zgodbe (Dolina smrti, Amazonka) brez slovenske povezave = ocena 0
    - Suhoparni birokratski projekti (X milijonov za Y) = max ocena 5
+   - ZNANSTVENE ODKRITJA in raziskave o naravi ki bralca NAUČIJO nekaj novega = ocena 7+
+     Primeri: analiza morske vode razkrije plenilce, nova metoda štetja ptic, odkritje nove vrste,
+     kako se obnavljajo mokrišča. Če bi bralec rekel "o, tega pa nisem vedel!" → 7+
 
 7. ZIVALI - ocenjuj ČUSTVENO, ne novinarsko:
    - Rojstvo mladiča (v živalskem vrtu ali naravi) = ocena 8+, to je "instant smile" za bralca
    - Rešena/posvojena žival = ocena 8+
    - Vrnitev vrste v naravo, flamingoji na bajerju = ocena 8+
    - NE potrebuje globoke zgodbe ali podrobnosti — že sam dogodek je pozitiven
-   - Izobraževalni/opozorilni teksti o živalih BREZ pozitivne zgodbe = ocena 2-3
+   - Fascinantna dejstva o živalih ki bralca NAUČIJO = ocena 7+
+     Primer: kako delfini komunicirajo, zakaj čebele plešejo, kako bobri spreminjajo krajino
+   - Suhoparen opozorilni/izobraževalni tekst BREZ wow faktorja = ocena 2-3
 
 8. Čustva: PONOS, TOPLINA, OLAJSANJE, CUDESENJE, UPANJE
    Ocena 0 če primarno zbudi: krivdo, jezo, žalost, tesnobo, zahteva denar, politiko, senzacionalizem.
 
-DEDUP PRAVILO — KRITIČNO:
-Prejel boš tudi seznam OBSTOJEČIH zgodb (že v uredništvu ali objavljenih).
-Če je zgodba o ISTEM DOGODKU kot obstoječa (isti akter, isti dogodek, isti rezultat — čeprav z drugačnim naslovom ali iz drugega vira):
-- score: 0
-- rejected_because: "Duplikat: [naslov obstoječe zgodbe]"
-Primer: "Slivnik deveti na paraolimpijadi" in "Slivnik z najboljšim dosežkom" = ISTI DOGODEK = duplikat.
-Ne označi kot duplikat če gre za NOVEJŠI RAZVOJ iste teme (npr. kvalifikacije → finale).
+9. NAPOVEDI vs ZGODBE — velja za VSE kategorije:
+   - Če se nekaj ŠE NI ZGODILO (bo nastopil, bo tekmoval, se pripravlja, je blizu) → max ocena 3
+   - Samo DOKONČANI dosežki dobijo visoko oceno
+   - "X bo odprl" ≠ "X je odprl". Prvo je napoved, drugo je zgodba.
+
+10. KLJUČNI TEST za oceno 6+:
+   Ali bi ta zgodba bralca GANILA, NAVDUŠILA ali PRESENETILA?
+   Ali je v njej nekaj kar bi povedal prijatelju?
+   Če samo INFORMIRA (rezultat, statistika, napoved, PR) → max 5.
+
+11. FAKTOR ČUDENJA — velja za VSE kategorije:
+   Zgodba ki bralca NAUČI nekaj presenetljivega ali fascinantnega dobi +2 na oceno.
+   "O, tega pa nisem vedel!" = znak dobre zgodbe za Svetla Stran.
+   Primeri: nova raziskava razkrije presenetljivo dejstvo, nenavaden pristop k problemu,
+   skrita zgodba za nečim vsakdanjim. To velja za naravo, živali, znanost, skupnost, vse.
 
 Vrni SAMO JSON brez markdown:
 {
@@ -593,25 +614,6 @@ async function main() {
   // ── 5. SCORING ────────────────────────────────────────────────────────────
   console.log(`\n[5/6] Scoring...`);
 
-  // Fetch existing stories for semantic dedup
-  const [{ data: inboxHeadlines }, { data: recentArticles }, { data: recentDrafts }] = await Promise.all([
-    supabase.from('headlines').select('ai_headline, raw_title').in('status', ['new', 'picked']),
-    supabase.from('articles').select('title').order('published_at', { ascending: false }).limit(30),
-    supabase.from('drafts').select('title').order('created_at', { ascending: false }).limit(10),
-  ]);
-
-  const existingTitles = [
-    ...(inboxHeadlines || []).map(h => h.ai_headline || h.raw_title),
-    ...(recentArticles || []).map(a => a.title),
-    ...(recentDrafts || []).map(d => d.title),
-  ].filter(Boolean);
-
-  let dedupContext = existingTitles.length > 0
-    ? `\n\nOBSTOJEČE ZGODBE (preveri duplikate!):\n${existingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}`
-    : '';
-
-  console.log(`  Dedup context: ${existingTitles.length} existing stories loaded`);
-
   const PARALLEL = 4;
   const scored = [];
   for (let i = 0; i < passedStories.length; i += PARALLEL) {
@@ -619,13 +621,11 @@ async function main() {
     const results = await Promise.all(chunk.map(async (story) => {
       try {
         const contentForScoring = story.fullContent || story.rawContent;
-        const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}${dedupContext}`;
+        const userMsg = `Naslov: ${story.rawTitle}\n\nVsebina:\n${contentForScoring}`;
         const text = await askClaude(SCORING_PROMPT, userMsg);
         const result = extractJSON(text);
-        const isDup = result.rejected_because?.startsWith('Duplikat');
-        const icon = isDup ? '⊘' : result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
+        const icon = result.score >= AUTO_WRITE_MIN_SCORE ? '★' : result.score >= 6 ? '●' : '○';
         console.log(`  ${icon} [${result.score}] ${story.rawTitle.slice(0, 60)}`);
-        if (isDup) console.log(`    ↳ ${result.rejected_because}`);
         return { ...story, ai: result };
       } catch (e) {
         console.error(`  Score fail: ${story.rawTitle.slice(0, 40)} - ${e.message}`);
