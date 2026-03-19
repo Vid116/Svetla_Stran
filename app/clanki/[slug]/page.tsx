@@ -14,6 +14,7 @@ import { CategoryIcon } from "@/lib/category-icons";
 import { ShareButton } from "@/components/share-button";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
+import { CommentSection } from "@/components/comment-section";
 import { SiteFooter } from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
@@ -238,6 +239,11 @@ export default async function ArticlePage({
           references={article.references}
         />
       </main>
+
+      {/* Comments */}
+      <div className="mx-auto max-w-3xl px-6 pb-8">
+        <CommentSection articleId={row.id} />
+      </div>
 
       {/* Newsletter signup (after article) */}
       <div className="mx-auto max-w-3xl px-6 pb-8">
