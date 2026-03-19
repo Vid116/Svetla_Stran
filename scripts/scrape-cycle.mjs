@@ -38,7 +38,7 @@ const TIER_FILTER = TIER_ARG ? parseInt(process.argv[process.argv.indexOf(TIER_A
 const ARTICLES_DIR = './output/articles';
 const STATE_FILE = './output/scrape-state.json';
 const AUTO_WRITE_MIN_SCORE = 8;
-const CUTOFF_HOURS = 48;
+const CUTOFF_HOURS = 24 * 365 * 2; // 2 years — dedup handles freshness, not cutoff
 const USER_AGENT = 'SvetlaStran/1.0 (+https://svetlastran.si)';
 
 // ── SUPABASE ────────────────────────────────────────────────────────────────
@@ -121,13 +121,14 @@ const TITLE_FILTER_PROMPT = `Si uredniški asistent za Svetla Stran - SLOVENSKI 
 ${FILOZOFIJA}
 
 Dobiš seznam naslovov člankov (ID: naslov). Za vsakega odloči:
-- "DA" - naslov nakazuje potencialno pozitivno SLOVENSKO zgodbo
+- "DA" - naslov nakazuje potencialno pozitivno, zanimivo ali fascinantno SLOVENSKO zgodbo
 - "NE" - naslov je očitno negativen, političen, kriminalen, vojni konflikt, nesreča ali nerelevanten
 
 ŠPORT: DA samo za SLOVENSKE športnike/ekipe. Tuji športniki (NBA, Premier League, La Liga) brez slovenske povezave = NE.
 PODJETNISTVO/JUNAKI: Bodi posebej pozoren da te ne izpustiš - inovacije, prostovoljstvo, reševanje.
+NARAVA/ZIVALI/ZNANOST: DA za VSE kar se tiče živali, narave, divjih živali, ekologije, raziskav, odkritij, vrst, habitatov. Tudi če naslov zveni "izobraževalno" ali "znanstveno" — to so potencialno fascinantne zgodbe. Primeri DA: "Risinja skotila mladiče", "Z analizo morske vode do spoznanj", "Monitoring ptic na Cerkniškem jezeru", "Bobri spreminjajo krajino" — vse DA.
 
-Bodi LIBERALEN z DA pri vseh kategorijah RAZEN pri tujem športu.
+Bodi LIBERALEN z DA pri vseh kategorijah RAZEN pri tujem športu. Če dvomiš → DA.
 
 Vrni SAMO JSON brez markdown:
 {"rezultati": [{"id": "string", "odlocitev": "DA" | "NE"}]}`;

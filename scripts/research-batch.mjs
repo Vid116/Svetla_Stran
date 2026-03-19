@@ -145,6 +145,39 @@ async function main() {
     return;
   }
 
+  // ── DEDUP CHECK: filter out stories already covered ──────────────────────
+  console.log(`\nChecking ${headlineIds.length} headlines for duplicates...`);
+  const allHeadlines = await Promise.all(headlineIds.map(id => getHeadline(id)));
+  const candidates = allHeadlines.map(h => ({
+    id: h.id,
+    title: h.ai_headline || h.raw_title,
+    category: h.ai_category,
+  }));
+
+  const { checkDuplicates } = await import('../lib/research-write/dedup.mjs');
+  const dedupResults = await checkDuplicates(candidates);
+
+  const duplicateIds = new Set();
+  for (const r of dedupResults) {
+    if (r.isDuplicate) {
+      duplicateIds.add(r.id);
+      await supabase.from('headlines').update({
+        status: 'dismissed',
+        dismissed_reason: `Podobna zgodba že v obdelavi: ${r.duplicateOf}`,
+      }).eq('id', r.id);
+    }
+  }
+
+  headlineIds = headlineIds.filter(id => !duplicateIds.has(id));
+  if (duplicateIds.size > 0) {
+    console.log(`[Dedup] Dismissed ${duplicateIds.size} duplicates, ${headlineIds.length} remaining.\n`);
+  }
+
+  if (headlineIds.length === 0) {
+    console.log('No unique headlines to process after dedup.');
+    return;
+  }
+
   const knownDomains = await getSources();
   console.log(`\nStarting research for ${headlineIds.length} headlines...\n`);
 

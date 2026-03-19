@@ -517,3 +517,24 @@ export async function deleteComment(id: string) {
   const { error } = await supabase.from("comments").delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function getPendingCommentCount() {
+  const supabase = getSupabaseAdmin();
+  const { count, error } = await supabase
+    .from("comments")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (error) throw error;
+  return count || 0;
+}
+
+export async function getPendingComments() {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*, articles(title, slug)")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Comment {
   id: string;
@@ -15,9 +15,7 @@ interface Comment {
 }
 
 function relativeDate(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
+  const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffMin = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
@@ -28,308 +26,128 @@ function relativeDate(dateStr: string): string {
   return `pred ${diffDays} ${diffDays === 1 ? "dnem" : "dnevi"}`;
 }
 
-export function CommentSection({ articleId }: { articleId: string }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditor, setIsEditor] = useState(false);
-  const [editorName, setEditorName] = useState<string | null>(null);
-  const [authorName, setAuthorName] = useState("");
-  const [body, setBody] = useState("");
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyBody, setReplyBody] = useState("");
-  const [posting, setPosting] = useState(false);
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+/* ── Self-contained comment form (used for top-level AND replies) ── */
 
-  const fetchComments = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/comments?articleId=${articleId}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setComments(data.comments ?? []);
-      setIsEditor(data.isEditor ?? false);
-      setEditorName(data.editorName ?? null);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, [articleId]);
+function CommentForm({
+  isEditor,
+  editorName,
+  onSubmit,
+  onCancel,
+  submitLabel = "Objavi komentar",
+  compact = false,
+}: {
+  isEditor: boolean;
+  editorName: string | null;
+  onSubmit: (name: string, body: string) => Promise<"approved" | "pending" | "error">;
+  onCancel?: () => void;
+  submitLabel?: string;
+  compact?: boolean;
+}) {
+  const [name, setName] = useState("");
+  const [body, setBody] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("svetla_comment_name");
-    if (saved) setAuthorName(saved);
-    fetchComments();
-  }, [fetchComments]);
+    if (saved) setName(saved);
+  }, []);
 
-  const handleNameBlur = () => {
-    const trimmed = authorName.trim();
-    if (trimmed) {
-      localStorage.setItem("svetla_comment_name", trimmed);
+  useEffect(() => {
+    if (compact && textareaRef.current) {
+      textareaRef.current.focus();
     }
-  };
+  }, [compact]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = isEditor ? editorName : authorName.trim();
-    if (!name || !body.trim() || posting) return;
+    const trimmedName = isEditor ? (editorName || "") : name.trim();
+    if (!trimmedName || !body.trim() || posting) return;
+
+    if (!isEditor) {
+      localStorage.setItem("svetla_comment_name", trimmedName);
+    }
 
     setPosting(true);
-    try {
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          articleId,
-          body: body.trim(),
-          authorName: isEditor ? undefined : name,
-        }),
-      });
-      if (!res.ok) return;
+    setMessage(null);
 
+    const result = await onSubmit(trimmedName, body.trim());
+
+    if (result === "approved") {
       setBody("");
-      if (isEditor) {
-        await fetchComments();
-      } else {
-        setPendingMessage("Hvala! Komentar čaka na odobritev.");
-        setTimeout(() => setPendingMessage(null), 5000);
-      }
-    } catch {
-      // silent
-    } finally {
-      setPosting(false);
+      if (onCancel) onCancel();
+    } else if (result === "pending") {
+      setBody("");
+      setMessage("Hvala! Komentar čaka na odobritev.");
+      setTimeout(() => {
+        setMessage(null);
+        if (onCancel) onCancel();
+      }, 3000);
     }
+
+    setPosting(false);
   };
 
-  const handleReply = async (parentId: string) => {
-    const name = isEditor ? editorName : authorName.trim();
-    if (!name || !replyBody.trim() || posting) return;
-
-    setPosting(true);
-    try {
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          articleId,
-          parentId,
-          body: replyBody.trim(),
-          authorName: isEditor ? undefined : name,
-        }),
-      });
-      if (!res.ok) return;
-
-      setReplyBody("");
-      setReplyingTo(null);
-      if (isEditor) {
-        await fetchComments();
-      } else {
-        setPendingMessage("Hvala! Komentar čaka na odobritev.");
-        setTimeout(() => setPendingMessage(null), 5000);
-      }
-    } catch {
-      // silent
-    } finally {
-      setPosting(false);
-    }
-  };
-
-  const handleModerate = async (id: string, action: "approve" | "reject") => {
-    try {
-      await fetch("/api/comments", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action }),
-      });
-      await fetchComments();
-    } catch {
-      // silent
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await fetch(`/api/comments?id=${id}`, { method: "DELETE" });
-      await fetchComments();
-    } catch {
-      // silent
-    }
-  };
-
-  const topLevel = comments.filter((c) => !c.parent_id);
-  const replies = comments.filter((c) => c.parent_id);
-  const getReplies = (parentId: string) =>
-    replies.filter((c) => c.parent_id === parentId);
-
-  const visibleCount = isEditor
-    ? comments.length
-    : comments.filter((c) => c.status === "approved").length;
+  const rows = compact ? 2 : 4;
 
   return (
-    <section className="border-t border-border/30 mt-14 pt-10">
-      <h2 className="text-xl font-semibold text-foreground mb-8">
-        Komentarji
-      </h2>
-
-      {/* ── Comment form ── */}
-      <form onSubmit={handleSubmit} className="mb-10">
-        {!isEditor && (
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            onBlur={handleNameBlur}
-            placeholder="Vaše ime"
-            className="w-full max-w-xs rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary mb-3"
-          />
-        )}
-        <div className="relative">
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value.slice(0, 2000))}
-            placeholder="Vaš komentar..."
-            rows={4}
-            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-          />
-          {body.length > 1800 && (
-            <span className="absolute bottom-3 right-3 text-xs text-muted-foreground">
-              {body.length} / 2000
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-3">
-          <button
-            type="submit"
-            disabled={posting || (!isEditor && !authorName.trim()) || !body.trim()}
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-          >
-            {posting ? "Objavljanje..." : "Objavi komentar"}
-          </button>
-          {pendingMessage && (
-            <span className="text-sm text-nature font-medium">
-              {pendingMessage}
-            </span>
-          )}
-        </div>
-      </form>
-
-      {/* ── Comment list ── */}
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Nalaganje komentarjev...</p>
-      ) : visibleCount === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Še ni komentarjev. Bodite prvi!
+    <form onSubmit={handleSubmit} className={compact ? "" : "mb-10"}>
+      {isEditor ? (
+        <p className="text-xs text-muted-foreground mb-2">
+          Objavljate kot <span className="font-medium text-foreground">{editorName}</span>
         </p>
       ) : (
-        <>
-          <h3 className="text-sm font-medium text-muted-foreground mb-6">
-            {visibleCount} {visibleCount === 1 ? "komentar" : visibleCount === 2 ? "komentarja" : visibleCount <= 4 ? "komentarji" : "komentarjev"}
-          </h3>
-          <div className="space-y-6">
-            {topLevel.map((comment) => {
-              // Visitors only see approved comments
-              if (!isEditor && comment.status !== "approved") return null;
-              return (
-                <div key={comment.id}>
-                  <CommentCard
-                    comment={comment}
-                    isEditor={isEditor}
-                    onReply={() => {
-                      setReplyingTo(replyingTo === comment.id ? null : comment.id);
-                      setReplyBody("");
-                    }}
-                    onModerate={handleModerate}
-                    onDelete={handleDelete}
-                  />
-
-                  {/* Reply form */}
-                  {replyingTo === comment.id && (
-                    <div className="ml-8 pl-4 border-l-2 border-border/30 mt-3">
-                      {!isEditor && !authorName.trim() && (
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Najprej vnesite ime zgoraj.
-                        </p>
-                      )}
-                      <textarea
-                        value={replyBody}
-                        onChange={(e) => setReplyBody(e.target.value.slice(0, 2000))}
-                        placeholder="Vaš odgovor..."
-                        rows={3}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => handleReply(comment.id)}
-                          disabled={posting || (!isEditor && !authorName.trim()) || !replyBody.trim()}
-                          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          Odgovori
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setReplyingTo(null); setReplyBody(""); }}
-                          className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                        >
-                          Prekliči
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Replies */}
-                  {getReplies(comment.id).map((reply) => {
-                    if (!isEditor && reply.status !== "approved") return null;
-                    return (
-                      <div key={reply.id} className="ml-8 pl-4 border-l-2 border-border/30 mt-3">
-                        <CommentCard
-                          comment={reply}
-                          isEditor={isEditor}
-                          onReply={() => {
-                            setReplyingTo(replyingTo === reply.id ? null : reply.id);
-                            setReplyBody("");
-                          }}
-                          onModerate={handleModerate}
-                          onDelete={handleDelete}
-                        />
-                        {/* Nested reply form */}
-                        {replyingTo === reply.id && (
-                          <div className="mt-3">
-                            <textarea
-                              value={replyBody}
-                              onChange={(e) => setReplyBody(e.target.value.slice(0, 2000))}
-                              placeholder="Vaš odgovor..."
-                              rows={3}
-                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-                            />
-                            <div className="flex gap-2 mt-2">
-                              <button
-                                type="button"
-                                onClick={() => handleReply(comment.id)}
-                                disabled={posting || (!isEditor && !authorName.trim()) || !replyBody.trim()}
-                                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-                              >
-                                Odgovori
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setReplyingTo(null); setReplyBody(""); }}
-                                className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                              >
-                                Prekliči
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Vaše ime"
+          maxLength={50}
+          className={`rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary mb-2 ${
+            compact ? "w-full max-w-[200px]" : "w-full max-w-xs"
+          }`}
+        />
       )}
-    </section>
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={body}
+          onChange={(e) => setBody(e.target.value.slice(0, 2000))}
+          placeholder={compact ? "Vaš odgovor..." : "Vaš komentar..."}
+          rows={rows}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+        />
+        {body.length > 1800 && (
+          <span className="absolute bottom-2.5 right-3 text-xs text-muted-foreground">
+            {body.length} / 2000
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <button
+          type="submit"
+          disabled={posting || (!isEditor && !name.trim()) || !body.trim()}
+          className={`rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer disabled:cursor-not-allowed ${
+            compact ? "text-xs px-3 py-1.5" : ""
+          }`}
+        >
+          {posting ? "..." : submitLabel}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            Prekliči
+          </button>
+        )}
+        {message && (
+          <span className="text-xs text-nature font-medium">{message}</span>
+        )}
+      </div>
+    </form>
   );
 }
 
@@ -338,25 +156,28 @@ export function CommentSection({ articleId }: { articleId: string }) {
 function CommentCard({
   comment,
   isEditor,
-  onReply,
+  isReplyOpen,
+  onToggleReply,
   onModerate,
   onDelete,
+  hideReply,
 }: {
   comment: Comment;
   isEditor: boolean;
-  onReply: () => void;
+  isReplyOpen: boolean;
+  onToggleReply: () => void;
   onModerate: (id: string, action: "approve" | "reject") => void;
   onDelete: (id: string) => void;
+  hideReply?: boolean;
 }) {
   return (
-    <div className="group">
-      {/* Header: name, badge, date */}
+    <div>
       <div className="flex items-center gap-2 mb-1">
         <span className="text-sm font-semibold text-foreground">
           {comment.author_name}
         </span>
         {comment.author_type === "editor" && (
-          <span className="inline-flex items-center rounded-full bg-sky/20 text-sky-soft px-2 py-0.5 text-[10px] font-medium" style={{ color: "var(--color-primary)" }}>
+          <span className="inline-flex items-center rounded-full bg-sky/20 px-2 py-0.5 text-[10px] font-medium" style={{ color: "var(--color-primary)" }}>
             Urednik
           </span>
         )}
@@ -380,27 +201,28 @@ function CommentCard({
         </span>
       </div>
 
-      {/* Body */}
       <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap mb-2">
         {comment.body}
       </p>
 
-      {/* Rejection reason */}
       {isEditor && comment.status === "rejected" && comment.rejection_reason && (
         <p className="text-xs text-muted-foreground mb-2">
           Razlog: {comment.rejection_reason}
         </p>
       )}
 
-      {/* Actions */}
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onReply}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-        >
-          Odgovori
-        </button>
+        {!hideReply && (
+          <button
+            type="button"
+            onClick={onToggleReply}
+            className={`text-xs transition-colors cursor-pointer ${
+              isReplyOpen ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Odgovori
+          </button>
+        )}
 
         {isEditor && comment.status === "pending" && (
           <>
@@ -432,5 +254,182 @@ function CommentCard({
         )}
       </div>
     </div>
+  );
+}
+
+/* ── Main section ── */
+
+export function CommentSection({ articleId }: { articleId: string }) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [myPending, setMyPending] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditor, setIsEditor] = useState(false);
+  const [editorName, setEditorName] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/comments?articleId=${articleId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setComments(data.comments ?? []);
+      setIsEditor(data.isEditor ?? false);
+      setEditorName(data.editorName ?? null);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, [articleId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  const submitComment = async (name: string, body: string, parentId?: string | null): Promise<"approved" | "pending" | "error"> => {
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleId,
+          parentId: parentId || null,
+          authorName: name,
+          body,
+        }),
+      });
+      if (!res.ok) return "error";
+
+      const comment = await res.json();
+      if (comment.status === "approved") {
+        await fetchComments();
+        return "approved";
+      }
+      // Show pending comment optimistically to the visitor
+      setMyPending((prev) => [...prev, comment]);
+      return "approved"; // Tell the form it succeeded (so it clears)
+    } catch {
+      return "error";
+    }
+  };
+
+  const handleModerate = async (id: string, action: "approve" | "reject") => {
+    try {
+      await fetch("/api/comments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId: id, action }),
+      });
+      await fetchComments();
+    } catch {
+      // silent
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/comments?id=${id}`, { method: "DELETE" });
+      await fetchComments();
+    } catch {
+      // silent
+    }
+  };
+
+  // Merge server comments with optimistic pending ones (avoid dupes if page refreshed)
+  const serverIds = new Set(comments.map((c) => c.id));
+  const allComments = [...comments, ...myPending.filter((c) => !serverIds.has(c.id))];
+
+  const topLevel = allComments.filter((c) => !c.parent_id);
+  const replies = allComments.filter((c) => c.parent_id);
+  const getReplies = (parentId: string) => replies.filter((c) => c.parent_id === parentId);
+  const myPendingIds = new Set(myPending.map((c) => c.id));
+
+  const visibleCount = isEditor
+    ? allComments.length
+    : allComments.filter((c) => c.status === "approved" || myPendingIds.has(c.id)).length;
+
+  return (
+    <section id="komentarji" className="border-t border-border/30 mt-14 pt-10 mx-auto max-w-3xl px-6 pb-12">
+      <h2 className="text-xl font-semibold text-foreground mb-8">
+        {visibleCount > 0
+          ? `${visibleCount} ${visibleCount === 1 ? "komentar" : visibleCount === 2 ? "komentarja" : visibleCount <= 4 ? "komentarji" : "komentarjev"}`
+          : "Komentarji"}
+      </h2>
+
+      {/* Top-level comment form */}
+      <CommentForm
+        isEditor={isEditor}
+        editorName={editorName}
+        onSubmit={(name, body) => submitComment(name, body)}
+        submitLabel="Objavi komentar"
+      />
+
+      {/* Comment list */}
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Nalaganje...</p>
+      ) : visibleCount === 0 ? (
+        <p className="text-sm text-muted-foreground/60">
+          Še ni komentarjev. Bodite prvi!
+        </p>
+      ) : (
+        <div className="space-y-6">
+          {topLevel.map((comment) => {
+            const isMine = myPendingIds.has(comment.id);
+            if (!isEditor && comment.status !== "approved" && !isMine) return null;
+            return (
+              <div key={comment.id} className={isMine && comment.status === "pending" ? "opacity-75" : ""}>
+                {isMine && comment.status === "pending" && (
+                  <p className="text-[11px] text-muted-foreground/50 mb-1">Čaka na odobritev</p>
+                )}
+                <CommentCard
+                  comment={comment}
+                  isEditor={isEditor}
+                  isReplyOpen={replyingTo === comment.id}
+                  onToggleReply={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                  onModerate={handleModerate}
+                  onDelete={handleDelete}
+                />
+
+                {/* Inline reply form */}
+                {replyingTo === comment.id && (
+                  <div className="ml-8 pl-4 border-l-2 border-border/30 mt-3">
+                    <CommentForm
+                      isEditor={isEditor}
+                      editorName={editorName}
+                      onSubmit={(name, body) => submitComment(name, body, comment.id)}
+                      onCancel={() => setReplyingTo(null)}
+                      submitLabel="Odgovori"
+                      compact
+                    />
+                  </div>
+                )}
+
+                {/* Replies */}
+                {getReplies(comment.id).map((reply) => {
+                  const isMyReply = myPendingIds.has(reply.id);
+                  if (!isEditor && reply.status !== "approved" && !isMyReply) return null;
+                  return (
+                    <div key={reply.id} className={`ml-8 pl-4 border-l-2 border-border/30 mt-3 ${isMyReply && reply.status === "pending" ? "opacity-75" : ""}`}>
+                      {isMyReply && reply.status === "pending" && (
+                        <p className="text-[11px] text-muted-foreground/50 mb-1">Čaka na odobritev</p>
+                      )}
+                      <CommentCard
+                        comment={reply}
+                        isEditor={isEditor}
+                        isReplyOpen={false}
+                        onToggleReply={() => {}}
+                        onModerate={handleModerate}
+                        onDelete={handleDelete}
+                        hideReply
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

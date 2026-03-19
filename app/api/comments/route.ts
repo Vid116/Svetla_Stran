@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
     if (!articleId) {
       return NextResponse.json({ error: "articleId je obvezen" }, { status: 400 });
     }
-    if (!authorName || authorName.length > 50) {
+    const editor = await getAuthEditor();
+
+    if (!editor && (!authorName || authorName.length > 50)) {
       return NextResponse.json(
         { error: "Ime avtorja je obvezno (maks 50 znakov)" },
         { status: 400 },
@@ -48,8 +50,6 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-
-    const editor = await getAuthEditor();
 
     const comment = await createComment({
       article_id: articleId,

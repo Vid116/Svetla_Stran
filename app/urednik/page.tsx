@@ -2,11 +2,13 @@ import Link from "next/link";
 import { EditorTabs } from "@/components/editor-tabs";
 import { UserMenu } from "@/components/user-menu";
 import { requireAuth } from "@/lib/require-auth";
+import { getPendingCommentCount } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function UrednikPage() {
   const session = await requireAuth();
+  const pendingComments = await getPendingCommentCount();
 
   return (
     <main className="min-h-screen">
@@ -40,6 +42,17 @@ export default async function UrednikPage() {
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20"
             >
               Viri
+            </Link>
+            <Link
+              href="/urednik/komentarji"
+              className="inline-flex items-center gap-1.5 rounded-full bg-rose/10 px-4 py-1.5 text-sm font-medium text-rose-foreground transition-all hover:bg-rose/20"
+            >
+              Komentarji
+              {pendingComments > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-destructive text-[10px] font-bold text-white">
+                  {pendingComments}
+                </span>
+              )}
             </Link>
             {session.user.role === "admin" && (
               <Link
