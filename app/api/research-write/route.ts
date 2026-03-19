@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthAPI } from "@/lib/require-auth-api";
 import { createDraft, pickHeadline, setHeadlineProcessing, deleteDraftsByHeadlineId, getSources, addSourceSuggestion } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const maxDuration = 300; // up to 5 minutes for full research pipeline
 
@@ -22,6 +23,23 @@ export async function POST(req: NextRequest) {
     // Set headline to processing immediately
     headlineId = story.headlineId || story.storyId;
     if (headlineId) {
+      // Dedup check: is this story already covered?
+      const dupCheck = await checkForDuplicate(
+        story.aiHeadline || story.ai_headline || story.rawTitle,
+        story.ai?.category || story.ai_category,
+      );
+      if (dupCheck) {
+        // Mark as dismissed and return early
+        await getSupabaseAdmin().from("headlines").update({
+          status: "dismissed",
+          dismissed_reason: `Podobna zgodba že v obdelavi: ${dupCheck}`,
+        }).eq("id", headlineId);
+        return NextResponse.json({
+          skipped: true,
+          reason: `Podobna zgodba že v obdelavi: ${dupCheck}`,
+        });
+      }
+
       // Delete old drafts if re-running
       await deleteDraftsByHeadlineId(headlineId);
       await setHeadlineProcessing(headlineId);
@@ -86,6 +104,56 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+const RELATED_CATEGORIES: Record<string, string[]> = {
+  SPORT: ['SPORT', 'JUNAKI'],
+  JUNAKI: ['JUNAKI', 'SPORT', 'SKUPNOST'],
+  NARAVA: ['NARAVA', 'ZIVALI'],
+  ZIVALI: ['ZIVALI', 'NARAVA'],
+  SKUPNOST: ['SKUPNOST', 'JUNAKI'],
+  PODJETNISTVO: ['PODJETNISTVO', 'SLOVENIJA_V_SVETU', 'INFRASTRUKTURA'],
+  SLOVENIJA_V_SVETU: ['SLOVENIJA_V_SVETU', 'PODJETNISTVO', 'SPORT'],
+  INFRASTRUKTURA: ['INFRASTRUKTURA', 'PODJETNISTVO'],
+  KULTURA: ['KULTURA'],
+};
+
+/**
+ * Quick dedup check — returns the title of the duplicate if found, null if unique.
+ * Compares against recent articles, drafts, and in-progress headlines.
+ */
+async function checkForDuplicate(title: string, category: string): Promise<string | null> {
+  if (!title) return null;
+
+  const supabase = getSupabaseAdmin();
+  const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+  const relatedCats = RELATED_CATEGORIES[category] || [category];
+
+  const [{ data: articles }, { data: drafts }, { data: headlines }] = await Promise.all([
+    supabase.from('articles').select('title, subtitle').gte('published_at', cutoff).in('category', relatedCats),
+    supabase.from('drafts').select('title, subtitle').gte('created_at', cutoff).in('category', relatedCats),
+    supabase.from('headlines').select('ai_headline, ai_reason').in('status', ['picked', 'processing']).in('ai_category', relatedCats),
+  ]);
+
+  const pool = [
+    ...(articles || []).map((a: any) => `${a.title} — ${a.subtitle || ''}`),
+    ...(drafts || []).map((d: any) => `${d.title} — ${d.subtitle || ''}`),
+    ...(headlines || []).map((h: any) => `${h.ai_headline} — ${h.ai_reason || ''}`),
+  ];
+
+  if (pool.length === 0) return null;
+
+  // Simple keyword overlap check first (cheap, no AI)
+  const titleWords = new Set(title.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+  for (const existing of pool) {
+    const existingWords = new Set(existing.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3));
+    const overlap = [...titleWords].filter(w => existingWords.has(w)).length;
+    if (overlap >= 3 && overlap >= titleWords.size * 0.5) {
+      return existing.split(' — ')[0];
+    }
+  }
+
+  return null;
 }
 
 async function runResearchScript(story: Record<string, unknown>): Promise<unknown> {

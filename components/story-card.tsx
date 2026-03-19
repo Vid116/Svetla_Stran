@@ -102,9 +102,14 @@ export function StoryCard({
           ai_antidote: dbStory.ai_antidote,
         }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Napaka pri raziskovanju");
+      }
+      if (data.skipped) {
+        setError(data.reason || "Podobna zgodba že obstaja");
+        onRefresh?.();
+        return;
       }
       setSent(true);
       onRefresh?.();
