@@ -3,6 +3,7 @@ import { Sun } from "lucide-react";
 import { ArticleGrid } from "@/components/article-grid";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
+import { HeroSection } from "@/components/hero-section";
 import { getPublishedArticles } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -88,6 +89,9 @@ export default async function HomePage() {
           </div>
         </div>
       </nav>
+
+      {/* Hero section */}
+      <HeroSection articleCount={articles.length} />
 
       {/* Articles */}
       <div className="mx-auto max-w-6xl px-6 py-8">

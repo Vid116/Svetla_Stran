@@ -78,8 +78,10 @@ export function StoryCard({
   const [expanded, setExpanded] = useState(false);
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [skipReason, setSkipReason] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [showDismissReasons, setShowDismissReasons] = useState(false);
+  const [customReason, setCustomReason] = useState("");
 
   async function handleResearchWrite() {
     setResearching(true);
@@ -107,7 +109,7 @@ export function StoryCard({
         throw new Error(data.error || "Napaka pri raziskovanju");
       }
       if (data.skipped) {
-        setError(data.reason || "Podobna zgodba že obstaja");
+        setSkipReason(data.reason || "Podobna zgodba že obstaja");
         onRefresh?.();
         return;
       }
@@ -216,6 +218,11 @@ export function StoryCard({
               </div>
             )}
 
+            {skipReason && (
+              <div className="rounded-lg bg-warmth/20 p-3 text-xs text-warmth-foreground">
+                <span className="font-medium">Duplikat:</span> {skipReason}
+              </div>
+            )}
             {error && (
               <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive">{error}</div>
             )}
@@ -263,6 +270,23 @@ export function StoryCard({
                       {r.label}
                     </button>
                   ))}
+                </div>
+                <div className="mt-2 flex gap-1.5">
+                  <input
+                    type="text"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && customReason.trim()) onStatusChange?.("dismissed", customReason.trim()); }}
+                    placeholder="Drug razlog..."
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  />
+                  <button
+                    onClick={() => { if (customReason.trim()) onStatusChange?.("dismissed", customReason.trim()); }}
+                    disabled={!customReason.trim()}
+                    className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-all hover:bg-destructive/20 disabled:opacity-40"
+                  >
+                    Zavrni
+                  </button>
                 </div>
               </div>
             )}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { PublishedArticle } from "@/app/page";
 import {
   CATEGORY_PILL,
@@ -12,6 +13,155 @@ import {
   readingTime,
 } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
+import {
+  RevealOnScroll,
+  StaggerContainer,
+  StaggerItem,
+  HeroReveal,
+} from "@/components/motion-wrappers";
+
+// Cloud color schemes per category
+const CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string }> = {
+  VSE:                { soft: "#e4e4e8", fill: "#3a3a42", text: "#555560", activeText: "#ffffff" },
+  SPORT:              { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
+  ZIVALI:             { soft: "#f5e6c8", fill: "#e8c98a", text: "#7a5a1f", activeText: "#3d2500" },
+  SKUPNOST:           { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
+  NARAVA:             { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515" },
+  INFRASTRUKTURA:     { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
+  PODJETNISTVO:       { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
+  SLOVENIJA_V_SVETU:  { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
+  JUNAKI:             { soft: "#fce0e0", fill: "#f0a0a0", text: "#8a2020", activeText: "#400000" },
+  KULTURA:            { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
+};
+
+// Cloud puffs: [leftPercent, topPercent, size(px)]
+// Circle centers sit ON the button edge (0/100%) — half sticks out, half fills in.
+// Tightly spaced so they merge into one continuous fluffy outline.
+const CLOUD_PUFFS: [number, number, number][][] = [
+  // Circle centers on the fill border: top=10%, bottom=90%, left=4%, right=96%
+  // Even spacing: top/bottom every ~13%, sides every ~16%. Max size diff between neighbors: 2px.
+  // All sizes now in % of button width. ~18% ≈ what 28px was on a medium button.
+  // shape 0 — slightly bigger top
+  [
+    [7,10,16], [20,10,18], [33,10,20], [46,10,20], [59,10,20], [72,10,18], [85,10,16],
+    [96,38,18], [96,62,18],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 1 — bigger left-top, smaller right
+  [
+    [7,10,18], [20,10,20], [33,10,20], [46,10,18], [59,10,16], [72,10,16], [85,10,14],
+    [96,38,16], [96,62,16],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
+    [4,62,20], [4,38,20],
+  ],
+  // shape 2 — bigger right-top, smaller left
+  [
+    [7,10,14], [20,10,14], [33,10,16], [46,10,18], [59,10,20], [72,10,20], [85,10,18],
+    [96,38,20], [96,62,20],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
+    [4,62,16], [4,38,16],
+  ],
+  // shape 3 — twin bumps top
+  [
+    [7,10,16], [20,10,18], [33,10,20], [46,10,16], [59,10,16], [72,10,20], [85,10,18],
+    [96,38,18], [96,62,18],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 4 — dome top, flatter bottom
+  [
+    [7,10,14], [20,10,16], [33,10,18], [46,10,20], [59,10,20], [72,10,18], [85,10,16],
+    [96,38,18], [96,62,18],
+    [85,90,14], [72,90,14], [59,90,14], [46,90,14], [33,90,14], [20,90,14],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 5 — bumpy sides
+  [
+    [7,10,16], [20,10,18], [33,10,18], [46,10,16], [59,10,16], [72,10,18], [85,10,16],
+    [96,38,20], [96,62,20],
+    [85,90,16], [72,90,18], [59,90,16], [46,90,16], [33,90,18], [20,90,16],
+    [4,62,20], [4,38,20],
+  ],
+  // shape 6 — bigger bottom
+  [
+    [7,10,14], [20,10,16], [33,10,16], [46,10,18], [59,10,18], [72,10,16], [85,10,14],
+    [96,38,18], [96,62,18],
+    [85,90,18], [72,90,20], [59,90,20], [46,90,20], [33,90,20], [20,90,18],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 7 — even all around
+  [
+    [7,10,18], [20,10,18], [33,10,18], [46,10,18], [59,10,18], [72,10,18], [85,10,18],
+    [96,38,18], [96,62,18],
+    [85,90,18], [72,90,18], [59,90,18], [46,90,18], [33,90,18], [20,90,18],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 8 — one bigger bump center-top
+  [
+    [7,10,16], [20,10,16], [33,10,18], [46,10,20], [59,10,18], [72,10,16], [85,10,16],
+    [96,38,18], [96,62,18],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
+    [4,62,18], [4,38,18],
+  ],
+];
+
+/** Cloud-shaped button — tightly overlapping circles wrap all the way around */
+function CloudButton({
+  children,
+  active,
+  category,
+  shapeIndex,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  category: string;
+  shapeIndex: number;
+  onClick: () => void;
+}) {
+  const colors = CLOUD_COLORS[category] ?? { soft: "#e8e8e8", fill: "#aaa", text: "#333", activeText: "#000" };
+  const puffs = CLOUD_PUFFS[shapeIndex % CLOUD_PUFFS.length];
+  const bg = active ? colors.fill : colors.soft;
+  const fg = active ? colors.activeText : colors.text;
+
+  return (
+    <button
+      onClick={onClick}
+      className="group relative cursor-pointer transition-all duration-300 hover:-translate-y-1.5 active:translate-y-0"
+      style={{ color: fg }}
+    >
+      {/* Puffs — circles all around the edge, sizes in % so they scale with button */}
+      {puffs.map((p, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full transition-colors duration-300"
+          style={{
+            left: `${p[0]}%`,
+            top: `${p[1]}%`,
+            width: `${p[2]}%`,
+            aspectRatio: "1",
+            backgroundColor: bg,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+      {/* Inner fill — solid center, fully rounded so no straight edges show */}
+      <div
+        className="absolute transition-colors duration-300"
+        style={{
+          inset: "10% 4%",
+          borderRadius: "40%",
+          backgroundColor: bg,
+        }}
+      />
+      {/* Content */}
+      <span className="relative z-10 inline-flex items-center gap-2 px-8 py-4 text-sm font-medium whitespace-nowrap">
+        {children}
+      </span>
+    </button>
+  );
+}
 
 function getExcerpt(text: string, chars = 120) {
   const plain = text.replace(/\n+/g, " ").trim();
@@ -64,8 +214,17 @@ function matchesSearch(searchText: string, query: string): boolean {
 }
 
 export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Read ?kategorija= from URL on mount
+  useEffect(() => {
+    const cat = searchParams.get("kategorija");
+    if (cat && articles.some((a) => a.ai.category === cat)) {
+      setActiveCategory(cat);
+    }
+  }, [searchParams, articles]);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -93,59 +252,67 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   return (
     <>
       {/* ── Search bar ── */}
-      <div className="relative max-w-md mx-auto mb-8">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Poišči zgodbe..."
-          className="w-full pl-10 pr-9 py-2.5 rounded-full bg-muted/40 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer"
-            aria-label="Počisti iskanje"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* ── Category filter pills ── */}
-      {categories.length > 1 && (
-        <nav
-          aria-label="Filtriraj po kategoriji"
-          className="flex flex-wrap gap-2 justify-center mb-12"
-        >
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`px-3.5 py-2 rounded-full text-sm border transition-all cursor-pointer ${
-              activeCategory === null
-                ? "bg-foreground text-background border-foreground shadow-sm"
-                : "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground"
-            }`}
-          >
-            Vse
-          </button>
-          {categories.map((cat) => (
+      <HeroReveal delay={0.3}>
+        <div className="relative max-w-md mx-auto mb-8">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Poišči zgodbe..."
+            className="w-full pl-10 pr-9 py-2.5 rounded-full bg-muted/40 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
+          />
+          {searchQuery && (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all cursor-pointer ${
-                activeCategory === cat
-                  ? (CATEGORY_PILL[cat] ?? "bg-primary text-primary-foreground border-primary") +
-                    " shadow-sm scale-105"
-                  : (CATEGORY_PILL[cat] ?? "bg-muted text-muted-foreground border-border") +
-                    " opacity-60 hover:opacity-100"
-              }`}
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Počisti iskanje"
             >
-              <CategoryIcon category={cat} className="w-3.5 h-3.5" />
-              {CATEGORY_LABELS[cat] ?? cat}
+              <X className="w-3.5 h-3.5" />
             </button>
-          ))}
-        </nav>
+          )}
+        </div>
+      </HeroReveal>
+
+      {/* ── Category filter ── */}
+      {categories.length > 1 && (
+        <HeroReveal delay={0.4}>
+          <nav
+            aria-label="Filtriraj po kategoriji"
+            className="mb-14"
+          >
+            <p className="text-center text-xs font-medium text-muted-foreground/60 uppercase tracking-widest mb-4">
+              Izberi temo
+            </p>
+            <div className="flex flex-wrap gap-6 justify-center items-center py-2">
+              <CloudButton
+                active={activeCategory === null}
+                category="VSE"
+                shapeIndex={0}
+                onClick={() => setActiveCategory(null)}
+              >
+                Vse zgodbe
+                <span className="text-xs opacity-50">{articles.length}</span>
+              </CloudButton>
+              {categories.map((cat, i) => {
+                const count = articles.filter((a) => a.ai.category === cat).length;
+                return (
+                  <CloudButton
+                    key={cat}
+                    active={activeCategory === cat}
+                    category={cat}
+                    shapeIndex={i + 1}
+                    onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+                  >
+                    <CategoryIcon category={cat} className="w-4 h-4" />
+                    {CATEGORY_LABELS[cat] ?? cat}
+                    <span className="text-xs opacity-50">{count}</span>
+                  </CloudButton>
+                );
+              })}
+            </div>
+          </nav>
+        </HeroReveal>
       )}
 
       {filtered.length === 0 && (
@@ -154,129 +321,120 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
         </p>
       )}
 
-      {/* ── Featured hero article (with image) ── */}
+      {/* ── Featured hero article ── */}
       {featured && (
-        <Link href={`/clanki/${featured.slug}`} className="group block mb-14">
-          <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
-            {/* Image or gradient background */}
-            <div className="relative h-64 sm:h-80 md:h-96">
-              <div className="absolute inset-0 overflow-hidden">
-                {featured.imageUrl ? (
-                  <img
-                    src={featured.imageUrl}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                  />
-                ) : (
-                  <CategoryGradient category={featured.ai.category} />
-                )}
-              </div>
-              {/* Dark gradient overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-              {/* Content over image — anchored to bottom */}
-              <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
-                {/* Category + date */}
-                <div className="flex items-center gap-3 mb-4">
-                  <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
-                  <time className="text-xs text-white/70">
-                    {formatDate(featured.publishedAt)}
-                  </time>
-                </div>
-
-                {/* Title */}
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
-                  {featured.title}
-                </h2>
-
-                {/* Subtitle */}
-                <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
-                  {featured.subtitle}
-                </p>
-
-                {/* CTA */}
-                <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
-                  <span>Preberi zgodbo</span>
-                  <span aria-hidden>→</span>
-                </div>
-              </div>
-            </div>
-          </article>
-        </Link>
-      )}
-
-      {/* ── Article card grid ── */}
-      {rest.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rest.map((article) => (
-            <Link
-              key={article.slug}
-              href={`/clanki/${article.slug}`}
-              className="group block"
-            >
-              <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                {/* Card image */}
-                <div className="relative h-44 overflow-hidden">
-                  {article.imageUrl ? (
+        <RevealOnScroll className="mb-14">
+          <Link href={`/clanki/${featured.slug}`} className="group block">
+            <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="relative h-64 sm:h-80 md:h-96">
+                <div className="absolute inset-0 overflow-hidden">
+                  {featured.imageUrl ? (
                     <img
-                      src={article.imageUrl}
+                      src={featured.imageUrl}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
                     />
                   ) : (
-                    <CategoryGradient category={article.ai.category} />
+                    <CategoryGradient category={featured.ai.category} />
                   )}
-                  {/* Category icon overlay */}
-                  <div className="absolute top-3 left-3">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm bg-white/80 ${
-                        CATEGORY_PILL[article.ai.category] ?? "bg-muted text-foreground border-border"
-                      }`}
-                    >
-                      <CategoryIcon category={article.ai.category} className="w-3 h-3" />
-                      {CATEGORY_LABELS[article.ai.category] ?? ""}
-                    </span>
-                  </div>
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-                <div className="flex flex-col flex-1 p-5">
-                  {/* Date */}
-                  <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
-                    {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </time>
+                <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
+                    <time className="text-xs text-white/70">
+                      {formatDate(featured.publishedAt)}
+                    </time>
+                  </div>
 
-                  {/* Title */}
-                  <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
-                    {article.title}
-                  </h3>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
+                    {featured.title}
+                  </h2>
 
-                  {/* Excerpt */}
-                  <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
-                    {getExcerpt(article.subtitle || article.body)}
+                  <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
+                    {featured.subtitle}
                   </p>
 
-                  {/* Card footer */}
-                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground/50 truncate max-w-[50%]">
-                      {article.source.sourceName}
-                    </span>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-muted-foreground/40">
-                        {readingTime(article.body)}
-                      </span>
-                      <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        Preberi →
+                  <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
+                    <span>Preberi zgodbo</span>
+                    <span aria-hidden>→</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </Link>
+        </RevealOnScroll>
+      )}
+
+      {/* ── Article card grid with stagger ── */}
+      {rest.length > 0 && (
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rest.map((article) => (
+            <StaggerItem key={article.slug}>
+              <Link
+                href={`/clanki/${article.slug}`}
+                className="group block h-full"
+              >
+                <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                  {/* Card image */}
+                  <div className="relative h-44 overflow-hidden">
+                    {article.imageUrl ? (
+                      <img
+                        src={article.imageUrl}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      />
+                    ) : (
+                      <CategoryGradient category={article.ai.category} />
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm bg-white/80 ${
+                          CATEGORY_PILL[article.ai.category] ?? "bg-muted text-foreground border-border"
+                        }`}
+                      >
+                        <CategoryIcon category={article.ai.category} className="w-3 h-3" />
+                        {CATEGORY_LABELS[article.ai.category] ?? ""}
                       </span>
                     </div>
                   </div>
-                </div>
-              </article>
-            </Link>
+
+                  <div className="flex flex-col flex-1 p-5">
+                    <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
+                      {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </time>
+
+                    <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
+                      {article.title}
+                    </h3>
+
+                    <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
+                      {getExcerpt(article.subtitle || article.body)}
+                    </p>
+
+                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground/50 truncate max-w-[50%]">
+                        {article.source.sourceName}
+                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs text-muted-foreground/40">
+                          {readingTime(article.body)}
+                        </span>
+                        <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          Preberi →
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
     </>
   );

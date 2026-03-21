@@ -7,7 +7,7 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const playfair = Playfair_Display({subsets:['latin'],weight:['400','600'],variable:'--font-brand'});
 
 export const metadata: Metadata = {
-  title: "Svetla Stran - Uredniški Inbox",
+  title: "Svetla Stran — dobre zgodbe iz Slovenije",
   description: "Portal pozitivnih novic iz Slovenije",
 };
 

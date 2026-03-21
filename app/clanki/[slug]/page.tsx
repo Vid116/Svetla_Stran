@@ -7,6 +7,7 @@ import type { PublishedArticle } from "@/app/page";
 import {
   CATEGORY_PILL,
   CATEGORY_ACCENT_BAR,
+  CATEGORY_LABELS,
   formatDate,
   readingTime,
 } from "@/lib/article-helpers";
@@ -16,6 +17,9 @@ import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
 import { SiteFooter } from "@/components/site-footer";
+import { MidArticleCta } from "@/components/mid-article-cta";
+import { StickySubscribeBar } from "@/components/sticky-subscribe-bar";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 export const dynamic = "force-dynamic";
 
@@ -172,14 +176,16 @@ export default async function ArticlePage({
 
         <div className="space-y-6">
           {paragraphs.map((p, i) => (
-            <p
-              key={i}
-              className={`leading-[1.85] text-foreground/85 ${
-                i === 0 ? "text-lg font-light" : "text-base"
-              }`}
-            >
-              {p}
-            </p>
+            <div key={i}>
+              <p
+                className={`leading-[1.85] text-foreground/85 ${
+                  i === 0 ? "text-lg font-light" : "text-base"
+                }`}
+              >
+                {p}
+              </p>
+              {i === 2 && paragraphs.length > 4 && <MidArticleCta />}
+            </div>
           ))}
         </div>
 
@@ -238,16 +244,69 @@ export default async function ArticlePage({
           research={article.research}
           references={article.references}
         />
+
+        {/* End-of-article: share + 3-tier navigation */}
+        <div className="mt-12 space-y-4">
+          {/* Share row */}
+          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/30 px-6 py-4">
+            <p className="text-sm font-medium text-foreground">
+              Vam je bila zgodba všeč? Delite jo naprej.
+            </p>
+            <ShareButton title={article.title} />
+          </div>
+
+          {/* 3-tier back navigation: Category (biggest) → All stories → Back */}
+          <div className="flex flex-col items-center gap-3 pt-4">
+            {/* Tier 1: Category — largest, vibrant fill */}
+            <Link
+              href={`/?kategorija=${article.ai.category}`}
+              className={`group inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
+                ({
+                  SPORT: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
+                  ZIVALI: "bg-warmth text-amber-950 shadow-lg shadow-warmth/25 hover:shadow-warmth/40",
+                  SKUPNOST: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
+                  NARAVA: "bg-nature text-green-950 shadow-lg shadow-nature/25 hover:shadow-nature/40",
+                  INFRASTRUKTURA: "bg-gold text-amber-950 shadow-lg shadow-gold/25 hover:shadow-gold/40",
+                  PODJETNISTVO: "bg-gold text-amber-950 shadow-lg shadow-gold/25 hover:shadow-gold/40",
+                  SLOVENIJA_V_SVETU: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
+                  JUNAKI: "bg-rose text-rose-950 shadow-lg shadow-rose/25 hover:shadow-rose/40",
+                  KULTURA: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
+                } as Record<string, string>)[article.ai.category] ?? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              }`}
+            >
+              <CategoryIcon category={article.ai.category} className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              Več iz {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
+              <span aria-hidden className="group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
+
+            {/* Tier 2: All stories — medium, subtle color */}
+            <Link
+              href="/"
+              className="group inline-flex items-center gap-2 rounded-xl border-2 border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary/40 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm"
+            >
+              Vse zgodbe
+              <span aria-hidden className="text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all">→</span>
+            </Link>
+
+            {/* Tier 3: Back — smallest, text-only */}
+            <Link
+              href="/"
+              className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors"
+            >
+              ← Nazaj
+            </Link>
+          </div>
+        </div>
       </main>
+
+      {/* Newsletter signup (before comments) */}
+      <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
+        <NewsletterSignup variant="inline" />
+      </div>
 
       {/* Comments */}
       <div className="mx-auto max-w-3xl px-6 pb-8">
         <CommentSection articleId={row.id} />
-      </div>
-
-      {/* Newsletter signup (after article) */}
-      <div className="mx-auto max-w-3xl px-6 pb-8">
-        <NewsletterSignup variant="inline" />
       </div>
 
       {/* Related articles */}
@@ -306,6 +365,12 @@ export default async function ArticlePage({
       )}
 
       <SiteFooter />
+
+      {/* Sticky mobile subscribe bar */}
+      <StickySubscribeBar />
+
+      {/* Scroll to top — small floating button */}
+      <ScrollToTop />
     </div>
   );
 }
