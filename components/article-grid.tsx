@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -24,14 +24,14 @@ import {
 const CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string }> = {
   VSE:                { soft: "#e4e4e8", fill: "#3a3a42", text: "#555560", activeText: "#ffffff" },
   SPORT:              { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
-  ZIVALI:             { soft: "#f5e6c8", fill: "#e8c98a", text: "#7a5a1f", activeText: "#3d2500" },
+  ZIVALI:             { soft: "#f8e0d0", fill: "#e8a070", text: "#7a3a1a", activeText: "#3d1800" },
   SKUPNOST:           { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
   NARAVA:             { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515" },
-  INFRASTRUKTURA:     { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
+  INFRASTRUKTURA:     { soft: "#d0ecec", fill: "#6abfbf", text: "#1a6060", activeText: "#0a3030" },
   PODJETNISTVO:       { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
-  SLOVENIJA_V_SVETU:  { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
+  SLOVENIJA_V_SVETU:  { soft: "#d8daf8", fill: "#8088e0", text: "#2a2e7a", activeText: "#ffffff" },
   JUNAKI:             { soft: "#fce0e0", fill: "#f0a0a0", text: "#8a2020", activeText: "#400000" },
-  KULTURA:            { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
+  KULTURA:            { soft: "#f5d8ee", fill: "#d88ec4", text: "#7a2060", activeText: "#3d0030" },
 };
 
 // Cloud puffs: [leftPercent, topPercent, size(px)]
@@ -217,6 +217,12 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const hasInteracted = useRef(false);
+
+  function handleCategoryChange(cat: string | null) {
+    hasInteracted.current = true;
+    setActiveCategory(cat);
+  }
 
   // Read ?kategorija= from URL on mount
   useEffect(() => {
@@ -230,6 +236,15 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     const seen = new Set<string>();
     articles.forEach((a) => seen.add(a.ai.category));
     return Array.from(seen);
+  }, [articles]);
+
+  // Memoize counts so they don't recompute on every render
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of articles) {
+      counts[a.ai.category] = (counts[a.ai.category] || 0) + 1;
+    }
+    return counts;
   }, [articles]);
 
   const filtered = useMemo(() => {
@@ -284,32 +299,66 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
             <p className="text-center text-xs font-medium text-muted-foreground/60 uppercase tracking-widest mb-4">
               Izberi temo
             </p>
-            <div className="flex flex-wrap gap-6 justify-center items-center py-2">
-              <CloudButton
-                active={activeCategory === null}
-                category="VSE"
-                shapeIndex={0}
-                onClick={() => setActiveCategory(null)}
-              >
-                Vse zgodbe
-                <span className="text-xs opacity-50">{articles.length}</span>
-              </CloudButton>
-              {categories.map((cat, i) => {
-                const count = articles.filter((a) => a.ai.category === cat).length;
-                return (
+            <div className="flex flex-col items-center gap-2">
+              {/* Selected — top row */}
+              <div className="flex justify-center">
+                {activeCategory === null ? (
                   <CloudButton
-                    key={cat}
-                    active={activeCategory === cat}
-                    category={cat}
-                    shapeIndex={i + 1}
-                    onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+                    active
+                    category="VSE"
+                    shapeIndex={0}
+                    onClick={() => handleCategoryChange(null)}
                   >
-                    <CategoryIcon category={cat} className="w-4 h-4" />
-                    {CATEGORY_LABELS[cat] ?? cat}
-                    <span className="text-xs opacity-50">{count}</span>
+                    Vse zgodbe
+                    <span className="text-xs opacity-50">{articles.length}</span>
                   </CloudButton>
-                );
-              })}
+                ) : (
+                  <CloudButton
+                    active
+                    category={activeCategory}
+                    shapeIndex={categories.indexOf(activeCategory) + 1}
+                    onClick={() => handleCategoryChange(null)}
+                  >
+                    <CategoryIcon category={activeCategory} className="w-4 h-4" />
+                    {CATEGORY_LABELS[activeCategory] ?? activeCategory}
+                    <span className="text-xs opacity-50">
+                      {categoryCounts[activeCategory] ?? 0}
+                    </span>
+                  </CloudButton>
+                )}
+              </div>
+              {/* Rest — second row */}
+              <div className="flex flex-wrap gap-5 justify-center">
+                {activeCategory !== null && (
+                  <CloudButton
+                    active={false}
+                    category="VSE"
+                    shapeIndex={0}
+                    onClick={() => handleCategoryChange(null)}
+                  >
+                    Vse zgodbe
+                    <span className="text-xs opacity-50">{articles.length}</span>
+                  </CloudButton>
+                )}
+                {categories
+                  .filter((cat) => cat !== activeCategory)
+                  .map((cat, i) => {
+                    const count = categoryCounts[cat] ?? 0;
+                    return (
+                      <CloudButton
+                        key={cat}
+                        active={false}
+                        category={cat}
+                        shapeIndex={categories.indexOf(cat) + 1}
+                        onClick={() => handleCategoryChange(cat)}
+                      >
+                        <CategoryIcon category={cat} className="w-4 h-4" />
+                        {CATEGORY_LABELS[cat] ?? cat}
+                        <span className="text-xs opacity-50">{count}</span>
+                      </CloudButton>
+                    );
+                  })}
+              </div>
             </div>
           </nav>
         </HeroReveal>
@@ -323,7 +372,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
       {/* ── Featured hero article ── */}
       {featured && (
-        <RevealOnScroll className="mb-14">
+        <RevealOnScroll className="mb-14" skip={hasInteracted.current}>
           <Link href={`/clanki/${featured.slug}`} className="group block">
             <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="relative h-64 sm:h-80 md:h-96">
@@ -369,9 +418,9 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
       {/* ── Article card grid with stagger ── */}
       {rest.length > 0 && (
-        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" skip={hasInteracted.current}>
           {rest.map((article) => (
-            <StaggerItem key={article.slug}>
+            <StaggerItem key={article.slug} skip={hasInteracted.current}>
               <Link
                 href={`/clanki/${article.slug}`}
                 className="group block h-full"

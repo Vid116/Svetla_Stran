@@ -3,16 +3,20 @@
 import { motion, stagger } from "motion/react";
 import type { ReactNode } from "react";
 
-/** Fade + slide up on scroll into view */
+/** Fade + slide up on scroll into view. Set skip=true to render instantly. */
 export function RevealOnScroll({
   children,
   className,
   delay = 0,
+  skip = false,
 }: {
   children: ReactNode;
   className?: string;
   delay?: number;
+  skip?: boolean;
 }) {
+  if (skip) return <div className={className}>{children}</div>;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -26,16 +30,20 @@ export function RevealOnScroll({
   );
 }
 
-/** Container that staggers its children's entrance */
+/** Container that staggers its children's entrance. Set skip=true to render instantly. */
 export function StaggerContainer({
   children,
   className,
   staggerDelay = 0.08,
+  skip = false,
 }: {
   children: ReactNode;
   className?: string;
   staggerDelay?: number;
+  skip?: boolean;
 }) {
+  if (skip) return <div className={className}>{children}</div>;
+
   return (
     <motion.div
       initial="hidden"
@@ -56,14 +64,18 @@ export function StaggerContainer({
   );
 }
 
-/** Individual stagger child — use inside StaggerContainer */
+/** Individual stagger child — use inside StaggerContainer. Set skip=true to render instantly. */
 export function StaggerItem({
   children,
   className,
+  skip = false,
 }: {
   children: ReactNode;
   className?: string;
+  skip?: boolean;
 }) {
+  if (skip) return <div className={className}>{children}</div>;
+
   return (
     <motion.div
       variants={{
