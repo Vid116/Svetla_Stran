@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sun } from "lucide-react";
+import { LogoLink } from "@/components/logo-link";
 import { ArticleGrid } from "@/components/article-grid";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
@@ -73,12 +74,7 @@ export default async function HomePage() {
       {/* Nav with search */}
       <nav className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <Sun className="w-6 h-6 text-gold" aria-hidden />
-            <span className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-brand)' }}>
-              Svetla Stran
-            </span>
-          </Link>
+          <LogoLink />
           <NavSearch />
           <Link
             href="/o-nas"

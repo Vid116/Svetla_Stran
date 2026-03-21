@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { Sun } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { CATEGORY_LABELS } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
 
-const TOP_CATEGORIES = ["SPORT", "SKUPNOST", "KULTURA", "NARAVA", "SLOVENIJA_V_SVETU"];
+const ALL_CATEGORIES = [
+  "SPORT", "NARAVA", "SKUPNOST", "PODJETNISTVO", "KULTURA",
+  "JUNAKI", "ZIVALI", "INFRASTRUKTURA", "SLOVENIJA_V_SVETU",
+];
 
 export function SiteFooter() {
   return (
@@ -13,7 +16,7 @@ export function SiteFooter() {
           {/* Brand */}
           <div>
             <Link href="/" className="inline-flex items-center gap-2.5 mb-3">
-              <Sun className="w-5 h-5 text-gold" aria-hidden />
+              <Logo variant={2} size={24} />
               <span className="text-base font-semibold" style={{ fontFamily: 'var(--font-brand)' }}>Svetla Stran</span>
             </Link>
             <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-xs">
@@ -26,11 +29,11 @@ export function SiteFooter() {
             <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/50 mb-3">
               Kategorije
             </p>
-            <ul className="space-y-1.5">
-              {TOP_CATEGORIES.map((cat) => (
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {ALL_CATEGORIES.map((cat) => (
                 <li key={cat}>
                   <Link
-                    href={`/clanki?kategorija=${cat}`}
+                    href={`/?kategorija=${cat}`}
                     className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors inline-flex items-center gap-1.5"
                   >
                     <CategoryIcon category={cat} className="w-3.5 h-3.5" />

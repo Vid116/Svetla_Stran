@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sun } from "lucide-react";
+import { Logo } from "@/components/logo";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -15,7 +15,7 @@ export default function AboutPage() {
       <nav className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <Sun className="w-6 h-6 text-gold" aria-hidden />
+            <Logo variant={2} size={28} />
             <span className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-brand)' }}>
               Svetla Stran
             </span>

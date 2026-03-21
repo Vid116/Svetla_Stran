@@ -269,13 +269,25 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     setActiveCategory(cat);
   }
 
-  // Read ?kategorija= from URL on mount
+  // Sync category from URL (?kategorija=)
   useEffect(() => {
     const cat = searchParams.get("kategorija");
     if (cat && articles.some((a) => a.ai.category === cat)) {
       setActiveCategory(cat);
+    } else if (!cat) {
+      setActiveCategory(null);
     }
   }, [searchParams, articles]);
+
+  // Listen for logo click reset
+  useEffect(() => {
+    function onReset() {
+      hasInteracted.current = true;
+      setActiveCategory(null);
+    }
+    window.addEventListener("svetla-reset", onReset);
+    return () => window.removeEventListener("svetla-reset", onReset);
+  }, []);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
