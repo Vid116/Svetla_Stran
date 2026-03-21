@@ -162,6 +162,50 @@ function CloudButton({
   );
 }
 
+/**
+ * Pick the best article for the hero spot.
+ * Score = ai_score + recency_bonus (5-day decay) + image_bonus + category_diversity.
+ */
+function pickFeatured(articles: PublishedArticle[]): {
+  featured: PublishedArticle | undefined;
+  rest: PublishedArticle[];
+} {
+  if (articles.length === 0) return { featured: undefined, rest: [] };
+  if (articles.length === 1) return { featured: articles[0], rest: [] };
+
+  const now = Date.now();
+
+  const scored = articles.map((a) => {
+    const daysOld = (now - new Date(a.publishedAt).getTime()) / 86400000;
+    const recencyBonus = Math.max(0, 5 - daysOld);
+    const imageBonus = a.imageUrl ? 1 : 0;
+    const score = (a.ai.score || 5) + recencyBonus + imageBonus;
+    return { article: a, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Top 5 candidates
+  const candidates = scored.slice(0, 5);
+
+  // Category diversity: count how often each category appears in the 3 most recent articles
+  const recentCategories = articles.slice(0, 3).map((a) => a.ai.category);
+
+  let best = candidates[0];
+  for (const c of candidates) {
+    const cCount = recentCategories.filter((rc) => rc === c.article.ai.category).length;
+    const bestCount = recentCategories.filter((rc) => rc === best.article.ai.category).length;
+    // Prefer less-represented category, or higher score if tied
+    if (cCount < bestCount || (cCount === bestCount && c.score > best.score)) {
+      best = c;
+    }
+  }
+
+  const featured = best.article;
+  const rest = articles.filter((a) => a.slug !== featured.slug);
+  return { featured, rest };
+}
+
 function getExcerpt(text: string, chars = 120) {
   const plain = text.replace(/\n+/g, " ").trim();
   if (plain.length <= chars) return plain;
@@ -263,7 +307,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     return result;
   }, [articles, activeCategory, searchQuery]);
 
-  const [featured, ...rest] = filtered;
+  const { featured, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
 
   return (
     <>

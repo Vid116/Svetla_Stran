@@ -194,6 +194,17 @@ export async function publishDraft(draftId: string) {
 
   if (fetchErr || !draft) throw fetchErr || new Error("Draft not found");
 
+  // Fetch ai_score from the headline
+  let aiScore: number | null = null;
+  if (draft.headline_id) {
+    const { data: headline } = await supabase
+      .from("headlines")
+      .select("ai_score")
+      .eq("id", draft.headline_id)
+      .single();
+    aiScore = headline?.ai_score ?? null;
+  }
+
   // Insert into articles
   const { error: insertErr } = await supabase.from("articles").insert({
     headline_id: draft.headline_id,
@@ -210,7 +221,7 @@ export async function publishDraft(draftId: string) {
     image_position: draft.image_position ?? 33,
     research_references: draft.research_references || [],
     raw_title: draft.raw_title || null,
-    ai_score: null,
+    ai_score: aiScore,
     verification_passed: draft.verification_passed ?? null,
     verification_summary: draft.verification_summary || null,
     verification_claims: draft.verification_claims || [],
