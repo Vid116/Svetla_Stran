@@ -12,7 +12,7 @@ import {
   readingTime,
 } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
-import { ShareButton } from "@/components/share-button";
+import { ShareButton, ShareBar } from "@/components/share-button";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
@@ -186,7 +186,7 @@ export default async function ArticlePage({
               >
                 {p}
               </p>
-              {i === 2 && paragraphs.length > 4 && <MidArticleCta />}
+              {i === 2 && paragraphs.length > 4 && <MidArticleCta category={article.ai.category} />}
             </div>
           ))}
         </div>
@@ -249,13 +249,8 @@ export default async function ArticlePage({
 
         {/* End-of-article: share + 3-tier navigation */}
         <div className="mt-12 space-y-4">
-          {/* Share row */}
-          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/30 px-6 py-4">
-            <p className="text-sm font-medium text-foreground">
-              Vam je bila zgodba všeč? Delite jo naprej.
-            </p>
-            <ShareButton title={article.title} />
-          </div>
+          {/* Share row — entire bar is clickable */}
+          <ShareBar title={article.title} />
 
           {/* Back to category */}
           <div className="flex justify-center pt-4">
@@ -285,7 +280,7 @@ export default async function ArticlePage({
 
       {/* Newsletter signup (before comments) */}
       <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <NewsletterSignup variant="inline" />
+        <NewsletterSignup variant="inline" category={article.ai.category} />
       </div>
 
       {/* Comments */}
@@ -351,7 +346,7 @@ export default async function ArticlePage({
       <SiteFooter />
 
       {/* Sticky mobile subscribe bar */}
-      <StickySubscribeBar />
+      <StickySubscribeBar category={article.ai.category} />
 
       {/* Scroll to top — small floating button */}
       <ScrollToTop />

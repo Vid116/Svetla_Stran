@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { PublishedArticle } from "@/app/page";
@@ -216,8 +215,10 @@ function matchesSearch(searchText: string, query: string): boolean {
 export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const hasInteracted = useRef(false);
+
+  // Read search query from URL (?q=)
+  const searchQuery = searchParams.get("q") ?? "";
 
   function handleCategoryChange(cat: string | null) {
     hasInteracted.current = true;
@@ -266,28 +267,60 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
   return (
     <>
-      {/* ── Search bar ── */}
-      <HeroReveal delay={0.3}>
-        <div className="relative max-w-md mx-auto mb-8">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Poišči zgodbe..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-full bg-muted/40 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground/50 hover:text-foreground transition-colors cursor-pointer"
-              aria-label="Počisti iskanje"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      </HeroReveal>
+      {/* ── Featured hero article ── */}
+      {featured && (
+        <RevealOnScroll className="mb-10" skip={hasInteracted.current}>
+          <Link href={`/clanki/${featured.slug}`} className="group block">
+            <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="relative h-64 sm:h-80 md:h-[26rem]">
+                <div className="absolute inset-0 overflow-hidden">
+                  {featured.imageUrl ? (
+                    <img
+                      src={featured.imageUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                    />
+                  ) : (
+                    <CategoryGradient category={featured.ai.category} />
+                  )}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
+                    <time className="text-xs text-white/70">
+                      {formatDate(featured.publishedAt)}
+                    </time>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
+                    {featured.title}
+                  </h2>
+
+                  <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
+                    {featured.subtitle}
+                  </p>
+
+                  <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
+                    <span>Preberi zgodbo</span>
+                    <span aria-hidden>→</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </Link>
+        </RevealOnScroll>
+      )}
+
+      {/* ── Tagline + article count ── */}
+      <div className="text-center mb-10">
+        <p className="text-sm text-muted-foreground">
+          Preverjene zgodbe o ljudeh, dosežkih in napredku.
+          <span className="mx-2 text-border">·</span>
+          <span className="tabular-nums">{articles.length}</span> {articles.length === 1 ? "zgodba" : articles.length === 2 ? "zgodbi" : articles.length <= 4 ? "zgodbe" : "zgodb"}
+        </p>
+      </div>
 
       {/* ── Category filter ── */}
       {categories.length > 1 && (
@@ -366,54 +399,8 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
       {filtered.length === 0 && (
         <p className="py-12 text-center text-lg text-muted-foreground">
-          {searchQuery.trim().length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb v tej kategoriji."}
+          {searchQuery.length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb v tej kategoriji."}
         </p>
-      )}
-
-      {/* ── Featured hero article ── */}
-      {featured && (
-        <RevealOnScroll className="mb-14" skip={hasInteracted.current}>
-          <Link href={`/clanki/${featured.slug}`} className="group block">
-            <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
-              <div className="relative h-64 sm:h-80 md:h-96">
-                <div className="absolute inset-0 overflow-hidden">
-                  {featured.imageUrl ? (
-                    <img
-                      src={featured.imageUrl}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
-                    />
-                  ) : (
-                    <CategoryGradient category={featured.ai.category} />
-                  )}
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-                <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
-                    <time className="text-xs text-white/70">
-                      {formatDate(featured.publishedAt)}
-                    </time>
-                  </div>
-
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
-                    {featured.title}
-                  </h2>
-
-                  <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
-                    {featured.subtitle}
-                  </p>
-
-                  <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
-                    <span>Preberi zgodbo</span>
-                    <span aria-hidden>→</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </Link>
-        </RevealOnScroll>
       )}
 
       {/* ── Article card grid with stagger ── */}

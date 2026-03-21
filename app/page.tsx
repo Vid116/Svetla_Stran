@@ -3,7 +3,7 @@ import { Sun } from "lucide-react";
 import { ArticleGrid } from "@/components/article-grid";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
-import { HeroSection } from "@/components/hero-section";
+import { NavSearch } from "@/components/nav-search";
 import { getPublishedArticles } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -70,28 +70,24 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen">
-      {/* Nav */}
+      {/* Nav with search */}
       <nav className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
+        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <Sun className="w-6 h-6 text-gold" aria-hidden />
             <span className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-brand)' }}>
               Svetla Stran
             </span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/o-nas"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              O nas
-            </Link>
-          </div>
+          <NavSearch />
+          <Link
+            href="/o-nas"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            O nas
+          </Link>
         </div>
       </nav>
-
-      {/* Hero section */}
-      <HeroSection articleCount={articles.length} />
 
       {/* Articles */}
       <div className="mx-auto max-w-6xl px-6 py-8">

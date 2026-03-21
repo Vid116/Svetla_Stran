@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sun } from "lucide-react";
 import { CATEGORY_LABELS } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
+import { ThemePickerModal } from "@/components/theme-picker-modal";
 
 const CATEGORIES = [
   "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
@@ -13,14 +14,17 @@ const CATEGORIES = [
 interface Props {
   /** "hero" = large with description, "inline" = compact for article footer */
   variant?: "hero" | "inline";
+  /** Pre-select this category in the theme picker modal */
+  category?: string;
 }
 
-export function NewsletterSignup({ variant = "hero" }: Props) {
+export function NewsletterSignup({ variant = "hero", category }: Props) {
   const [email, setEmail] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([...CATEGORIES]);
   const [showTopics, setShowTopics] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) => {
@@ -38,6 +42,12 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || status === "loading") return;
+
+    // If user hasn't manually picked themes, show the modal
+    if (!showTopics && allSelected) {
+      setShowModal(true);
+      return;
+    }
 
     setStatus("loading");
     setMessage("");
@@ -61,7 +71,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
       }
 
       setStatus("success");
-      setMessage(data.message || "Ste znotraj. Dobrodošli.");
+      setMessage(data.message || "Naročeni! Vidimo se v ponedeljek.");
       setEmail("");
     } catch {
       setStatus("error");
@@ -97,7 +107,7 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
           </h3>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-          Kratke, preverjene, brez clickbaita. Vsak ponedeljek zjutraj.
+          Kratki članki, preverjene zgodbe. Vsak ponedeljek zjutraj.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
@@ -145,6 +155,18 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
             ))}
           </div>
         )}
+        {showModal && (
+          <ThemePickerModal
+            email={email}
+            initialCategory={category}
+            onComplete={() => {
+              setShowModal(false);
+              setStatus("success");
+              setMessage("Naročeni! Vidimo se v ponedeljek.");
+              setEmail("");
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -160,9 +182,9 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
           Pet zgodb za boljši ponedeljek
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          Vsak ponedeljek zjutraj v nabiralniku. Preverjene zgodbe, kratek bralni čas.
+          Vsak ponedeljek zjutraj v nabiralniku. Kratki članki, preverjene zgodbe.
           <br />
-          Brez clickbaita. Brez politike. Brez spama.
+          Samo dobro. Samo resnično. Samo za vas.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
@@ -216,9 +238,20 @@ export function NewsletterSignup({ variant = "hero" }: Props) {
         )}
 
         <p className="mt-6 text-xs text-muted-foreground/50">
-          Brez obveznosti. Odjava kadarkoli.
+          Enkrat tedensko. Odjavite se kadarkoli.
         </p>
       </div>
+      {showModal && (
+        <ThemePickerModal
+          email={email}
+          onComplete={() => {
+            setShowModal(false);
+            setStatus("success");
+            setMessage("Naročeni! Vidimo se v ponedeljek.");
+            setEmail("");
+          }}
+        />
+      )}
     </div>
   );
 }
