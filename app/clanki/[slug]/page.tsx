@@ -115,11 +115,12 @@ export default async function ArticlePage({
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           <div className="absolute top-0 left-0 right-0 p-6">
             <Link
-              href="/"
+              href={`/?kategorija=${article.ai.category}`}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-3 py-1.5"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
-              Vse zgodbe
+              <CategoryIcon category={article.ai.category} className="w-3.5 h-3.5" />
+              {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
             </Link>
           </div>
         </div>
@@ -138,11 +139,12 @@ export default async function ArticlePage({
         <div className="relative mx-auto max-w-3xl px-6 pt-8 pb-10">
           {!article.imageUrl && (
             <Link
-              href="/"
+              href={`/?kategorija=${article.ai.category}`}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group mb-8 block"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
-              Vse zgodbe
+              <CategoryIcon category={article.ai.category} className="w-3.5 h-3.5" />
+              {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
             </Link>
           )}
 
@@ -255,9 +257,8 @@ export default async function ArticlePage({
             <ShareButton title={article.title} />
           </div>
 
-          {/* 3-tier back navigation: Category (biggest) → All stories → Back */}
-          <div className="flex flex-col items-center gap-3 pt-4">
-            {/* Tier 1: Category — largest, vibrant fill */}
+          {/* Back to category */}
+          <div className="flex justify-center pt-4">
             <Link
               href={`/?kategorija=${article.ai.category}`}
               className={`group inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
@@ -266,9 +267,9 @@ export default async function ArticlePage({
                   ZIVALI: "bg-warmth text-amber-950 shadow-lg shadow-warmth/25 hover:shadow-warmth/40",
                   SKUPNOST: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
                   NARAVA: "bg-nature text-green-950 shadow-lg shadow-nature/25 hover:shadow-nature/40",
-                  INFRASTRUKTURA: "bg-gold text-amber-950 shadow-lg shadow-gold/25 hover:shadow-gold/40",
+                  INFRASTRUKTURA: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
                   PODJETNISTVO: "bg-gold text-amber-950 shadow-lg shadow-gold/25 hover:shadow-gold/40",
-                  SLOVENIJA_V_SVETU: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
+                  SLOVENIJA_V_SVETU: "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40",
                   JUNAKI: "bg-rose text-rose-950 shadow-lg shadow-rose/25 hover:shadow-rose/40",
                   KULTURA: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
                 } as Record<string, string>)[article.ai.category] ?? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
@@ -277,23 +278,6 @@ export default async function ArticlePage({
               <CategoryIcon category={article.ai.category} className="w-5 h-5 group-hover:scale-110 transition-transform" />
               Več iz {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
               <span aria-hidden className="group-hover:translate-x-1 transition-transform">→</span>
-            </Link>
-
-            {/* Tier 2: All stories — medium, subtle color */}
-            <Link
-              href="/"
-              className="group inline-flex items-center gap-2 rounded-xl border-2 border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary/40 hover:text-primary hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              Vse zgodbe
-              <span aria-hidden className="text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all">→</span>
-            </Link>
-
-            {/* Tier 3: Back — smallest, text-only */}
-            <Link
-              href="/"
-              className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors"
-            >
-              ← Nazaj
             </Link>
           </div>
         </div>
