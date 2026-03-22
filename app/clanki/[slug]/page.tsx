@@ -43,7 +43,7 @@ function rowToArticle(s: any): PublishedArticle {
       antidote_for: s.antidote || null,
     },
     references: s.research_references || undefined,
-    imagePosition: s.image_position ?? 33,
+    imagePosition: s.image_position ?? 50,
     aiImageUrl: s.ai_image_url || undefined,
     longForm: s.long_form || null,
     verification: {
@@ -111,7 +111,7 @@ export default async function ArticlePage({
             src={article.imageUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: `center ${article.imagePosition ?? 33}%` }}
+            style={{ objectPosition: `center ${article.imagePosition ?? 50}%` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           <div className="absolute top-0 left-0 right-0 p-6">

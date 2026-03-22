@@ -18,10 +18,11 @@ import {
   StaggerItem,
   HeroReveal,
 } from "@/components/motion-wrappers";
+import { SafeImage } from "@/components/safe-image";
 
 // Cloud color schemes per category
 const CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string }> = {
-  VSE:                { soft: "#e4e4e8", fill: "#3a3a42", text: "#555560", activeText: "#ffffff" },
+  VSE:                { soft: "#f0ebe0", fill: "#d4b878", text: "#7a6530", activeText: "#3d3010" },
   SPORT:              { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
   ZIVALI:             { soft: "#f8e0d0", fill: "#e8a070", text: "#7a3a1a", activeText: "#3d1800" },
   SKUPNOST:           { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
@@ -331,10 +332,10 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
               <div className="relative h-64 sm:h-80 md:h-[26rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   {featured.imageUrl ? (
-                    <img
+                    <SafeImage
                       src={featured.imageUrl}
-                      alt=""
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                      fallback={<CategoryGradient category={featured.ai.category} />}
                     />
                   ) : (
                     <CategoryGradient category={featured.ai.category} />
@@ -472,10 +473,10 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                   {/* Card image */}
                   <div className="relative h-44 overflow-hidden">
                     {article.imageUrl ? (
-                      <img
+                      <SafeImage
                         src={article.imageUrl}
-                        alt=""
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        fallback={<CategoryGradient category={article.ai.category} />}
                       />
                     ) : (
                       <CategoryGradient category={article.ai.category} />

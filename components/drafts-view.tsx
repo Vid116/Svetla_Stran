@@ -383,7 +383,7 @@ function FullPagePreview({
       {/* Hero image */}
       {draft.image_url ? (
         <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden">
-          <img src={draft.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={draft.image_url} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
         </div>
       ) : (

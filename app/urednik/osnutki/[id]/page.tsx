@@ -8,7 +8,6 @@ import {
   formatDate,
 } from "@/lib/article-helpers";
 import { DraftActions } from "./draft-actions";
-import { ImagePosition } from "./image-position";
 import { ImageAdder } from "./image-adder";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
@@ -37,11 +36,15 @@ export default async function DraftPreviewPage({
     <div className="min-h-screen">
       {/* Hero image with adjustable position, or image adder */}
       {draft.image_url ? (
-        <ImagePosition
-          draftId={draft.id}
-          imageUrl={draft.image_url}
-          initialPosition={draft.image_position ?? 33}
-        />
+        <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden">
+          <img
+            src={draft.image_url}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: `center ${draft.image_position ?? 50}%` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+        </div>
       ) : (
         <ImageAdder draftId={draft.id} />
       )}
@@ -161,6 +164,22 @@ export default async function DraftPreviewPage({
           references={references}
         />
       </main>
+
+      {/* Image prompt for manual generation */}
+      {draft.image_prompt && !draft.ai_image_url && (
+        <div className="mx-auto max-w-3xl px-6 pb-6">
+          <div className="rounded-xl border border-gold/30 bg-gold-soft/20 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gold-foreground">
+                Prompt za sliko (kopiraj in generiraj ročno)
+              </p>
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed select-all font-mono bg-background/50 rounded-lg p-3">
+              {draft.image_prompt}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Editor sticky footer */}
       <div className="sticky bottom-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-sm">
