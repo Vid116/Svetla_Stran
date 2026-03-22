@@ -29,7 +29,7 @@ function rowToArticle(s: any): PublishedArticle {
     subtitle: s.subtitle || "",
     body: s.body,
     slug: s.slug,
-    imageUrl: s.image_url || undefined,
+    imageUrl: s.ai_image_url || s.image_url || undefined,
     publishedAt: s.published_at || s.created_at,
     source: {
       rawTitle: s.raw_title || undefined,
@@ -44,6 +44,7 @@ function rowToArticle(s: any): PublishedArticle {
     },
     references: s.research_references || undefined,
     imagePosition: s.image_position ?? 33,
+    aiImageUrl: s.ai_image_url || undefined,
     longForm: s.long_form || null,
     verification: {
       passed: s.verification_passed ?? null,

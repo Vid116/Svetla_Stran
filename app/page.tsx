@@ -29,6 +29,7 @@ export interface PublishedArticle {
   };
   references?: { url: string; title: string }[];
   imagePosition?: number;
+  aiImageUrl?: string;
   longForm?: { title: string; subtitle: string; body: string; slug: string } | null;
   verification?: {
     passed: boolean | null;
@@ -48,7 +49,7 @@ function rowToArticle(s: any): PublishedArticle {
     subtitle: s.subtitle || "",
     body: s.body,
     slug: s.slug,
-    imageUrl: s.image_url || undefined,
+    imageUrl: s.ai_image_url || s.image_url || undefined,
     publishedAt: s.published_at || s.created_at,
     source: {
       sourceUrl: s.source_url,

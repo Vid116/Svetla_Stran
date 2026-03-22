@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
         body: result.article.body,
         slug: result.article.slug,
         image_url: result.imageUrl || undefined,
+        ai_image_url: result.aiImageUrl || undefined,
         category: story.ai?.category || story.ai_category,
         emotions: story.ai?.emotions || story.ai_emotions || [],
         antidote: story.ai?.antidote_for || story.ai_antidote,

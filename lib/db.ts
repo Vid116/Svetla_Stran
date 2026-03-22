@@ -124,6 +124,7 @@ export async function createDraft(draft: {
   verification_summary?: string;
   verification_claims?: any;
   long_form?: { title: string; subtitle: string; body: string; slug: string };
+  ai_image_url?: string;
 }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -222,6 +223,7 @@ export async function publishDraft(draftId: string) {
     research_references: draft.research_references || [],
     raw_title: draft.raw_title || null,
     ai_score: aiScore,
+    ai_image_url: draft.ai_image_url || null,
     verification_passed: draft.verification_passed ?? null,
     verification_summary: draft.verification_summary || null,
     verification_claims: draft.verification_claims || [],
