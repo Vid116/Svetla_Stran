@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
+import { getArticleBySlug, getEmotionMatchedArticles } from "@/lib/db";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
-  CATEGORY_PILL,
   CATEGORY_ACCENT_BAR,
   CATEGORY_LABELS,
   formatDate,
@@ -17,6 +16,7 @@ import { EmotionTag } from "@/components/emotion-tag";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
+import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
 import { SiteFooter } from "@/components/site-footer";
 import { MidArticleCta } from "@/components/mid-article-cta";
 import { StickySubscribeBar } from "@/components/sticky-subscribe-bar";
@@ -87,14 +87,14 @@ export default async function ArticlePage({
 
   const article = rowToArticle(row);
 
-  // Related articles
-  const allRows = await getPublishedArticles();
-  const allArticles = allRows
-    .filter((s: any) => s.title && s.body && s.slug !== slug)
-    .map(rowToArticle);
-
-  const sameCategory = allArticles.filter((a) => a.ai.category === article.ai.category);
-  const related = (sameCategory.length >= 3 ? sameCategory : [...sameCategory, ...allArticles.filter((a) => a.ai.category !== article.ai.category)]).slice(0, 3);
+  // Emotion-matched related articles
+  const emotionMatched = await getEmotionMatchedArticles(
+    article.slug,
+    article.ai.emotions || [],
+    article.ai.category || null,
+    3
+  );
+  const relatedArticles = emotionMatched.map(rowToArticle);
 
   const paragraphs = article.body
     .split(/\n\n+/)
@@ -255,38 +255,36 @@ export default async function ArticlePage({
           references={article.references}
         />
 
-        {/* End-of-article: share + 3-tier navigation */}
-        <div className="mt-12 space-y-4">
-          {/* Share row — entire bar is clickable */}
-          <ShareBar title={article.title} />
-
-          {/* Back to category */}
-          <div className="flex justify-center pt-4">
-            <Link
-              href={`/?kategorija=${article.ai.category}`}
-              className={`group inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-semibold transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
-                ({
-                  SPORT: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
-                  ZIVALI: "bg-warmth text-amber-950 shadow-lg shadow-warmth/25 hover:shadow-warmth/40",
-                  SKUPNOST: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
-                  NARAVA: "bg-nature text-green-950 shadow-lg shadow-nature/25 hover:shadow-nature/40",
-                  INFRASTRUKTURA: "bg-sky text-white shadow-lg shadow-sky/25 hover:shadow-sky/40",
-                  PODJETNISTVO: "bg-gold text-amber-950 shadow-lg shadow-gold/25 hover:shadow-gold/40",
-                  SLOVENIJA_V_SVETU: "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-primary/40",
-                  JUNAKI: "bg-rose text-rose-950 shadow-lg shadow-rose/25 hover:shadow-rose/40",
-                  KULTURA: "bg-lavender text-purple-950 shadow-lg shadow-lavender/25 hover:shadow-lavender/40",
-                } as Record<string, string>)[article.ai.category] ?? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              }`}
-            >
-              <CategoryIcon category={article.ai.category} className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              Več iz {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
-              <span aria-hidden className="group-hover:translate-x-1 transition-transform">→</span>
-            </Link>
+        {/* Emotional tag section */}
+        {(article.ai.antidote_for || (article.ai.emotions && article.ai.emotions.length > 0)) && (
+          <div className="mt-10">
+            <div className="rounded-xl border border-border/30 bg-card/50 p-6 text-center">
+              {article.ai.antidote_for && (
+                <p className="font-brand text-lg font-semibold text-foreground/80">
+                  Ta zgodba je zdravilo za {article.ai.antidote_for}
+                </p>
+              )}
+              <div className="mt-2 flex justify-center">
+                <EmotionTag emotions={article.ai.emotions} />
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Share bar */}
+        <div className="mt-10">
+          <ShareBar title={article.title} />
         </div>
       </main>
 
-      {/* Newsletter signup (before comments) */}
+      {/* Emotion-matched next reads */}
+      {relatedArticles.length > 0 && (
+        <div className="mx-auto max-w-6xl px-6 py-8">
+          <EmotionMatchedArticles articles={relatedArticles} />
+        </div>
+      )}
+
+      {/* Newsletter signup */}
       <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
         <NewsletterSignup variant="inline" category={article.ai.category} />
       </div>
@@ -295,61 +293,6 @@ export default async function ArticlePage({
       <div className="mx-auto max-w-3xl px-6 pb-8">
         <CommentSection articleId={row.id} />
       </div>
-
-      {/* Related articles */}
-      {related.length > 0 && (
-        <section className="border-t border-border/30 bg-heaven/50">
-          <div className="mx-auto max-w-6xl px-6 py-14">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-muted-foreground/70">
-                Več zgodb
-              </h2>
-              <span className="h-px flex-1 bg-border/50" />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {related.map((rel) => (
-                <Link key={rel.slug} href={`/clanki/${rel.slug}`} className="group block">
-                  <article className="h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                    <div className="relative h-32 overflow-hidden bg-muted">
-                      {rel.imageUrl ? (
-                        <img
-                          src={rel.imageUrl}
-                          alt=""
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${
-                          CATEGORY_ACCENT_BAR[rel.ai.category]?.replace("bg-", "from-") ?? "from-primary"
-                        }/20 to-muted`}>
-                          <span className="absolute inset-0 flex items-center justify-center opacity-20">
-                            <CategoryIcon category={rel.ai.category} className="w-10 h-10" />
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col flex-1 p-4">
-                      <h3 className="text-sm font-semibold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2 flex-1">
-                        {rel.title}
-                      </h3>
-
-                      <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground/50 truncate max-w-[70%]">
-                          {rel.source.sourceName}
-                        </span>
-                        <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                          Preberi →
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       <SiteFooter />
 
