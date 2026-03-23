@@ -48,6 +48,50 @@ export const CATEGORY_ACCENT_BAR: Record<string, string> = {
   KULTURA: "bg-lavender",
 };
 
+// ── Emotion helpers ──────────────────────────────────────
+
+export const EMOTION_LABELS: Record<string, string> = {
+  PONOS: 'Ponos',
+  TOPLINA: 'Toplina',
+  OLAJSANJE: 'Olajšanje',
+  CUDESENJE: 'Čudenje',
+  UPANJE: 'Upanje',
+};
+
+export const EMOTION_ICONS: Record<string, string> = {
+  PONOS: '💪',
+  TOPLINA: '💛',
+  OLAJSANJE: '😌',
+  CUDESENJE: '✨',
+  UPANJE: '☀️',
+};
+
+export const EMOTION_COLORS: Record<string, { bg: string; text: string; cloud: string }> = {
+  UPANJE: { bg: 'bg-sky-100', text: 'text-sky-700', cloud: 'sky' },
+  TOPLINA: { bg: 'bg-amber-100', text: 'text-amber-700', cloud: 'warmth' },
+  PONOS: { bg: 'bg-yellow-100', text: 'text-yellow-700', cloud: 'gold' },
+  CUDESENJE: { bg: 'bg-purple-100', text: 'text-purple-700', cloud: 'lavender' },
+  OLAJSANJE: { bg: 'bg-green-100', text: 'text-green-700', cloud: 'nature' },
+};
+
+export const ANTIDOTE_LABELS: Record<string, { label: string; oneLiner: string }> = {
+  jeza: { label: 'Prijaznost', oneLiner: 'Za trenutke ko svet kliče po razumu' },
+  skrb: { label: 'Upanje', oneLiner: 'Za trenutke ko prihodnost skrbi' },
+  cinizem: { label: 'Dobrota', oneLiner: 'Za trenutke ko dvomiš v ljudi' },
+  osamljenost: { label: 'Povezanost', oneLiner: 'Za trenutke ko se čutiš sam' },
+  obup: { label: 'Odpornost', oneLiner: 'Za trenutke ko je vsega preveč' },
+  strah: { label: 'Pogum', oneLiner: 'Za trenutke ko se svet zdi nevaren' },
+};
+
+export const ANTIDOTE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  jeza: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+  skrb: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
+  cinizem: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+  osamljenost: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+  obup: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+  strah: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+};
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("sl-SI", {
     day: "numeric",
