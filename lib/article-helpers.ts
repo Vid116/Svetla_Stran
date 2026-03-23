@@ -48,31 +48,7 @@ export const CATEGORY_ACCENT_BAR: Record<string, string> = {
   KULTURA: "bg-lavender",
 };
 
-// ── Emotion helpers ──────────────────────────────────────
-
-export const EMOTION_LABELS: Record<string, string> = {
-  PONOS: 'Ponos',
-  TOPLINA: 'Toplina',
-  OLAJSANJE: 'Olajšanje',
-  CUDESENJE: 'Čudenje',
-  UPANJE: 'Upanje',
-};
-
-export const EMOTION_ICONS: Record<string, string> = {
-  PONOS: '💪',
-  TOPLINA: '💛',
-  OLAJSANJE: '😌',
-  CUDESENJE: '✨',
-  UPANJE: '☀️',
-};
-
-export const EMOTION_COLORS: Record<string, { bg: string; text: string; cloud: string }> = {
-  UPANJE: { bg: 'bg-sky-100', text: 'text-sky-700', cloud: 'sky' },
-  TOPLINA: { bg: 'bg-amber-100', text: 'text-amber-700', cloud: 'warmth' },
-  PONOS: { bg: 'bg-yellow-100', text: 'text-yellow-700', cloud: 'gold' },
-  CUDESENJE: { bg: 'bg-purple-100', text: 'text-purple-700', cloud: 'lavender' },
-  OLAJSANJE: { bg: 'bg-green-100', text: 'text-green-700', cloud: 'nature' },
-};
+// ── Antidote helpers ────────────────────────────────────
 
 export const ANTIDOTE_LABELS: Record<string, { label: string; oneLiner: string }> = {
   jeza: { label: 'Prijaznost', oneLiner: 'Za trenutke ko svet kliče po razumu' },
