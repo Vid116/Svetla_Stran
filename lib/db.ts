@@ -280,14 +280,13 @@ export async function getArticleBySlug(slug: string) {
 
 export async function getEmotionMatchedArticles(
   currentSlug: string,
-  emotions: string[],
+  antidote: string | null,
   category: string | null,
   limit: number = 3
 ): Promise<any[]> {
   const supabase = getSupabaseAdmin();
 
-  if (!emotions || emotions.length === 0) {
-    // Fallback: category-only match
+  if (!antidote) {
     const { data, error } = await supabase
       .from('articles')
       .select('*')
@@ -299,34 +298,34 @@ export async function getEmotionMatchedArticles(
     return data || [];
   }
 
-  // Best: emotion + category overlap
+  // Best: same antidote + same category
   const { data: bestMatch, error: e1 } = await supabase
     .from('articles')
     .select('*')
     .neq('slug', currentSlug)
+    .eq('antidote', antidote)
     .eq('category', category)
-    .overlaps('emotions', emotions)
     .order('published_at', { ascending: false })
     .limit(limit);
   if (e1) throw e1;
 
   if (bestMatch && bestMatch.length >= limit) return bestMatch;
 
-  // Good: emotion overlap (cross-category)
+  // Good: same antidote, any category
   const excludeSlugs = [currentSlug, ...(bestMatch || []).map((a: any) => a.slug)];
-  const { data: emotionMatch, error: e2 } = await supabase
+  const { data: antidoteMatch, error: e2 } = await supabase
     .from('articles')
     .select('*')
     .not('slug', 'in', `(${excludeSlugs.join(',')})`)
-    .overlaps('emotions', emotions)
+    .eq('antidote', antidote)
     .order('published_at', { ascending: false })
     .limit(limit - (bestMatch?.length || 0));
   if (e2) throw e2;
 
-  const combined = [...(bestMatch || []), ...(emotionMatch || [])];
+  const combined = [...(bestMatch || []), ...(antidoteMatch || [])];
   if (combined.length >= limit) return combined.slice(0, limit);
 
-  // Fallback: fill remaining with category-only
+  // Fallback: category-only
   const usedSlugs = [currentSlug, ...combined.map((a: any) => a.slug)];
   const { data: categoryFill, error: e3 } = await supabase
     .from('articles')

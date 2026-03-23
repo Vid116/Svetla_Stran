@@ -86,10 +86,10 @@ export default async function ArticlePage({
 
   const article = rowToArticle(row);
 
-  // Emotion-matched related articles
+  // Antidote-matched related articles
   const emotionMatched = await getEmotionMatchedArticles(
     article.slug,
-    article.ai.emotions || [],
+    article.ai.antidote_for,
     article.ai.category || null,
     3
   );
