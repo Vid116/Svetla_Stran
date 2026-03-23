@@ -126,6 +126,10 @@ export async function createDraft(draft: {
   long_form?: { title: string; subtitle: string; body: string; slug: string };
   ai_image_url?: string;
   image_prompt?: string;
+  ai_score?: number | null;
+  initial_score?: number | null;
+  initial_antidote?: string | null;
+  initial_category?: string | null;
 }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -196,15 +200,15 @@ export async function publishDraft(draftId: string) {
 
   if (fetchErr || !draft) throw fetchErr || new Error("Draft not found");
 
-  // Fetch ai_score from the headline
-  let aiScore: number | null = null;
+  // Fetch ai_score from the headline as fallback
+  let headlineScore: number | null = null;
   if (draft.headline_id) {
     const { data: headline } = await supabase
       .from("headlines")
       .select("ai_score")
       .eq("id", draft.headline_id)
       .single();
-    aiScore = headline?.ai_score ?? null;
+    headlineScore = headline?.ai_score ?? null;
   }
 
   // Insert into articles
@@ -223,7 +227,10 @@ export async function publishDraft(draftId: string) {
     image_position: 50,
     research_references: draft.research_references || [],
     raw_title: draft.raw_title || null,
-    ai_score: aiScore,
+    ai_score: draft.ai_score || headlineScore || 0,
+    initial_score: draft.initial_score || null,
+    initial_antidote: draft.initial_antidote || null,
+    initial_category: draft.initial_category || null,
     ai_image_url: draft.ai_image_url || null,
     verification_passed: draft.verification_passed ?? null,
     verification_summary: draft.verification_summary || null,

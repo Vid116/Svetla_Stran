@@ -60,9 +60,15 @@ export async function POST(req: NextRequest) {
         image_url: result.imageUrl || undefined,
         ai_image_url: result.aiImageUrl || undefined,
         image_prompt: result.imagePrompt || undefined,
-        category: story.ai?.category || story.ai_category,
+        // Deep scores (from written article) override initial headline scores
+        category: result.deepScore?.category || story.ai?.category || story.ai_category,
         emotions: story.ai?.emotions || story.ai_emotions || [],
-        antidote: story.ai?.antidote_for || story.ai_antidote,
+        antidote: result.deepScore?.antidote || story.ai?.antidote_for || story.ai_antidote,
+        ai_score: result.deepScore?.score || story.ai?.score || story.ai_score || null,
+        // Store initial scores for feedback loop
+        initial_score: story.ai?.score || story.ai_score || null,
+        initial_antidote: story.ai?.antidote_for || story.ai_antidote || null,
+        initial_category: story.ai?.category || story.ai_category || null,
         source_name: story.sourceName || story.source_name,
         source_url: story.sourceUrl || story.source_url,
         research_queries: result.research?.queriesUsed || [],
