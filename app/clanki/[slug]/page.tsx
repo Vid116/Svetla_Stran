@@ -13,6 +13,7 @@ import {
 } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
 import { ShareButton, ShareBar } from "@/components/share-button";
+import { EmotionTag } from "@/components/emotion-tag";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
@@ -162,6 +163,12 @@ export default async function ArticlePage({
               <ShareButton title={article.title} />
             </div>
           </div>
+
+          <EmotionTag
+            antidote={article.ai.antidote_for}
+            emotions={article.ai.emotions}
+            showAntidoteLine={true}
+          />
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight text-foreground mb-5">
             {article.title}
