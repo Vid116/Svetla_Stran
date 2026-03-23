@@ -68,6 +68,16 @@ export const ANTIDOTE_COLORS: Record<string, { bg: string; text: string; border:
   strah: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
 };
 
+// Cloud-style colors for antidote buttons (same format as CLOUD_COLORS in article-grid)
+export const ANTIDOTE_CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string; whisper: string }> = {
+  jeza:         { soft: "#fce0e0", fill: "#f0a0a0", text: "#8a2020", activeText: "#400000", whisper: "#c08080" },
+  skrb:         { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff", whisper: "#80a8c0" },
+  cinizem:      { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00", whisper: "#b0a070" },
+  osamljenost:  { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050", whisper: "#a090c0" },
+  obup:         { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515", whisper: "#80b088" },
+  strah:        { soft: "#f8e0d0", fill: "#e8a070", text: "#7a3a1a", activeText: "#3d1800", whisper: "#c09878" },
+};
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("sl-SI", {
     day: "numeric",
