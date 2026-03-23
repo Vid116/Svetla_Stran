@@ -271,6 +271,68 @@ export async function getArticleBySlug(slug: string) {
   return data;
 }
 
+export async function getEmotionMatchedArticles(
+  currentSlug: string,
+  emotions: string[],
+  category: string | null,
+  limit: number = 3
+): Promise<any[]> {
+  const supabase = getSupabaseAdmin();
+
+  if (!emotions || emotions.length === 0) {
+    // Fallback: category-only match
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .neq('slug', currentSlug)
+      .eq('category', category)
+      .order('published_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Best: emotion + category overlap
+  const { data: bestMatch, error: e1 } = await supabase
+    .from('articles')
+    .select('*')
+    .neq('slug', currentSlug)
+    .eq('category', category)
+    .overlaps('emotions', emotions)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+  if (e1) throw e1;
+
+  if (bestMatch && bestMatch.length >= limit) return bestMatch;
+
+  // Good: emotion overlap (cross-category)
+  const excludeSlugs = [currentSlug, ...(bestMatch || []).map((a: any) => a.slug)];
+  const { data: emotionMatch, error: e2 } = await supabase
+    .from('articles')
+    .select('*')
+    .not('slug', 'in', `(${excludeSlugs.join(',')})`)
+    .overlaps('emotions', emotions)
+    .order('published_at', { ascending: false })
+    .limit(limit - (bestMatch?.length || 0));
+  if (e2) throw e2;
+
+  const combined = [...(bestMatch || []), ...(emotionMatch || [])];
+  if (combined.length >= limit) return combined.slice(0, limit);
+
+  // Fallback: fill remaining with category-only
+  const usedSlugs = [currentSlug, ...combined.map((a: any) => a.slug)];
+  const { data: categoryFill, error: e3 } = await supabase
+    .from('articles')
+    .select('*')
+    .not('slug', 'in', `(${usedSlugs.join(',')})`)
+    .eq('category', category)
+    .order('published_at', { ascending: false })
+    .limit(limit - combined.length);
+  if (e3) throw e3;
+
+  return [...combined, ...(categoryFill || [])].slice(0, limit);
+}
+
 // ── Sources queries ──────────────────────────────────────────────────────────
 
 export async function getSources() {
