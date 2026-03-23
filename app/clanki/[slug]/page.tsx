@@ -286,7 +286,7 @@ export default async function ArticlePage({
 
       {/* Newsletter signup */}
       <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <NewsletterSignup variant="inline" category={article.ai.category} />
+        <NewsletterSignup variant="afterglow" category={article.ai.category} />
       </div>
 
       {/* Comments */}

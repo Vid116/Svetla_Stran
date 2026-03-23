@@ -12,8 +12,8 @@ const CATEGORIES = [
 ] as const;
 
 interface Props {
-  /** "hero" = large with description, "inline" = compact for article footer */
-  variant?: "hero" | "inline";
+  /** "hero" = large with description, "inline" = compact for article footer, "afterglow" = end-of-article intimate */
+  variant?: "hero" | "inline" | "afterglow";
   /** Pre-select this category in the theme picker modal */
   category?: string;
 }
@@ -92,6 +92,77 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
           <p className="mt-3 text-xs text-muted-foreground">
             Prvo pismo pride v ponedeljek zjutraj.
           </p>
+        )}
+      </div>
+    );
+  }
+
+  if (variant === "afterglow") {
+    return (
+      <div className="rounded-xl border border-border/40 bg-card/50 p-6">
+        <p className="text-xs font-medium tracking-wider uppercase text-muted-foreground/60 mb-2">
+          Dnevna doza dobrega
+        </p>
+        <p className="text-sm text-foreground/80 leading-relaxed mb-4">
+          Svet ni tak kot ga kažejo. Dokaži si vsak dan.
+        </p>
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="vas@email.si"
+            required
+            className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          />
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
+            {status === "loading" ? "..." : "Pošlji mi"}
+          </button>
+        </form>
+        {status === "error" && (
+          <p className="mt-2 text-xs text-destructive">{message}</p>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowTopics(!showTopics)}
+          className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showTopics ? "Skrij teme" : "Izberi teme"} {showTopics ? "↑" : "↓"}
+        </button>
+        {showTopics && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => toggleCategory(cat)}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-all ${
+                  selectedCategories.includes(cat)
+                    ? "bg-foreground text-background"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <CategoryIcon category={cat} className="w-3 h-3" />
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+        )}
+        {showModal && (
+          <ThemePickerModal
+            email={email}
+            initialCategory={category}
+            onComplete={() => {
+              setShowModal(false);
+              setStatus("success");
+              setMessage("Naročeni! Vidimo se v ponedeljek.");
+              setEmail("");
+            }}
+          />
         )}
       </div>
     );
@@ -179,12 +250,10 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
 
       <div className="relative text-center max-w-lg mx-auto">
         <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">
-          Pet zgodb za boljši ponedeljek
+          Dnevna doza dobrega
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          Vsak ponedeljek zjutraj v nabiralniku. Kratki članki, preverjene zgodbe.
-          <br />
-          Samo dobro. Samo resnično. Samo za vas.
+          Ena dobra zgodba na dan. Brez klikanja, brez doom-scrollinga.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
@@ -201,7 +270,7 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
             disabled={status === "loading"}
             className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {status === "loading" ? "Naročanje..." : "Naroči se"}
+            {status === "loading" ? "..." : "Naroči se"}
           </button>
         </form>
 
