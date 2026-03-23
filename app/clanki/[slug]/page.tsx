@@ -163,11 +163,7 @@ export default async function ArticlePage({
             </div>
           </div>
 
-          <EmotionTag
-            antidote={article.ai.antidote_for}
-            emotions={article.ai.emotions}
-            showAntidoteLine={true}
-          />
+          <EmotionTag antidote={article.ai.antidote_for} />
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight text-foreground mb-5">
             {article.title}
@@ -255,17 +251,12 @@ export default async function ArticlePage({
         />
 
         {/* Emotional tag section */}
-        {(article.ai.antidote_for || (article.ai.emotions && article.ai.emotions.length > 0)) && (
+        {article.ai.antidote_for && (
           <div className="mt-10">
             <div className="rounded-xl border border-border/30 bg-card/50 p-6 text-center">
-              {article.ai.antidote_for && (
-                <p className="font-brand text-lg font-semibold text-foreground/80">
-                  Ta zgodba je zdravilo za {article.ai.antidote_for}
-                </p>
-              )}
-              <div className="mt-2 flex justify-center">
-                <EmotionTag emotions={article.ai.emotions} />
-              </div>
+              <p className="font-brand text-lg font-semibold text-foreground/80">
+                Ta zgodba je zdravilo za {article.ai.antidote_for}
+              </p>
             </div>
           </div>
         )}

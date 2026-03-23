@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
-import { EmotionTag } from '@/components/emotion-tag';
 import { CATEGORY_LABELS, CATEGORY_PILL, formatDate, readingTime } from '@/lib/article-helpers';
 import type { PublishedArticle } from '@/app/page';
 
@@ -60,7 +59,6 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
                 <h4 className="mb-1 font-brand text-base font-semibold leading-snug text-foreground/90 line-clamp-2">
                   {article.title}
                 </h4>
-                <EmotionTag emotions={article.ai.emotions} />
                 <p className="mt-2 text-xs text-muted-foreground">
                   {formatDate(article.publishedAt)} · {readingTime(article.body)}
                 </p>
