@@ -127,7 +127,7 @@ export function EmotionSection({ activeAntidote, onSelect }: EmotionSectionProps
                 }`}
                 style={{ color: colors.whisper, maxWidth: '100px' }}
               >
-                {oneLiner.replace('Za trenutke ko ', 'ko ')}
+                {oneLiner}
               </span>
             </div>
           );

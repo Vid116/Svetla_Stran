@@ -51,12 +51,12 @@ export const CATEGORY_ACCENT_BAR: Record<string, string> = {
 // ── Antidote helpers ────────────────────────────────────
 
 export const ANTIDOTE_LABELS: Record<string, { label: string; oneLiner: string }> = {
-  jeza: { label: 'Prijaznost', oneLiner: 'Za trenutke ko svet kliče po razumu' },
-  skrb: { label: 'Upanje', oneLiner: 'Za trenutke ko prihodnost skrbi' },
-  cinizem: { label: 'Dobrota', oneLiner: 'Za trenutke ko dvomiš v ljudi' },
-  osamljenost: { label: 'Povezanost', oneLiner: 'Za trenutke ko se čutiš sam' },
-  obup: { label: 'Odpornost', oneLiner: 'Za trenutke ko je vsega preveč' },
-  strah: { label: 'Pogum', oneLiner: 'Za trenutke ko se svet zdi nevaren' },
+  jeza: { label: 'Prijaznost', oneLiner: 'ko svet kliče po razumu' },
+  skrb: { label: 'Upanje', oneLiner: 'ko prihodnost skrbi' },
+  cinizem: { label: 'Dobrota', oneLiner: 'ko dvomiš v ljudi' },
+  osamljenost: { label: 'Povezanost', oneLiner: 'ko potrebuješ toplo zgodbo' },
+  obup: { label: 'Vztrajnost', oneLiner: 'ko pozabiš da je vse možno' },
+  strah: { label: 'Pogum', oneLiner: 'ko se svet zdi nevaren' },
 };
 
 export const ANTIDOTE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
