@@ -57,6 +57,7 @@ export const ANTIDOTE_LABELS: Record<string, { label: string; oneLiner: string }
   osamljenost: { label: 'Povezanost', oneLiner: 'ko potrebuješ toplo zgodbo' },
   obup: { label: 'Vztrajnost', oneLiner: 'ko pozabiš da je vse možno' },
   strah: { label: 'Pogum', oneLiner: 'ko se svet zdi nevaren' },
+  dolgcas: { label: 'Nasmeh', oneLiner: 'ko rabiš razlog za nasmeh' },
 };
 
 export const ANTIDOTE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -66,6 +67,7 @@ export const ANTIDOTE_COLORS: Record<string, { bg: string; text: string; border:
   osamljenost: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
   obup: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
   strah: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+  dolgcas: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
 };
 
 // Cloud-style colors for antidote buttons (same format as CLOUD_COLORS in article-grid)
@@ -76,6 +78,7 @@ export const ANTIDOTE_CLOUD_COLORS: Record<string, { soft: string; fill: string;
   osamljenost:  { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050", whisper: "#a090c0" },
   obup:         { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515", whisper: "#80b088" },
   strah:        { soft: "#f8e0d0", fill: "#e8a070", text: "#7a3a1a", activeText: "#3d1800", whisper: "#c09878" },
+  dolgcas:      { soft: "#fce8f0", fill: "#f0a0c0", text: "#8a2050", activeText: "#400020", whisper: "#c08098" },
 };
 
 export function formatDate(iso: string) {

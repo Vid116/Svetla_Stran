@@ -233,14 +233,15 @@ Vrni SAMO JSON brez markdown:
   "reason": "max 2 stavka",
   "category": "ZIVALI|SKUPNOST|SPORT|NARAVA|INFRASTRUKTURA|PODJETNISTVO|SLOVENIJA_V_SVETU|JUNAKI|KULTURA",
   "headline_suggestion": "max 10 besed",
-  "antidote_for": null | "jeza"|"skrb"|"cinizem"|"osamljenost"|"obup"|"strah"
-  // NAVODILA ZA antidote_for — razporedi ENAKOMERNO, ne samo cinizem/obup:
+  "antidote_for": null | "jeza"|"skrb"|"cinizem"|"osamljenost"|"obup"|"strah"|"dolgcas"
+  // NAVODILA ZA antidote_for — razporedi ENAKOMERNO:
   // "jeza" = zgodba kjer nekdo izbere prijaznost, odpuščanje, spravo NAMESTO maščevanja ali konflikta
   // "skrb" = zgodba ki pokaže da so se stvari uredile, da sistem deluje, da je pomoč prišla
   // "cinizem" = zgodba ki dokaže da so ljudje dobri brez skritih agend, nesebična dobrota
   // "osamljenost" = zgodba o povezovanju, skupnosti, sosedih, tujcih ki postanejo prijatelji
-  // "obup" = zgodba o odpornosti, obnovi, naravi ki se vrača, premagani oviri
+  // "obup" = zgodba o vztrajnosti, obnovi, naravi ki se vrača, premagani oviri
   // "strah" = zgodba o pogumu — običajni ljudje ki naredijo izredne stvari v nevarnih situacijah
+  // "dolgcas" = zgodba ki te nasmeje, ogreje srce, instant smile — živali, otroci, simpatični trenutki
 }`;
 
 const WRITING_PROMPT = `Si novinar za Svetla Stran - slovensko spletno stran pozitivnih novic.

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { ANTIDOTE_LABELS, ANTIDOTE_CLOUD_COLORS } from '@/lib/article-helpers';
 
-// Same cloud puff shapes as article-grid.tsx — pick 6 distinct ones for the antidotes
+// Same cloud puff shapes as article-grid.tsx — 7 distinct ones for the antidotes
 const CLOUD_PUFFS: [number, number, number][][] = [
   // shape 0 — slightly bigger top
   [
@@ -45,6 +45,13 @@ const CLOUD_PUFFS: [number, number, number][][] = [
     [7,10,18], [20,10,18], [33,10,18], [46,10,18], [59,10,18], [72,10,18], [85,10,18],
     [96,38,18], [96,62,18],
     [85,90,18], [72,90,18], [59,90,18], [46,90,18], [33,90,18], [20,90,18],
+    [4,62,18], [4,38,18],
+  ],
+  // shape 6 — one bigger bump center-top (playful for Nasmeh)
+  [
+    [7,10,16], [20,10,16], [33,10,18], [46,10,22], [59,10,18], [72,10,16], [85,10,16],
+    [96,38,18], [96,62,18],
+    [85,90,16], [72,90,16], [59,90,16], [46,90,16], [33,90,16], [20,90,16],
     [4,62,18], [4,38,18],
   ],
 ];
