@@ -34,6 +34,14 @@ export async function POST(req: NextRequest) {
     }).filter(Boolean);
     story._knownDomains = knownDomains;
 
+    // Fetch headline's initial score for feedback loop (frontend doesn't send ai_score)
+    let headlineInitialScore: number | null = null;
+    if (headlineId) {
+      const { getSupabaseAdmin } = await import("@/lib/supabase");
+      const { data: hl } = await getSupabaseAdmin().from("headlines").select("ai_score").eq("id", headlineId).single();
+      headlineInitialScore = hl?.ai_score ?? null;
+    }
+
     const result = await runResearchScript(story) as any;
 
     // Dedup: pipeline detected duplicate, skip
@@ -64,9 +72,9 @@ export async function POST(req: NextRequest) {
         category: result.deepScore?.category || story.ai?.category || story.ai_category,
         emotions: story.ai?.emotions || story.ai_emotions || [],
         antidote: result.deepScore?.antidote || story.ai?.antidote_for || story.ai_antidote,
-        ai_score: result.deepScore?.score || story.ai?.score || story.ai_score || null,
+        ai_score: result.deepScore?.score || headlineInitialScore || null,
         // Store initial scores for feedback loop
-        initial_score: story.ai?.score || story.ai_score || null,
+        initial_score: headlineInitialScore,
         initial_antidote: story.ai?.antidote_for || story.ai_antidote || null,
         initial_category: story.ai?.category || story.ai_category || null,
         source_name: story.sourceName || story.source_name,
