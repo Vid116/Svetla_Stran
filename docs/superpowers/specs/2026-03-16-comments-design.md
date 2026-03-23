@@ -124,7 +124,7 @@ AUTO-REPLY only if:
 When in doubt: approve and don't reply.
 ```
 
-**Implementation:** Single `Anthropic.messages.create()` call (not a full agent loop — moderation is a simple structured-output task). Uses CC subscription auth: delete `process.env.CLAUDECODE` and `process.env.ANTHROPIC_API_KEY` before dynamic `import("@anthropic-ai/sdk")`, same pattern as scrape-cycle.mjs. Note: in serverless API routes, the env-var deletion affects the current request only (each invocation gets a fresh process).
+**Implementation:** Single `Anthropic.messages.create()` call with `model: "claude-haiku-4-5-20251001"` (fast, cheap, sufficient for structured approve/reject). Uses CC subscription auth: delete `process.env.CLAUDECODE` and `process.env.ANTHROPIC_API_KEY` before dynamic `import("@anthropic-ai/sdk")`, same pattern as scrape-cycle.mjs. Note: in serverless API routes, the env-var deletion affects the current request only (each invocation gets a fresh process).
 
 **Returns:** `{ approved: boolean, reason: string | null, autoReply: { body: string } | null }`
 

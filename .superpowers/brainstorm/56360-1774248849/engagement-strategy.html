@@ -1,0 +1,90 @@
+<h2>How do we hook a first-time visitor?</h2>
+<p class="subtitle">Someone just finished reading an article they found via Google/social. They have 30 seconds before they close the tab. What keeps them?</p>
+
+<div class="section">
+  <h3>The Problem</h3>
+  <p>Right now, after reading an article, they see: share bar → related articles → newsletter signup → comments. This is <strong>what every blog does</strong>. Nothing says "this site is different, come back."</p>
+  <p>Meanwhile, your database has rich emotional data (<code>antidote_for</code>, <code>emotions</code>, scores) that readers never see. Your unique "antidote" philosophy is invisible to visitors.</p>
+</div>
+
+<h3>Three strategic approaches — click to select</h3>
+<p class="subtitle">These aren't mutually exclusive, but which resonates most as the primary direction?</p>
+
+<div class="options">
+  <div class="option" data-choice="emotional-navigation" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>🧭 Emotional Navigation</h3>
+      <p><strong>Core idea:</strong> Let readers browse by how they FEEL, not by category.</p>
+      <p>"Feeling cynical? Here's your antidote." / "I need warmth" / "Show me something that restores hope"</p>
+      <p>Surface the <code>antidote_for</code> and <code>emotions</code> data as a navigation layer. On each article, show what emotional poison this story counteracts. After reading, suggest the next story based on emotional continuity.</p>
+      <p><strong>Why it hooks:</strong> No other news site does this. It turns passive reading into active emotional self-care. The reader thinks "this site understands what I need" instead of "this is another article list."</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Strengths</h4><ul>
+          <li>Completely unique differentiator</li>
+          <li>Uses data you already collect</li>
+          <li>Creates emotional connection with the brand</li>
+          <li>Makes the "antidote" philosophy tangible</li>
+        </ul></div>
+        <div class="cons"><h4>Risks</h4><ul>
+          <li>Might feel gimmicky if not done tastefully</li>
+          <li>Emotion labels need careful Slovenian wording</li>
+          <li>Some visitors might not connect with the concept</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="social-proof-reactions" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>💛 Emotional Reactions + Social Proof</h3>
+      <p><strong>Core idea:</strong> Replace generic "likes" with emotion-specific reactions that match your 5 feelings.</p>
+      <p>After reading: "How did this story make you feel?" → PONOS / TOPLINA / OLAJŠANJE / ČUDENJE / UPANJE (with friendly icons). Show counts: "47 readers felt warmth from this story."</p>
+      <p>Add a "trending stories" section based on reaction velocity. Show "Most warming story this week" type highlights.</p>
+      <p><strong>Why it hooks:</strong> Creates community feeling — "other people are here, feeling what I feel." Readers become participants, not just consumers. Social proof drives clicks on other articles.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Strengths</h4><ul>
+          <li>Low friction engagement (one click)</li>
+          <li>Creates social proof and community feel</li>
+          <li>Generates data for better recommendations</li>
+          <li>Familiar pattern (like Facebook reactions) but unique twist</li>
+        </ul></div>
+        <div class="cons"><h4>Risks</h4><ul>
+          <li>Need enough traffic for counts to feel real</li>
+          <li>Could feel empty/lonely if counts are low early on</li>
+          <li>Reaction fatigue (another thing to click)</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="sticky-end-experience" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>🎯 Redesigned End-of-Article Experience</h3>
+      <p><strong>Core idea:</strong> The moment someone finishes reading is your ONE chance. Redesign the post-article flow to be a guided journey, not a list of unrelated CTAs.</p>
+      <p>After finishing: a "What to read next" card that's emotionally connected ("If this story moved you, this one will too"), a "Daily Dose" signup (not generic newsletter — "get one story a day that's an antidote for doom-scrolling"), and a "Story of the Day" highlight that creates daily freshness.</p>
+      <p>The key insight: instead of scattering CTAs (newsletter here, share there, comments below), create ONE cohesive post-read experience that feels like a natural continuation.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Strengths</h4><ul>
+          <li>Directly targets the B) conversion moment</li>
+          <li>Improves existing components, less new code</li>
+          <li>"Daily Dose" reframe is more compelling than "newsletter"</li>
+          <li>Emotionally-connected recommendations beat category-based</li>
+        </ul></div>
+        <div class="cons"><h4>Risks</h4><ul>
+          <li>Less revolutionary, more evolutionary</li>
+          <li>Success depends on recommendation quality</li>
+          <li>Doesn't create new engagement loops, just optimizes existing</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+  <h3>💡 My recommendation</h3>
+  <p>I'd go <strong>A + C combined</strong>. The emotional navigation (A) gives you the unique identity that makes someone think "I've never seen anything like this." The redesigned end-of-article (C) is where that identity converts into retention. B (reactions) is great but works best AFTER you have traffic — empty reaction counts hurt more than help early on.</p>
+  <p>The combination: reader finishes an article → sees "This story was an antidote for cynicism" → below that, "Need more? Browse by what you need:" with emotion-based links → then a "Daily Dose" signup instead of generic newsletter → then emotionally-matched related articles instead of same-category ones.</p>
+</div>

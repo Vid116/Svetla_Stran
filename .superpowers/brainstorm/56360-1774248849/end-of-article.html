@@ -1,0 +1,79 @@
+<h2>End-of-Article: The Conversion Moment</h2>
+<p class="subtitle">Someone just finished reading. Current flow: share bar → related articles → newsletter → comments. How do we redesign this into a journey that keeps them?</p>
+
+<div class="section">
+  <h3>Current end-of-article stack (top to bottom)</h3>
+  <div style="font-family: monospace; font-size: 0.85em; line-height: 2; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+    <div>📄 Article body ends</div>
+    <div style="color: #888;">── mid-article CTA (newsletter, if 4+ paragraphs) ──</div>
+    <div>📖 Long-form deep read (expandable)</div>
+    <div>📚 Sources list</div>
+    <div>🔍 Research & verification details</div>
+    <div style="color: #f88;">── THE GAP: reader is done, what now? ──</div>
+    <div>🔗 Share bar ("Vam je bila zgodba všeč?")</div>
+    <div>🏷️ Category navigation button</div>
+    <div>📰 Related articles (3 cards, same category)</div>
+    <div>✉️ Newsletter signup</div>
+    <div>💬 Comments</div>
+  </div>
+</div>
+
+<h3>Proposed new flow — does this sequence feel right?</h3>
+
+<div class="options">
+  <div class="option" data-choice="flow-a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Emotion-First Flow</h3>
+      <div style="font-family: monospace; font-size: 0.85em; line-height: 2.2; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+        <div>📄 Article body ends</div>
+        <div>📖 Long-form / Sources / Research (as-is)</div>
+        <div style="color: #8f8; font-weight: bold;">── NEW: Emotional tag ──</div>
+        <div style="padding-left: 1rem; color: #adf;">"Ta zgodba je zdravilo za cinizem"</div>
+        <div style="padding-left: 1rem; color: #adf;">Small emotion pills: ☀️ UPANJE · 💛 TOPLINA</div>
+        <div style="color: #8f8; font-weight: bold;">── NEW: Emotional next-read ──</div>
+        <div style="padding-left: 1rem; color: #adf;">"Če te je ta zgodba ogrela..."</div>
+        <div style="padding-left: 1rem; color: #adf;">2-3 cards matched by EMOTION, not category</div>
+        <div style="padding-left: 1rem; color: #adf;">Each card shows its emotion pill too</div>
+        <div>🔗 Share bar (kept, works well)</div>
+        <div style="color: #8f8; font-weight: bold;">── REFRAMED: Daily Dose signup ──</div>
+        <div style="padding-left: 1rem; color: #adf;">"Dnevna doza dobrega"</div>
+        <div style="padding-left: 1rem; color: #adf;">Not "newsletter" — "one story a day as</div>
+        <div style="padding-left: 1rem; color: #adf;">an antidote for doom-scrolling"</div>
+        <div>💬 Comments (kept at bottom)</div>
+      </div>
+      <p style="margin-top: 1rem;"><strong>Key change:</strong> emotions BEFORE share/newsletter — the emotional moment creates connection, THEN you ask for the share/signup. Category button removed (replaced by emotion-matched cards).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="flow-b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Share-First Flow</h3>
+      <div style="font-family: monospace; font-size: 0.85em; line-height: 2.2; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+        <div>📄 Article body ends</div>
+        <div>📖 Long-form / Sources / Research (as-is)</div>
+        <div>🔗 Share bar (immediately — capitalize on emotion)</div>
+        <div style="color: #8f8; font-weight: bold;">── NEW: Emotional bridge ──</div>
+        <div style="padding-left: 1rem; color: #adf;">"Zdravilo za cinizem · ☀️ UPANJE · 💛 TOPLINA"</div>
+        <div style="padding-left: 1rem; color: #adf;">Compact, one-line, not a section</div>
+        <div style="color: #8f8; font-weight: bold;">── COMBINED: Next reads + signup ──</div>
+        <div style="padding-left: 1rem; color: #adf;">"Kaj bereš naprej?"</div>
+        <div style="padding-left: 1rem; color: #adf;">2-3 emotion-matched article cards</div>
+        <div style="padding-left: 1rem; color: #adf;">Small "Dnevna doza" signup inline below cards</div>
+        <div style="padding-left: 1rem; color: #adf;">(not a big section, just email input + "Pošlji")</div>
+        <div>💬 Comments</div>
+      </div>
+      <p style="margin-top: 1rem;"><strong>Key change:</strong> Share comes FIRST while emotion is hottest. Emotion tag is compact context, not a section. Next reads and signup are combined into one "what's next" block. Leaner overall.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+  <h3>Key decisions embedded here</h3>
+  <ul style="line-height: 2;">
+    <li><strong>"Dnevna doza" vs "Newsletter":</strong> Both flows reframe the signup. "Get one positive story a day" is more compelling than "subscribe to our newsletter." Same Brevo backend, different framing.</li>
+    <li><strong>Emotion-matched vs category-matched related articles:</strong> Currently related articles use same category. Both flows switch to matching by emotion/antidote data. A JUNAKI story about rescue workers and a ZIVALI story about a rescued dog share TOPLINA — they should be connected.</li>
+    <li><strong>Comments stay at the very bottom:</strong> They're important for community but shouldn't interrupt the conversion flow.</li>
+  </ul>
+</div>

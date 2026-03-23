@@ -1,0 +1,63 @@
+<h2>Where does emotional navigation live?</h2>
+<p class="subtitle">The "antidote" identity needs to be visible but not forced. Where should readers encounter it?</p>
+
+<div class="section">
+  <h3>Context</h3>
+  <p>You have 6 antidote types: <strong>jeza → prijaznost</strong>, <strong>skrb → upanje</strong>, <strong>cinizem → dokaz dobrote</strong>, <strong>osamljenost → povezanost</strong>, <strong>obup → odpornost</strong>, <strong>strah → pogum</strong>. And 5 emotions: PONOS, TOPLINA, OLAJŠANJE, ČUDENJE, UPANJE.</p>
+  <p>The question is where these surface — this affects whether emotional browsing feels natural or bolted-on.</p>
+</div>
+
+<h3>Click to select your preferred approach</h3>
+
+<div class="options">
+  <div class="option" data-choice="woven-in" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Woven Into Existing UI</h3>
+      <p>Emotions appear naturally within what already exists:</p>
+      <ul style="margin: 0.5rem 0; padding-left: 1.2rem; line-height: 1.8;">
+        <li><strong>Article cards</strong> get a small emotion tag (e.g., a subtle "☀️ upanje" pill next to the category pill)</li>
+        <li><strong>Article page</strong> shows "Zdravilo za cinizem" as a quiet line near the category/date header</li>
+        <li><strong>Related articles</strong> section becomes "If this warmed you, try these" with emotion-matched stories</li>
+        <li><strong>Category clouds</strong> get an optional "po občutku" toggle that switches from categories to emotions</li>
+      </ul>
+      <p style="color: #8b8;">Subtle. Discoverable. Doesn't break existing UX.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="dedicated-section" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dedicated "Kaj potrebuješ?" Section on Homepage</h3>
+      <p>A prominent section on the homepage — between hero and article grid — that asks:</p>
+      <p style="font-style: italic; font-size: 1.1em; padding: 0.5rem 0;">"Kaj potrebuješ danes?" (What do you need today?)</p>
+      <ul style="margin: 0.5rem 0; padding-left: 1.2rem; line-height: 1.8;">
+        <li>Six beautiful cards/buttons: Pogum, Upanje, Toplina, Ponos, Čudenje, Olajšanje</li>
+        <li>Clicking one filters the grid to stories with that emotion/antidote</li>
+        <li>Each card has a one-liner: "Pogum — za trenutke ko se svet zdi nevaren"</li>
+        <li>Article pages still show the emotion tag, but the homepage section is the main entry point</li>
+      </ul>
+      <p style="color: #8b8;">Bold. Makes the philosophy impossible to miss. Statement piece.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="dual-mode" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Dual Mode: Categories ↔ Emotions Toggle</h3>
+      <p>The existing category cloud gets a mode switch. One button toggles between:</p>
+      <ul style="margin: 0.5rem 0; padding-left: 1.2rem; line-height: 1.8;">
+        <li><strong>📂 Po temi</strong> (by topic) — current category clouds: JUNAKI, SPORT, NARAVA...</li>
+        <li><strong>💛 Po občutku</strong> (by feeling) — emotion clouds: Upanje, Toplina, Pogum, Ponos, Čudenje, Olajšanje</li>
+      </ul>
+      <p>Same cloud button design, same grid behavior, just different filter dimension. The toggle sits above the clouds.</p>
+      <p>On article pages: both category AND emotion shown in header. Related articles can mix both dimensions.</p>
+      <p style="color: #8b8;">Elegant. Reuses existing design language. Gives readers agency.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+  <h3>💡 My take</h3>
+  <p><strong>C (dual mode)</strong> is the most elegant — it reuses your beautiful cloud buttons, doesn't add UI weight, and the toggle itself communicates "this site thinks about news differently." But <strong>B</strong> makes the biggest first impression for new visitors who might not notice a small toggle. What if we combine: <strong>B on first visit</strong> (the "kaj potrebuješ" moment), then <strong>C as the persistent tool</strong> for returning readers?</p>
+</div>

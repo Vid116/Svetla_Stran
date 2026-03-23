@@ -19,7 +19,6 @@ import { CommentSection } from "@/components/comment-section";
 import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
 import { SiteFooter } from "@/components/site-footer";
 import { MidArticleCta } from "@/components/mid-article-cta";
-import { StickySubscribeBar } from "@/components/sticky-subscribe-bar";
 import { ScrollToTop } from "@/components/scroll-to-top";
 
 export const dynamic = "force-dynamic";
@@ -295,9 +294,6 @@ export default async function ArticlePage({
       </div>
 
       <SiteFooter />
-
-      {/* Sticky mobile subscribe bar */}
-      <StickySubscribeBar category={article.ai.category} />
 
       {/* Scroll to top — small floating button */}
       <ScrollToTop />

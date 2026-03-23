@@ -143,13 +143,16 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
    - Šport BREZ slovenskega športnika/ekipe = ocena 0, rejected_because: "Ni slovenskega športnika"
    - Tuji športniki (NBA, Premier League) nas NE zanimajo razen če je Slovenec protagonist
    - ŠPORT — REZULTAT vs ZGODBA (KRITIČNO, beri pozorno):
-     ✗ REZULTAT = kdo je zmagal, koliko točk, kateri krog, kvalifikacije, uvrstitev → max ocena 4
+     ✗ RUTINSKI REZULTAT = ligaška tekma, krog kvalifikacij, redna uvrstitev → max ocena 4
        Primeri: "ACH Volley premagal Fenerbahče 3:1", "Dončić z 38 točkami", "Cedevita v polfinalu",
        "13 atletov na SP", "Fain z dvema normama", "Rakete v kvalifikacije" → VSE max 4
      ✓ ZGODBA = osebna pot, premagana ovira, čustveni trenutek, slovo, rekord kariere, prvak → 7+
        Primeri: "Kopitarjevo slovo: nasprotniki vstali in ploskali", "Kavtičnik pri 41 prvak ZDA",
        "Cene Prevc: Moja največja zmaga je žena", "Eksplodirala mu je bomba, postal športnik"
-     Vprašaj se: Ali bi to bralca GANILO ali samo INFORMIRALO? Če samo informira → max 4.
+     ★ ZGODOVINSKI DOSEŽEK = dosežek ki se zgodi enkrat na desetletje ali manj → ocena 7+
+       Test: ali bi to uvrstili v Wikipedijo športnika? Če da → to JE zgodba, ne le rezultat.
+       Primeri: Pogačar 4. spomenik, Dončić 60 točk, Kopitar rekord vseh časov Kings,
+       prvi Slovenec ki doseže X, rekord vseh časov. To so trenutki ki definirajo kariero.
    - "Blizu rekorda", "napoveduje boj", "bo nastopil" = NAPOVED, nič se ni zgodilo → max 3
 
 2. JUNAKI - NAJPOMEMBNEJŠA KATEGORIJA, iščemo AKTIVNO:
@@ -209,15 +212,18 @@ KRITIČNA PRAVILA ZA OCENJEVANJE:
    - "X bo odprl" ≠ "X je odprl". Prvo je napoved, drugo je zgodba.
 
 10. KLJUČNI TEST za oceno 6+:
-   Ali bi ta zgodba bralca GANILA, NAVDUŠILA ali PRESENETILA?
+   Ali bi ta zgodba bralca GANILA, NAVDUŠILA, PRESENETILA ali NAUČILA nekaj novega?
    Ali je v njej nekaj kar bi povedal prijatelju?
-   Če samo INFORMIRA (rezultat, statistika, napoved, PR) → max 5.
+   Zgodba lahko vzbudi čustva ALI razširi obzorja — oboje je vredno.
 
-11. FAKTOR ČUDENJA — velja za VSE kategorije:
+11. FAKTOR ČUDENJA IN ODKRITJA — velja za VSE kategorije, AKTIVNO IŠČI:
    Zgodba ki bralca NAUČI nekaj presenetljivega ali fascinantnega dobi +2 na oceno.
    "O, tega pa nisem vedel!" = znak dobre zgodbe za Svetla Stran.
    Primeri: nova raziskava razkrije presenetljivo dejstvo, nenavaden pristop k problemu,
-   skrita zgodba za nečim vsakdanjim. To velja za naravo, živali, znanost, skupnost, vse.
+   skrita zgodba za nečim vsakdanjim, fascinantna tehnika ali postopek, zanimiva zgodovina.
+   To velja za naravo, živali, znanost, skupnost, kulturo, infrastrukturo — VSE.
+   NE kaznuj zgodb samo zato ker "informirajo" — če bi bralec z navdušenjem povedal
+   prijatelju "a veš da..." potem je to DOBRA zgodba za Svetla Stran, ocena 7+.
 
 Vrni SAMO JSON brez markdown:
 {
