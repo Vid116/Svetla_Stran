@@ -10,9 +10,6 @@ import {
   CATEGORY_LABELS,
   formatDate,
   readingTime,
-  EMOTION_LABELS,
-  EMOTION_ICONS,
-  EMOTION_COLORS,
   ANTIDOTE_LABELS,
 } from "@/lib/article-helpers";
 import { EmotionSection } from "@/components/emotion-section";
@@ -37,15 +34,6 @@ const CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; a
   SLOVENIJA_V_SVETU:  { soft: "#d8daf8", fill: "#8088e0", text: "#2a2e7a", activeText: "#ffffff" },
   JUNAKI:             { soft: "#fce0e0", fill: "#f0a0a0", text: "#8a2020", activeText: "#400000" },
   KULTURA:            { soft: "#f5d8ee", fill: "#d88ec4", text: "#7a2060", activeText: "#3d0030" },
-};
-
-// Cloud color schemes per emotion
-const EMOTION_CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string }> = {
-  UPANJE:    { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
-  TOPLINA:   { soft: "#f8e0d0", fill: "#e8a070", text: "#7a3a1a", activeText: "#3d1800" },
-  PONOS:     { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
-  CUDESENJE: { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
-  OLAJSANJE: { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515" },
 };
 
 // Cloud puffs: [leftPercent, topPercent, size(px)]
@@ -277,8 +265,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeAntidote, setActiveAntidote] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'temi' | 'obcutku'>('temi');
-  const [activeEmotion, setActiveEmotion] = useState<string | null>(null);
+  const [showCategories, setShowCategories] = useState(false);
   const hasInteracted = useRef(false);
 
   // Read search query from URL (?q=)
@@ -287,20 +274,11 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
   function handleCategoryChange(cat: string | null) {
     hasInteracted.current = true;
     setActiveCategory(cat);
-    // Clear emotion filter when switching to category filter
-    setActiveEmotion(null);
   }
 
   function handleAntidoteSelect(antidote: string | null) {
     hasInteracted.current = true;
     setActiveAntidote(antidote);
-  }
-
-  function handleEmotionChange(emotion: string | null) {
-    hasInteracted.current = true;
-    setActiveEmotion(emotion);
-    // Clear category filter when switching to emotion filter
-    setActiveCategory(null);
   }
 
   // Sync category from URL (?kategorija=)
@@ -320,17 +298,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
       setActiveAntidote(antidote);
     } else if (!antidote) {
       setActiveAntidote(null);
-    }
-  }, [searchParams]);
-
-  // Sync emotion from URL (?obcutek=)
-  useEffect(() => {
-    const obcutek = searchParams.get("obcutek");
-    if (obcutek && EMOTION_LABELS[obcutek]) {
-      setActiveEmotion(obcutek);
-      setFilterMode('obcutku');
-    } else if (!obcutek) {
-      setActiveEmotion(null);
     }
   }, [searchParams]);
 
@@ -359,16 +326,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     return counts;
   }, [articles]);
 
-  const emotionCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const a of articles) {
-      for (const emotion of (a.ai.emotions ?? [])) {
-        counts[emotion] = (counts[emotion] || 0) + 1;
-      }
-    }
-    return counts;
-  }, [articles]);
-
   const filtered = useMemo(() => {
     let result = activeCategory
       ? articles.filter((a) => a.ai.category === activeCategory)
@@ -376,10 +333,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
     if (activeAntidote) {
       result = result.filter((a) => a.ai.antidote_for === activeAntidote);
-    }
-
-    if (activeEmotion) {
-      result = result.filter((a) => a.ai.emotions?.includes(activeEmotion));
     }
 
     if (searchQuery.trim().length >= 3) {
@@ -390,7 +343,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
     }
 
     return result;
-  }, [articles, activeCategory, activeAntidote, activeEmotion, searchQuery]);
+  }, [articles, activeCategory, activeAntidote, searchQuery]);
 
   const { featured, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
 
@@ -454,31 +407,22 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
       {/* ── Emotion section (antidote filter) ── */}
       <EmotionSection activeAntidote={activeAntidote} onSelect={handleAntidoteSelect} />
 
-      {/* ── Category / Emotion filter ── */}
+      {/* ── Category filter (hidden behind reveal link) ── */}
       {categories.length > 1 && (
         <HeroReveal delay={0.4}>
           <nav
-            aria-label="Filtriraj po kategoriji ali občutku"
+            aria-label="Filtriraj po kategoriji"
             className="mb-14"
           >
-            {/* Mode toggle */}
-            <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="flex justify-center mb-4">
               <button
-                onClick={() => { setFilterMode('temi'); setActiveEmotion(null); }}
-                className={`text-sm transition-colors ${filterMode === 'temi' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground/70'}`}
+                onClick={() => setShowCategories(!showCategories)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                📂 Po temi
-              </button>
-              <span className="text-border">|</span>
-              <button
-                onClick={() => { setFilterMode('obcutku'); setActiveCategory(null); }}
-                className={`text-sm transition-colors ${filterMode === 'obcutku' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground/70'}`}
-              >
-                💛 Po občutku
+                {showCategories ? '✕ Skrij teme' : '📂 Po temi ›'}
               </button>
             </div>
-
-            {filterMode === 'temi' ? (
+            {showCategories && (
               <>
                 <p className="text-center text-xs font-medium text-muted-foreground/60 uppercase tracking-widest mb-4">
                   Izberi temo
@@ -545,75 +489,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                   </div>
                 </div>
               </>
-            ) : (
-              <>
-                <p className="text-center text-xs font-medium text-muted-foreground/60 uppercase tracking-widest mb-4">
-                  Izberi občutek
-                </p>
-                <div className="flex flex-col items-center gap-2">
-                  {/* Selected emotion — top row */}
-                  <div className="flex justify-center">
-                    {activeEmotion === null ? (
-                      <CloudButton
-                        active
-                        category="VSE"
-                        shapeIndex={0}
-                        onClick={() => handleEmotionChange(null)}
-                      >
-                        Vse zgodbe
-                        <span className="text-xs opacity-50">{articles.length}</span>
-                      </CloudButton>
-                    ) : (
-                      <CloudButton
-                        active
-                        category={activeEmotion}
-                        shapeIndex={Object.keys(EMOTION_LABELS).indexOf(activeEmotion) + 1}
-                        onClick={() => handleEmotionChange(null)}
-                        colors={EMOTION_CLOUD_COLORS[activeEmotion]}
-                      >
-                        {EMOTION_ICONS[activeEmotion]}
-                        {EMOTION_LABELS[activeEmotion] ?? activeEmotion}
-                        <span className="text-xs opacity-50">
-                          {emotionCounts[activeEmotion] ?? 0}
-                        </span>
-                      </CloudButton>
-                    )}
-                  </div>
-                  {/* Rest — second row */}
-                  <div className="flex flex-wrap gap-5 justify-center">
-                    {activeEmotion !== null && (
-                      <CloudButton
-                        active={false}
-                        category="VSE"
-                        shapeIndex={0}
-                        onClick={() => handleEmotionChange(null)}
-                      >
-                        Vse zgodbe
-                        <span className="text-xs opacity-50">{articles.length}</span>
-                      </CloudButton>
-                    )}
-                    {Object.keys(EMOTION_LABELS)
-                      .filter((em) => em !== activeEmotion)
-                      .map((em) => {
-                        const count = emotionCounts[em] ?? 0;
-                        return (
-                          <CloudButton
-                            key={em}
-                            active={false}
-                            category={em}
-                            shapeIndex={Object.keys(EMOTION_LABELS).indexOf(em) + 1}
-                            onClick={() => handleEmotionChange(em)}
-                            colors={EMOTION_CLOUD_COLORS[em]}
-                          >
-                            {EMOTION_ICONS[em]}
-                            {EMOTION_LABELS[em] ?? em}
-                            <span className="text-xs opacity-50">{count}</span>
-                          </CloudButton>
-                        );
-                      })}
-                  </div>
-                </div>
-              </>
             )}
           </nav>
         </HeroReveal>
@@ -622,7 +497,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
       {/* ── Antidote filter heading ── */}
       {activeAntidote && ANTIDOTE_LABELS[activeAntidote] && (
         <p className="mb-4 text-center text-sm text-muted-foreground">
-          Zdravilo za {activeAntidote} — {filtered.length} {filtered.length === 1 ? 'zgodba' : 'zgodb'}
+          {ANTIDOTE_LABELS[activeAntidote].label} — {filtered.length} {filtered.length === 1 ? 'zgodba' : 'zgodb'}
         </p>
       )}
 
