@@ -214,8 +214,10 @@ function pickFeatured(articles: PublishedArticle[]): {
   }
 
   const featured = best.article;
-  // Keep featured in the grid too — so it's visible both as hero AND in filtered results
-  return { featured, rest: articles };
+  // Sort all articles by the same score logic (score + recency + image)
+  // Featured stays in the list so it shows up in filtered results too
+  const sorted = scored.sort((a, b) => b.score - a.score).map((s) => s.article);
+  return { featured, rest: sorted };
 }
 
 function getExcerpt(text: string, chars = 120) {
