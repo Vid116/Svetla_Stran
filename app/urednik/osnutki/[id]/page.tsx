@@ -11,6 +11,7 @@ import {
 } from "@/lib/article-helpers";
 import { DraftActions } from "./draft-actions";
 import { ImageAdder } from "./image-adder";
+import { RemoveImageButton } from "./remove-image-button";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 
@@ -38,7 +39,7 @@ export default async function DraftPreviewPage({
     <div className="min-h-screen">
       {/* Hero image with adjustable position, or image adder */}
       {(draft.image_url || draft.ai_image_url) ? (
-        <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden">
+        <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden group">
           <img
             src={draft.image_url || draft.ai_image_url}
             alt=""
@@ -46,6 +47,7 @@ export default async function DraftPreviewPage({
             style={{ objectPosition: `center ${draft.image_position ?? 50}%` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          <RemoveImageButton draftId={draft.id} />
         </div>
       ) : (
         <ImageAdder draftId={draft.id} />
