@@ -18,6 +18,7 @@ interface Headline {
   ai_category: string | null;
   ai_headline: string | null;
   ai_antidote: string | null;
+  hero_image?: string | null;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -102,6 +103,7 @@ export function StoryCard({
           ai_emotions: dbStory.ai_emotions,
           ai_headline: dbStory.ai_headline,
           ai_antidote: dbStory.ai_antidote,
+          hero_image: dbStory.hero_image,
         }),
       });
       const data = await res.json();

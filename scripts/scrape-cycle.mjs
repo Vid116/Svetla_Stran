@@ -449,9 +449,48 @@ async function fetchFullContent(url) {
       $('[class*="article-body"]').text() ||
       $('[class*="content"]').first().text() ||
       $('main p').map((_, el) => $(el).text()).get().join('\n');
-    return body.trim().slice(0, 5000);
+
+    // Extract hero image — og:image is most reliable for news articles
+    const heroImage = extractHeroImage($, url);
+
+    return { text: body.trim().slice(0, 5000), heroImage };
   } catch {
-    return '';
+    return { text: '', heroImage: null };
+  }
+}
+
+const SKIP_IMAGE_PATTERNS = /logo|icon|avatar|banner|sprite|ad-|ads\/|pixel|tracking|doubleclick|googlesyndication|facebook\.com\/tr|\.svg$/i;
+
+function extractHeroImage($, pageUrl) {
+  // 1. og:image — almost always the right article photo
+  const ogImage = $('meta[property="og:image"]').attr('content');
+  if (ogImage && !SKIP_IMAGE_PATTERNS.test(ogImage)) {
+    return resolveUrl(ogImage, pageUrl);
+  }
+
+  // 2. twitter:image — same concept, backup
+  const twitterImage = $('meta[name="twitter:image"]').attr('content') ||
+                        $('meta[property="twitter:image"]').attr('content');
+  if (twitterImage && !SKIP_IMAGE_PATTERNS.test(twitterImage)) {
+    return resolveUrl(twitterImage, pageUrl);
+  }
+
+  // 3. First large image inside <article> — last resort
+  const articleImg = $('article img').first().attr('src');
+  if (articleImg && !SKIP_IMAGE_PATTERNS.test(articleImg)) {
+    return resolveUrl(articleImg, pageUrl);
+  }
+
+  return null;
+}
+
+function resolveUrl(imgUrl, pageUrl) {
+  if (!imgUrl) return null;
+  if (imgUrl.startsWith('http')) return imgUrl;
+  try {
+    return new URL(imgUrl, pageUrl).href;
+  } catch {
+    return null;
   }
 }
 
@@ -495,6 +534,7 @@ async function saveHeadlineToDB(story) {
     ai_antidote: story.ai?.antidote_for || null,
     ai_antidote_secondary: story.ai?.antidote_secondary || null,
     ai_rejected_because: story.ai?.rejected_because || null,
+    hero_image: story.heroImage || null,
     status: story.ai?.score >= 6 && !story.ai?.rejected_because ? 'new' : 'dismissed',
     scraped_at: new Date().toISOString(),
   };
@@ -608,13 +648,16 @@ async function main() {
   for (let i = 0; i < passedStories.length; i += CONTENT_BATCH) {
     const batch = passedStories.slice(i, i + CONTENT_BATCH);
     await Promise.allSettled(batch.map(async (story) => {
-      const full = await fetchFullContent(story.sourceUrl);
-      if (full && full.length > 50) {
-        story.fullContent = full;
+      const { text, heroImage } = await fetchFullContent(story.sourceUrl);
+      if (text && text.length > 50) {
+        story.fullContent = text;
         // Use full content for scoring if rawContent is short
         if (!story.rawContent || story.rawContent.length < 100) {
-          story.rawContent = full;
+          story.rawContent = text;
         }
+      }
+      if (heroImage) {
+        story.heroImage = heroImage;
       }
     }));
   }
