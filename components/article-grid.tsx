@@ -407,15 +407,12 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
         </p>
       </div>
 
-      {/* ── Emotion section (antidote filter) ── */}
-      <EmotionSection activeAntidote={activeAntidote} onSelect={handleAntidoteSelect} />
-
       {/* ── Category filter ── */}
       {articles.length > 0 && (
         <HeroReveal delay={0.4}>
           <nav
             aria-label="Filtriraj po kategoriji"
-            className="mb-14"
+            className="mb-6"
           >
             {/* Category groups — always visible */}
             <div className="flex flex-col items-center gap-2">
@@ -477,6 +474,11 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
           </nav>
         </HeroReveal>
       )}
+
+      {/* ── Antidote pill slider ── */}
+      <div className="mb-8">
+        <EmotionSection activeAntidote={activeAntidote} onSelect={handleAntidoteSelect} />
+      </div>
 
       {/* ── Antidote filter heading ── */}
       {activeAntidote && ANTIDOTE_LABELS[activeAntidote] && (
