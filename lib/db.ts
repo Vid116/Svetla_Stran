@@ -53,7 +53,7 @@ export async function getProcessedHeadlines(categories?: string[]) {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("headlines")
-    .select("*, drafts(id, title, slug, status, created_at, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
+    .select("*, drafts(id, title, slug, status, created_at, ai_score, category, antidote, antidote_secondary, ai_image_url, image_url, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
     .in("status", ["processing", "picked"])
     .order("scraped_at", { ascending: false });
 
