@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { ANTIDOTE_LABELS } from '@/lib/article-helpers';
+import { ANTIDOTE_LABELS, ANTIDOTE_CLOUD_COLORS } from '@/lib/article-helpers';
 
 interface EmotionSectionProps {
   activeAntidote: string | null;
@@ -29,17 +29,25 @@ export function EmotionSection({ activeAntidote, onSelect }: EmotionSectionProps
         <div className="flex gap-2 px-4 py-1 w-max mx-auto">
           {antidotes.map(([key, { label, oneLiner }]) => {
             const isActive = activeAntidote === key;
+            const colors = ANTIDOTE_CLOUD_COLORS[key];
             const isTapped = tapped === key;
 
             return (
               <button
                 key={key}
                 onClick={() => handleTap(key)}
-                className={`group relative flex-shrink-0 rounded-full px-4 py-1.5 text-xs transition-all duration-200 border ${
+                className={`group relative flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 border ${
                   isActive
-                    ? 'bg-warmth/20 text-warmth border-warmth/40 font-semibold shadow-sm scale-105'
-                    : 'bg-white/60 text-foreground/40 border-border/20 font-medium hover:-translate-y-0.5 hover:text-foreground/60 hover:border-border/40'
+                    ? 'shadow-sm scale-105 border-2'
+                    : 'hover:-translate-y-0.5'
                 }`}
+                style={{
+                  // Outline style: transparent bg, colored border + text
+                  // Active: filled with soft color
+                  backgroundColor: isActive ? colors.soft : 'transparent',
+                  color: isActive ? colors.activeText : colors.text,
+                  borderColor: isActive ? colors.fill : `${colors.text}30`,
+                }}
               >
                 {label}
                 <span
@@ -48,7 +56,7 @@ export function EmotionSection({ activeAntidote, onSelect }: EmotionSectionProps
                       ? 'opacity-50'
                       : 'opacity-0 group-hover:opacity-35'
                   }`}
-                  style={{ color: isActive ? 'var(--warmth)' : '#aaa' }}
+                  style={{ color: colors.whisper }}
                 >
                   {oneLiner}
                 </span>
