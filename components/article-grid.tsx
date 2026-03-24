@@ -214,8 +214,8 @@ function pickFeatured(articles: PublishedArticle[]): {
   }
 
   const featured = best.article;
-  const rest = articles.filter((a) => a.slug !== featured.slug);
-  return { featured, rest };
+  // Keep featured in the grid too — so it's visible both as hero AND in filtered results
+  return { featured, rest: articles };
 }
 
 function getExcerpt(text: string, chars = 120) {
