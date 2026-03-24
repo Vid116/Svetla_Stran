@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ANTIDOTE_LABELS } from "@/lib/article-helpers";
 
 interface VerificationClaim {
   claim: string;
@@ -21,6 +22,11 @@ interface Draft {
   slug: string;
   status: string;
   created_at: string;
+  ai_score: number | null;
+  category: string | null;
+  antidote: string | null;
+  antidote_secondary: string | null;
+  ai_image_url: string | null;
   verification_passed: boolean | null;
   verification_summary: string | null;
   verification_claims: VerificationClaim[] | null;
@@ -241,6 +247,25 @@ function ProcessingCard({
           )}
           {draft?.verification_passed === false && (
             <span className="text-xs text-destructive" title="Preverba neuspesna">Neuspesno</span>
+          )}
+          {draft?.ai_score != null && (
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${
+              draft.ai_score >= 8 ? "bg-gold/20 text-gold" :
+              draft.ai_score >= 6 ? "bg-sky/20 text-sky" :
+              "bg-muted text-muted-foreground"
+            }`}>
+              {draft.ai_score}/10
+            </span>
+          )}
+          {draft?.antidote && ANTIDOTE_LABELS[draft.antidote] && (
+            <span className="inline-flex items-center rounded-full bg-warmth/15 px-2 py-0.5 text-xs text-warmth">
+              {ANTIDOTE_LABELS[draft.antidote].label}
+            </span>
+          )}
+          {draft?.antidote_secondary && ANTIDOTE_LABELS[draft.antidote_secondary] && (
+            <span className="inline-flex items-center rounded-full bg-warmth/10 px-2 py-0.5 text-xs text-warmth/60">
+              {ANTIDOTE_LABELS[draft.antidote_secondary].label}
+            </span>
           )}
         </div>
 
