@@ -1,0 +1,114 @@
+<h2>Homepage Filter Layout</h2>
+<p class="subtitle">Categories as main navigation, antidotes as a subtle discovery bar below</p>
+
+<div class="mockup">
+  <div class="mockup-header">Homepage — Filter Section</div>
+  <div class="mockup-body" style="padding: 0; background: linear-gradient(180deg, #f8f6f3 0%, #fff 100%);">
+
+    <!-- Hero article placeholder -->
+    <div style="height: 180px; background: linear-gradient(135deg, #e8e4dd 0%, #d4cfc6 100%); display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.8em;">
+      ▲ Hero Article Above ▲
+    </div>
+
+    <!-- Tagline -->
+    <div style="text-align: center; padding: 1.5rem 1rem 0.5rem;">
+      <div style="font-size: 0.7em; color: #bbb; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem;">Preverjene zgodbe iz Slovenije</div>
+      <div style="font-size: 0.75em; color: #999;">218 zgodb</div>
+    </div>
+
+    <!-- Category Clouds — MAIN, always visible -->
+    <div style="padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;">
+      <div style="background: #fce0e0; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #8a2020;">Junaki</div>
+      <div style="background: #d4ecfc; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #1a5f8a;">Šport</div>
+      <div style="background: #d4f0d8; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #1f6b2f;">Narava</div>
+      <div style="background: #f8e0d0; border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #7a3a1a;">Živali</div>
+      <div style="background: #e8dff5; border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #5b2d8e;">Skupnost</div>
+      <div style="background: #f5eac8; border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #6b5010;">Podjetništvo</div>
+      <div style="background: #d8daf8; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #2a2e7a;">Slov. v svetu</div>
+      <div style="background: #f5d8ee; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #7a2060;">Kultura</div>
+      <div style="background: #d0ecec; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.5rem 1.1rem; font-size: 0.7rem; font-weight: 600; color: #1a6060;">Infrastruktura</div>
+    </div>
+
+    <!-- Divider -->
+    <div style="border-top: 1px solid rgba(0,0,0,0.06); margin: 0 2rem;"></div>
+
+    <!-- Antidote slider bar — subtle, horizontal -->
+    <div style="padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.6rem; overflow-x: auto;">
+      <span style="font-size: 0.6rem; color: #bbb; white-space: nowrap; letter-spacing: 0.03em;">Kaj potrebuješ danes?</span>
+
+      <style>
+        .antidote-pill {
+          padding: 0.35rem 0.9rem;
+          border-radius: 999px;
+          font-size: 0.65rem;
+          font-weight: 500;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: 1px solid transparent;
+          position: relative;
+        }
+        .antidote-pill:hover { transform: translateY(-1px); }
+        .antidote-pill .whisper {
+          position: absolute;
+          bottom: -14px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 0.45rem;
+          color: transparent;
+          white-space: nowrap;
+          transition: color 0.3s;
+        }
+        .antidote-pill:hover .whisper { color: #ccc; }
+      </style>
+
+      <div class="antidote-pill" style="background: #fff5f5; color: #a03050; border-color: #f0d0d8;">
+        Prijaznost
+        <span class="whisper">ko svet kliče po razumu</span>
+      </div>
+      <div class="antidote-pill" style="background: #f0f7ff; color: #2060a0; border-color: #d0e0f0;">
+        Upanje
+        <span class="whisper">ko prihodnost skrbi</span>
+      </div>
+      <div class="antidote-pill" style="background: #fffbf0; color: #8a6010; border-color: #f0e4c8;">
+        Dobrota
+        <span class="whisper">ko dvomiš v ljudi</span>
+      </div>
+      <div class="antidote-pill" style="background: #f5f0ff; color: #6030a0; border-color: #e0d4f0;">
+        Povezanost
+        <span class="whisper">ko potrebuješ toplo zgodbo</span>
+      </div>
+      <div class="antidote-pill" style="background: #f0fff5; color: #207040; border-color: #c8e8d0;">
+        Vztrajnost
+        <span class="whisper">ko pozabiš da je vse možno</span>
+      </div>
+      <div class="antidote-pill" style="background: #fff8f0; color: #a06010; border-color: #f0dcc0;">
+        Pogum
+        <span class="whisper">ko se svet zdi nevaren</span>
+      </div>
+      <div class="antidote-pill" style="background: #fef0f5; color: #8a2050; border-color: #f0d0e0;">
+        Nasmeh
+        <span class="whisper">ko rabiš razlog za nasmeh</span>
+      </div>
+    </div>
+
+    <!-- Article grid placeholder -->
+    <div style="padding: 1rem 1.5rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem;">
+      <div style="height: 120px; background: #f4f2ef; border-radius: 8px;"></div>
+      <div style="height: 120px; background: #f4f2ef; border-radius: 8px;"></div>
+      <div style="height: 120px; background: #f4f2ef; border-radius: 8px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+  <h3>How it works</h3>
+  <ul style="line-height: 2; font-size: 0.9em;">
+    <li><strong>Category clouds</strong> — always visible, main filter, familiar to any news reader</li>
+    <li><strong>Antidote bar</strong> — slim horizontal strip with pill buttons, scrolls on mobile</li>
+    <li><strong>"Kaj potrebuješ danes?"</strong> — quiet label on the left, not a big heading</li>
+    <li><strong>Whispers</strong> — still hover-reveal on pills, same discovery minigame</li>
+    <li>Thin divider separates the two layers — categories above, emotions below</li>
+  </ul>
+</div>

@@ -1,0 +1,130 @@
+<h2>Homepage Filter Layout v2</h2>
+<p class="subtitle">Mobile-first. Antidote pills as a centered horizontal slider, no label text.</p>
+
+<div class="cards">
+
+  <!-- Mobile view -->
+  <div class="card" data-choice="mobile" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 0; background: linear-gradient(180deg, #f8f6f3 0%, #fff 100%); max-width: 390px; margin: 0 auto;">
+
+      <!-- Hero placeholder -->
+      <div style="height: 140px; background: linear-gradient(135deg, #e8e4dd 0%, #d4cfc6 100%); display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 0.7em;">
+        ▲ Hero Article ▲
+      </div>
+
+      <!-- Tagline -->
+      <div style="text-align: center; padding: 1.2rem 1rem 0.3rem;">
+        <div style="font-size: 0.6em; color: #ccc; letter-spacing: 0.08em; text-transform: uppercase;">Preverjene zgodbe iz Slovenije</div>
+      </div>
+
+      <!-- Category Clouds — main, wrapping -->
+      <div style="padding: 0.6rem 1rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem;">
+        <div style="background: #fce0e0; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #8a2020;">Junaki</div>
+        <div style="background: #d4ecfc; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #1a5f8a;">Šport</div>
+        <div style="background: #d4f0d8; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #1f6b2f;">Narava</div>
+        <div style="background: #f8e0d0; border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #7a3a1a;">Živali</div>
+        <div style="background: #e8dff5; border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #5b2d8e;">Skupnost</div>
+        <div style="background: #f5eac8; border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #6b5010;">Podjetništvo</div>
+        <div style="background: #d8daf8; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #2a2e7a;">Slov. v svetu</div>
+        <div style="background: #f5d8ee; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #7a2060;">Kultura</div>
+        <div style="background: #d0ecec; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.4rem 0.9rem; font-size: 0.6rem; font-weight: 600; color: #1a6060;">Infrastruktura</div>
+      </div>
+
+      <!-- Thin divider -->
+      <div style="border-top: 1px solid rgba(0,0,0,0.04); margin: 0.2rem 1.5rem;"></div>
+
+      <!-- Antidote slider — centered, horizontal scroll, no label -->
+      <div style="padding: 0.5rem 0; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="display: flex; justify-content: center; gap: 0.4rem; padding: 0 1rem; min-width: max-content;">
+
+          <style>
+            .pill2 {
+              padding: 0.3rem 0.75rem;
+              border-radius: 999px;
+              font-size: 0.58rem;
+              font-weight: 500;
+              white-space: nowrap;
+              cursor: pointer;
+              transition: all 0.2s;
+              border: 1px solid transparent;
+              flex-shrink: 0;
+            }
+            .pill2:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+          </style>
+
+          <div class="pill2" style="background: #fff5f5; color: #a03050; border-color: #f0d8dc;">Prijaznost</div>
+          <div class="pill2" style="background: #f0f7ff; color: #2060a0; border-color: #d4e4f0;">Upanje</div>
+          <div class="pill2" style="background: #fffbf0; color: #8a6010; border-color: #ece0c0;">Dobrota</div>
+          <div class="pill2" style="background: #f5f0ff; color: #6030a0; border-color: #dcd0e8;">Povezanost</div>
+          <div class="pill2" style="background: #f0fff5; color: #207040; border-color: #c4e0cc;">Vztrajnost</div>
+          <div class="pill2" style="background: #fff8f0; color: #a06010; border-color: #e8d4b8;">Pogum</div>
+          <div class="pill2" style="background: #fef0f5; color: #8a2050; border-color: #ecd0dc;">Nasmeh</div>
+        </div>
+      </div>
+
+      <!-- Article grid placeholder -->
+      <div style="padding: 0.8rem 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Mobile (390px)</h3>
+      <p>Categories wrap in 2 rows. Antidote pills scroll horizontally — centered, no label text. Thin divider separates the two. Finger-swipeable on mobile.</p>
+    </div>
+  </div>
+
+  <!-- Desktop view -->
+  <div class="card" data-choice="desktop" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 0; background: linear-gradient(180deg, #f8f6f3 0%, #fff 100%);">
+
+      <div style="height: 140px; background: linear-gradient(135deg, #e8e4dd 0%, #d4cfc6 100%); display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 0.7em;">
+        ▲ Hero Article ▲
+      </div>
+
+      <div style="text-align: center; padding: 1.2rem 1rem 0.3rem;">
+        <div style="font-size: 0.6em; color: #ccc; letter-spacing: 0.08em; text-transform: uppercase;">Preverjene zgodbe iz Slovenije</div>
+      </div>
+
+      <!-- Categories — single row on desktop -->
+      <div style="padding: 0.6rem 2rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;">
+        <div style="background: #fce0e0; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #8a2020;">Junaki</div>
+        <div style="background: #d4ecfc; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #1a5f8a;">Šport</div>
+        <div style="background: #d4f0d8; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #1f6b2f;">Narava</div>
+        <div style="background: #f8e0d0; border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #7a3a1a;">Živali</div>
+        <div style="background: #e8dff5; border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #5b2d8e;">Skupnost</div>
+        <div style="background: #f5eac8; border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #6b5010;">Podjetništvo</div>
+        <div style="background: #d8daf8; border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #2a2e7a;">Slov. v svetu</div>
+        <div style="background: #f5d8ee; border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #7a2060;">Kultura</div>
+        <div style="background: #d0ecec; border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.45rem 1rem; font-size: 0.65rem; font-weight: 600; color: #1a6060;">Infrastruktura</div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(0,0,0,0.04); margin: 0.2rem 3rem;"></div>
+
+      <!-- Antidote bar — all fit in one row on desktop -->
+      <div style="padding: 0.5rem 2rem; display: flex; justify-content: center; gap: 0.5rem;">
+        <div class="pill2" style="background: #fff5f5; color: #a03050; border-color: #f0d8dc;">Prijaznost</div>
+        <div class="pill2" style="background: #f0f7ff; color: #2060a0; border-color: #d4e4f0;">Upanje</div>
+        <div class="pill2" style="background: #fffbf0; color: #8a6010; border-color: #ece0c0;">Dobrota</div>
+        <div class="pill2" style="background: #f5f0ff; color: #6030a0; border-color: #dcd0e8;">Povezanost</div>
+        <div class="pill2" style="background: #f0fff5; color: #207040; border-color: #c4e0cc;">Vztrajnost</div>
+        <div class="pill2" style="background: #fff8f0; color: #a06010; border-color: #e8d4b8;">Pogum</div>
+        <div class="pill2" style="background: #fef0f5; color: #8a2050; border-color: #ecd0dc;">Nasmeh</div>
+      </div>
+
+      <!-- Articles -->
+      <div style="padding: 0.8rem 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem;">
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+        <div style="height: 100px; background: #f4f2ef; border-radius: 8px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Desktop</h3>
+      <p>All 7 antidote pills fit in one centered row. No scrolling needed. Same thin divider, no label text.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homepage Layout</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, sans-serif; background: #f8f6f3; max-width: 420px; margin: 0 auto; }
+
+  .hero { height: 200px; background: linear-gradient(135deg, #e0dbd4, #ccc6bc); display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 13px; }
+
+  .tagline { text-align: center; padding: 16px 16px 8px; font-size: 10px; color: #bbb; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Category clouds */
+  .categories { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 8px 16px 12px; }
+  .cat {
+    padding: 6px 14px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%;
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .cat:nth-child(2) { border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; }
+  .cat:nth-child(3) { border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; }
+  .cat:nth-child(4) { border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; }
+  .cat:nth-child(5) { border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; }
+  .cat:nth-child(6) { border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; }
+  .cat:hover { transform: translateY(-2px); }
+
+  .divider { border-top: 1px solid rgba(0,0,0,0.05); margin: 0 24px; }
+
+  /* Antidote slider */
+  .antidote-slider {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding: 10px 0;
+  }
+  .antidote-slider::-webkit-scrollbar { display: none; }
+  .antidote-track {
+    display: flex; gap: 6px; padding: 0 16px;
+    width: max-content; margin: 0 auto;
+  }
+  .pill {
+    padding: 5px 12px; border-radius: 999px; font-size: 10px; font-weight: 500;
+    white-space: nowrap; cursor: pointer; border: 1px solid transparent;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .pill:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .pill.active { border-width: 2px; font-weight: 600; }
+
+  /* Article placeholders */
+  .articles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px; }
+  .article-card { height: 140px; background: white; border-radius: 10px; border: 1px solid #eee; }
+</style>
+</head>
+<body>
+
+<div class="hero">▲ Hero Article ▲</div>
+
+<div class="tagline">Preverjene zgodbe iz Slovenije</div>
+
+<div class="categories">
+  <div class="cat" style="background:#fce0e0; color:#8a2020;">Junaki</div>
+  <div class="cat" style="background:#d4ecfc; color:#1a5f8a;">Šport</div>
+  <div class="cat" style="background:#d4f0d8; color:#1f6b2f;">Narava</div>
+  <div class="cat" style="background:#f8e0d0; color:#7a3a1a;">Živali</div>
+  <div class="cat" style="background:#e8dff5; color:#5b2d8e;">Skupnost</div>
+  <div class="cat" style="background:#f5eac8; color:#6b5010;">Podjetništvo</div>
+  <div class="cat" style="background:#d8daf8; color:#2a2e7a;">Slov. v svetu</div>
+  <div class="cat" style="background:#f5d8ee; color:#7a2060;">Kultura</div>
+  <div class="cat" style="background:#d0ecec; color:#1a6060;">Infrastruktura</div>
+</div>
+
+<div class="divider"></div>
+
+<div class="antidote-slider">
+  <div class="antidote-track">
+    <div class="pill" style="background:#fff5f5; color:#a03050; border-color:#f0d8dc;">Prijaznost</div>
+    <div class="pill" style="background:#f0f7ff; color:#2060a0; border-color:#d4e4f0;">Upanje</div>
+    <div class="pill" style="background:#fffbf0; color:#8a6010; border-color:#ece0c0;">Dobrota</div>
+    <div class="pill" style="background:#f5f0ff; color:#6030a0; border-color:#dcd0e8;">Povezanost</div>
+    <div class="pill" style="background:#f0fff5; color:#207040; border-color:#c4e0cc;">Vztrajnost</div>
+    <div class="pill" style="background:#fff8f0; color:#a06010; border-color:#e8d4b8;">Pogum</div>
+    <div class="pill" style="background:#fef0f5; color:#8a2050; border-color:#ecd0dc;">Nasmeh</div>
+  </div>
+</div>
+
+<div class="articles">
+  <div class="article-card"></div>
+  <div class="article-card"></div>
+  <div class="article-card"></div>
+  <div class="article-card"></div>
+</div>
+
+</body>
+</html>
