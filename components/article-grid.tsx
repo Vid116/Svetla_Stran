@@ -398,14 +398,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
         </RevealOnScroll>
       )}
 
-      {/* ── Tagline + article count ── */}
-      <div className="text-center mb-10">
-        <p className="text-sm text-muted-foreground">
-          Preverjene zgodbe o ljudeh, dosežkih in napredku.
-          <span className="mx-2 text-border">·</span>
-          <span className="tabular-nums">{articles.length}</span> {articles.length === 1 ? "zgodba" : articles.length === 2 ? "zgodbi" : articles.length <= 4 ? "zgodbe" : "zgodb"}
-        </p>
-      </div>
 
       {/* ── Category filter ── */}
       {articles.length > 0 && (
@@ -474,6 +466,15 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
           </nav>
         </HeroReveal>
       )}
+
+      {/* ── Tagline ── */}
+      <div className="text-center my-4">
+        <p className="text-xs text-muted-foreground/60">
+          Preverjene zgodbe o ljudeh, dosežkih in napredku.
+          <span className="mx-1.5 text-border/40">·</span>
+          <span className="tabular-nums">{articles.length}</span> zgodb
+        </p>
+      </div>
 
       {/* ── Antidote pill slider ── */}
       <div className="mb-8">
