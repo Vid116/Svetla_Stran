@@ -13,7 +13,6 @@ import {
 import { CategoryIcon } from "@/lib/category-icons";
 import { ShareButton, ShareBar } from "@/components/share-button";
 import { EmotionTag } from "@/components/emotion-tag";
-import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
 import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
@@ -243,24 +242,6 @@ export default async function ArticlePage({
               ))}
           </ol>
         </div>
-
-        {/* Expandable research & verification details */}
-        <ResearchDetails
-          verification={article.verification}
-          research={article.research}
-          references={article.references}
-        />
-
-        {/* Emotional tag section */}
-        {article.ai.antidote_for && (
-          <div className="mt-10">
-            <div className="rounded-xl border border-border/30 bg-card/50 p-6 text-center">
-              <p className="font-brand text-lg font-semibold text-foreground/80">
-                Ta zgodba je zdravilo za {article.ai.antidote_for}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Share bar */}
         <div className="mt-10">
