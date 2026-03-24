@@ -4,7 +4,9 @@ import { getDraftById } from "@/lib/db";
 import { requireAuth } from "@/lib/require-auth";
 import {
   CATEGORY_ICONS,
+  CATEGORY_LABELS,
   CATEGORY_ACCENT_BAR,
+  ANTIDOTE_LABELS,
   formatDate,
 } from "@/lib/article-helpers";
 import { DraftActions } from "./draft-actions";
@@ -60,14 +62,50 @@ export default async function DraftPreviewPage({
         )}
 
         <div className="relative mx-auto max-w-3xl px-6 pt-8 pb-10">
-          <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="text-xl">
               {CATEGORY_ICONS[draft.category] ?? "📰"}
+            </span>
+            <span className="text-xs font-medium text-foreground/70">
+              {CATEGORY_LABELS[draft.category] || draft.category}
             </span>
             <time className="text-xs text-muted-foreground" dateTime={draft.created_at}>
               {formatDate(draft.created_at)}
             </time>
           </div>
+
+          {/* Deep score info */}
+          {draft.ai_score != null && (
+            <div className="flex flex-wrap items-center gap-2 mb-6 text-xs">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${
+                draft.ai_score >= 8 ? 'bg-nature/20 text-nature' :
+                draft.ai_score >= 6 ? 'bg-sky/20 text-sky' :
+                'bg-muted text-muted-foreground'
+              }`}>
+                {draft.ai_score}/10
+              </span>
+              {draft.antidote && ANTIDOTE_LABELS[draft.antidote] && (
+                <span className="rounded-full bg-warmth/15 px-2.5 py-1 text-warmth">
+                  {ANTIDOTE_LABELS[draft.antidote].label}
+                </span>
+              )}
+              {draft.antidote_secondary && ANTIDOTE_LABELS[draft.antidote_secondary] && (
+                <span className="rounded-full bg-warmth/10 px-2.5 py-1 text-warmth/70">
+                  + {ANTIDOTE_LABELS[draft.antidote_secondary].label}
+                </span>
+              )}
+              {draft.initial_score != null && draft.initial_score !== draft.ai_score && (
+                <span className="text-muted-foreground/50" title="Initial headline score → Deep score">
+                  (naslov: {draft.initial_score}/10
+                  {draft.initial_category && draft.initial_category !== draft.category
+                    ? ` · ${CATEGORY_LABELS[draft.initial_category] || draft.initial_category}` : ''}
+                  {draft.initial_antidote && draft.initial_antidote !== draft.antidote
+                    ? ` · ${ANTIDOTE_LABELS[draft.initial_antidote]?.label || draft.initial_antidote}` : ''}
+                  )
+                </span>
+              )}
+            </div>
+          )}
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight text-foreground mb-5">
             {draft.title}
