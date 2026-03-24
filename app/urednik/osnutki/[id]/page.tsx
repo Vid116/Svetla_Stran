@@ -35,10 +35,10 @@ export default async function DraftPreviewPage({
   return (
     <div className="min-h-screen">
       {/* Hero image with adjustable position, or image adder */}
-      {draft.image_url ? (
+      {(draft.image_url || draft.ai_image_url) ? (
         <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden">
           <img
-            src={draft.image_url}
+            src={draft.image_url || draft.ai_image_url}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ objectPosition: `center ${draft.image_position ?? 50}%` }}
@@ -50,8 +50,8 @@ export default async function DraftPreviewPage({
       )}
 
       {/* Article header */}
-      <header className={`relative ${draft.image_url ? "-mt-24" : "border-b border-border/30"}`}>
-        {!draft.image_url && (
+      <header className={`relative ${(draft.image_url || draft.ai_image_url) ? "-mt-24" : "border-b border-border/30"}`}>
+        {!(draft.image_url || draft.ai_image_url) && (
           <>
             <div className="absolute inset-0 bg-gradient-to-b from-heaven-glow/60 via-heaven to-background" />
             <div className="absolute -top-8 left-1/3 h-48 w-64 rounded-full bg-gold-soft/30 blur-3xl pointer-events-none" />
@@ -204,7 +204,7 @@ export default async function DraftPreviewPage({
               </span>
             )}
           </div>
-          <DraftActions draftId={draft.id} hasImage={!!draft.image_url} />
+          <DraftActions draftId={draft.id} hasImage={!!(draft.image_url || draft.ai_image_url)} />
         </div>
 
         {draft.verification_summary && (
