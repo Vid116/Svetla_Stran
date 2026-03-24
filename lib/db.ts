@@ -114,6 +114,7 @@ export async function createDraft(draft: {
   category?: string;
   emotions?: string[];
   antidote?: string;
+  antidote_secondary?: string | null;
   source_name?: string;
   source_url?: string;
   research_queries?: string[];
@@ -222,6 +223,7 @@ export async function publishDraft(draftId: string) {
     category: draft.category,
     emotions: draft.emotions,
     antidote: draft.antidote,
+    antidote_secondary: draft.antidote_secondary || null,
     source_name: draft.source_name,
     source_url: draft.source_url,
     image_position: 50,
@@ -298,12 +300,12 @@ export async function getEmotionMatchedArticles(
     return data || [];
   }
 
-  // Best: same antidote + same category
+  // Best: same antidote (primary or secondary) + same category
   const { data: bestMatch, error: e1 } = await supabase
     .from('articles')
     .select('*')
     .neq('slug', currentSlug)
-    .eq('antidote', antidote)
+    .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
     .eq('category', category)
     .order('published_at', { ascending: false })
     .limit(limit);
@@ -311,13 +313,13 @@ export async function getEmotionMatchedArticles(
 
   if (bestMatch && bestMatch.length >= limit) return bestMatch;
 
-  // Good: same antidote, any category
+  // Good: same antidote (primary or secondary), any category
   const excludeSlugs = [currentSlug, ...(bestMatch || []).map((a: any) => a.slug)];
   const { data: antidoteMatch, error: e2 } = await supabase
     .from('articles')
     .select('*')
     .not('slug', 'in', `(${excludeSlugs.join(',')})`)
-    .eq('antidote', antidote)
+    .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
     .order('published_at', { ascending: false })
     .limit(limit - (bestMatch?.length || 0));
   if (e2) throw e2;

@@ -26,6 +26,7 @@ export interface PublishedArticle {
     category: string;
     emotions: string[];
     antidote_for: string | null;
+    antidote_secondary: string | null;
   };
   references?: { url: string; title: string }[];
   imagePosition?: number;
@@ -60,6 +61,7 @@ function rowToArticle(s: any): PublishedArticle {
       category: s.category || "",
       emotions: s.emotions || [],
       antidote_for: s.antidote || null,
+      antidote_secondary: s.antidote_secondary || null,
     },
   };
 }

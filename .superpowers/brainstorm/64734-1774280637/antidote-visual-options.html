@@ -1,0 +1,132 @@
+<h2>Kaj potrebuješ danes? — Visual Design</h2>
+<p class="subtitle">Three approaches. Your site's cloud buttons are the signature design element — let's see how far we can take them.</p>
+
+<div class="cards">
+
+  <!-- Option A: Cloud Buttons -->
+  <div class="card" data-choice="cloud-buttons" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 2rem; background: linear-gradient(135deg, #f8f6f3 0%, #eee8df 100%);">
+      <p style="text-align: center; font-family: serif; font-size: 1.1em; color: #3a3530; margin-bottom: 1.5rem; letter-spacing: 0.02em;">Kaj potrebuješ danes?</p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem;">
+        <!-- Cloud shape via border-radius trick -->
+        <div style="background: linear-gradient(135deg, #fff5f5, #ffe0e4); border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(220,120,140,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #a03050;">Prijaznost</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #f0f7ff, #ddeeff); border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(100,150,220,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #2060a0;">Upanje</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #fffbf0, #fff0d0); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(200,160,60,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #8a6010;">Dobrota</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #f5f0ff, #e8ddf8); border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(140,100,200,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #6030a0;">Povezanost</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #f0fff5, #d5f5e0); border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(80,170,100,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #207040;">Odpornost</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #fff8f0, #ffe8d0); border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.7rem 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(220,150,60,0.15); min-width: 90px;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: #a06010;">Pogum</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Cloud Buttons</h3>
+      <p>Use the same cloud-shaped buttons as your category filter. Consistent with the site's identity. Just the word — no emojis, no one-liners. Clean, playful, distinctive. When active, the cloud fills with deeper color.</p>
+      <p style="color: #8b8; font-size: 0.85em;">Pros: Brand-consistent, proven design element, minimal<br>Cons: Less explanatory — first-timers might not know what "Prijaznost" filters</p>
+    </div>
+  </div>
+
+  <!-- Option B: Warm Cards with Subtext -->
+  <div class="card" data-choice="warm-cards" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 2rem; background: linear-gradient(135deg, #f8f6f3 0%, #eee8df 100%);">
+      <p style="text-align: center; font-family: serif; font-size: 1.1em; color: #3a3530; margin-bottom: 1.5rem; letter-spacing: 0.02em;">Kaj potrebuješ danes?</p>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+        <div style="background: #fff; border: 1px solid #f0e0e4; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #a03050;">Prijaznost</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko svet kliče<br>po razumu</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #dde8f0; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #2060a0;">Upanje</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko prihodnost<br>skrbi</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #f0eadc; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #8a6010;">Dobrota</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko dvomiš<br>v ljudi</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e8ddf0; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #6030a0;">Povezanost</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko se čutiš<br>sam</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #d8eee0; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #207040;">Odpornost</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko je vsega<br>preveč</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #f0e4d0; border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #a06010;">Pogum</div>
+          <div style="font-size: 0.6rem; color: #999; margin-top: 0.2rem; line-height: 1.3;">Ko se svet zdi<br>nevaren</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Minimal Cards + Subtext</h3>
+      <p>Clean rectangular cards with the antidote word + a quiet one-liner below. No emojis, no heavy styling. The subtext explains WHY you'd click — "Ko dvomiš v ljudi" tells you this is for moments of cynicism.</p>
+      <p style="color: #8b8; font-size: 0.85em;">Pros: Self-explanatory, elegant, guides first-timers<br>Cons: More rectangular/grid-like, less playful than clouds</p>
+    </div>
+  </div>
+
+  <!-- Option C: Cloud + Subtext Hybrid -->
+  <div class="card" data-choice="cloud-subtext" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 2rem; background: linear-gradient(135deg, #f8f6f3 0%, #eee8df 100%);">
+      <p style="text-align: center; font-family: serif; font-size: 1.1em; color: #3a3530; margin-bottom: 1.5rem; letter-spacing: 0.02em;">Kaj potrebuješ danes?</p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem;">
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #fff5f5, #ffe0e4); border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,120,140,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a03050;">Prijaznost</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko svet kliče po razumu</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #f0f7ff, #ddeeff); border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(100,150,220,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #2060a0;">Upanje</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko prihodnost skrbi</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #fffbf0, #fff0d0); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(200,160,60,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #8a6010;">Dobrota</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko dvomiš v ljudi</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #f5f0ff, #e8ddf8); border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(140,100,200,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #6030a0;">Povezanost</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko se čutiš sam</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #f0fff5, #d5f5e0); border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(80,170,100,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #207040;">Odpornost</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko je vsega preveč</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="background: linear-gradient(135deg, #fff8f0, #ffe8d0); border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,150,60,0.15);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a06010;">Pogum</div>
+          </div>
+          <div style="font-size: 0.55rem; color: #aaa; margin-top: 0.3rem;">ko se svet zdi nevaren</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Clouds + Whisper Subtext</h3>
+      <p>Cloud-shaped buttons (your signature) with a tiny whisper of context below each one. The cloud is the clickable element, the subtext is just a quiet hint. Best of both: playful + explanatory. Subtext fades on hover as the cloud lifts.</p>
+      <p style="color: #8b8; font-size: 0.85em;">Pros: Brand-consistent AND self-explanatory, most polished<br>Cons: Slightly more visual weight than pure clouds</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+  <h3>💡 My take</h3>
+  <p><strong>C (Clouds + Whisper)</strong> — It's your signature design + just enough context for a first-timer to understand what each button does. The subtext is so quiet it doesn't compete with the cloud word, but it answers the question "why would I click this?" Pure clouds (A) look great but leave new visitors guessing. Cards (B) are clear but lose the magic of the cloud shapes that make your site distinctive.</p>
+</div>

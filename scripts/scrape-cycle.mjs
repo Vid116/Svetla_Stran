@@ -233,7 +233,8 @@ Vrni SAMO JSON brez markdown:
   "reason": "max 2 stavka",
   "category": "ZIVALI|SKUPNOST|SPORT|NARAVA|INFRASTRUKTURA|PODJETNISTVO|SLOVENIJA_V_SVETU|JUNAKI|KULTURA",
   "headline_suggestion": "max 10 besed",
-  "antidote_for": null | "jeza"|"skrb"|"cinizem"|"osamljenost"|"obup"|"strah"|"dolgcas"
+  "antidote_for": null | "jeza"|"skrb"|"cinizem"|"osamljenost"|"obup"|"strah"|"dolgcas",
+  "antidote_secondary": null | "jeza"|"skrb"|"cinizem"|"osamljenost"|"obup"|"strah"|"dolgcas"
   // NAVODILA ZA antidote_for — razporedi ENAKOMERNO:
   // "jeza" = zgodba kjer nekdo izbere prijaznost, odpuščanje, spravo NAMESTO maščevanja ali konflikta
   // "skrb" = zgodba ki pokaže da so se stvari uredile, da sistem deluje, da je pomoč prišla
@@ -492,6 +493,7 @@ async function saveHeadlineToDB(story) {
     ai_category: story.ai?.category || null,
     ai_headline: story.ai?.headline_suggestion || null,
     ai_antidote: story.ai?.antidote_for || null,
+    ai_antidote_secondary: story.ai?.antidote_secondary || null,
     ai_rejected_because: story.ai?.rejected_because || null,
     status: story.ai?.score >= 6 && !story.ai?.rejected_because ? 'new' : 'dismissed',
     scraped_at: new Date().toISOString(),

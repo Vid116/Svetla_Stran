@@ -1,0 +1,116 @@
+<h2>Clouds + Incognito Whispers</h2>
+<p class="subtitle">The subtext only reveals on hover — invisible until you need it.</p>
+
+<div class="cards">
+
+  <!-- Option 1: Whispers appear on hover -->
+  <div class="card" data-choice="hover-reveal" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 2.5rem 2rem; background: linear-gradient(135deg, #f8f6f3 0%, #eee8df 100%);">
+      <p style="text-align: center; font-family: serif; font-size: 1.15em; color: #3a3530; margin-bottom: 1.8rem; letter-spacing: 0.02em;">Kaj potrebuješ danes?</p>
+      <style>
+        .cloud-wrap { text-align: center; cursor: pointer; transition: transform 0.2s ease; }
+        .cloud-wrap:hover { transform: translateY(-3px); }
+        .cloud-btn { transition: box-shadow 0.2s ease; }
+        .cloud-wrap:hover .cloud-btn { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .cloud-whisper {
+          font-size: 0.55rem; color: transparent; margin-top: 0.25rem;
+          transition: color 0.3s ease; letter-spacing: 0.01em; height: 0.8rem;
+        }
+        .cloud-wrap:hover .cloud-whisper { color: #bbb; }
+      </style>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem;">
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #fff5f5, #ffe0e4); border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,120,140,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a03050;">Prijaznost</div>
+          </div>
+          <div class="cloud-whisper">ko svet kliče po razumu</div>
+        </div>
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #f0f7ff, #ddeeff); border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(100,150,220,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #2060a0;">Upanje</div>
+          </div>
+          <div class="cloud-whisper">ko prihodnost skrbi</div>
+        </div>
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #fffbf0, #fff0d0); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(200,160,60,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #8a6010;">Dobrota</div>
+          </div>
+          <div class="cloud-whisper">ko dvomiš v ljudi</div>
+        </div>
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #f5f0ff, #e8ddf8); border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(140,100,200,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #6030a0;">Povezanost</div>
+          </div>
+          <div class="cloud-whisper">ko se čutiš sam</div>
+        </div>
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #f0fff5, #d5f5e0); border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(80,170,100,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #207040;">Odpornost</div>
+          </div>
+          <div class="cloud-whisper">ko je vsega preveč</div>
+        </div>
+        <div class="cloud-wrap">
+          <div class="cloud-btn" style="background: linear-gradient(135deg, #fff8f0, #ffe8d0); border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,150,60,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a06010;">Pogum</div>
+          </div>
+          <div class="cloud-whisper">ko se svet zdi nevaren</div>
+        </div>
+      </div>
+      <p style="text-align: center; font-size: 0.55rem; color: #ccc; margin-top: 1.2rem;">↑ hover to see more</p>
+    </div>
+    <div class="card-body">
+      <h3>Hover Reveal</h3>
+      <p>Whispers are invisible (transparent text) until you hover a cloud. Then they fade in as light gray. The space is reserved so nothing jumps. Cloud lifts slightly on hover too.</p>
+    </div>
+  </div>
+
+  <!-- Option 2: Whispers always there but barely visible -->
+  <div class="card" data-choice="ghost-text" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 2.5rem 2rem; background: linear-gradient(135deg, #f8f6f3 0%, #eee8df 100%);">
+      <p style="text-align: center; font-family: serif; font-size: 1.15em; color: #3a3530; margin-bottom: 1.8rem; letter-spacing: 0.02em;">Kaj potrebuješ danes?</p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem;">
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #fff5f5, #ffe0e4); border-radius: 58% 42% 55% 45% / 52% 60% 40% 48%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,120,140,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a03050;">Prijaznost</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko svet kliče po razumu</div>
+        </div>
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #f0f7ff, #ddeeff); border-radius: 45% 55% 48% 52% / 60% 45% 55% 40%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(100,150,220,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #2060a0;">Upanje</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko prihodnost skrbi</div>
+        </div>
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #fffbf0, #fff0d0); border-radius: 52% 48% 42% 58% / 48% 55% 45% 52%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(200,160,60,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #8a6010;">Dobrota</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko dvomiš v ljudi</div>
+        </div>
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #f5f0ff, #e8ddf8); border-radius: 48% 52% 58% 42% / 55% 42% 58% 45%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(140,100,200,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #6030a0;">Povezanost</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko se čutiš sam</div>
+        </div>
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #f0fff5, #d5f5e0); border-radius: 55% 45% 50% 50% / 45% 58% 42% 55%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(80,170,100,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #207040;">Odpornost</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko je vsega preveč</div>
+        </div>
+        <div style="text-align: center; cursor: pointer;">
+          <div style="background: linear-gradient(135deg, #fff8f0, #ffe8d0); border-radius: 42% 58% 45% 55% / 58% 48% 52% 42%; padding: 0.8rem 1.4rem; box-shadow: 0 2px 8px rgba(220,150,60,0.12);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #a06010;">Pogum</div>
+          </div>
+          <div style="font-size: 0.5rem; color: rgba(0,0,0,0.15); margin-top: 0.25rem;">ko se svet zdi nevaren</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Ghost Text</h3>
+      <p>Whispers are always there but at 15% opacity — barely perceptible, like watermarks. You'd only notice them if you looked closely. No hover interaction needed. They're just... there, like a gentle suggestion.</p>
+    </div>
+  </div>
+
+</div>

@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
         category: result.deepScore?.category || story.ai?.category || story.ai_category,
         emotions: story.ai?.emotions || story.ai_emotions || [],
         antidote: result.deepScore?.antidote || story.ai?.antidote_for || story.ai_antidote,
+        antidote_secondary: result.deepScore?.antidote_secondary || story.ai?.antidote_secondary || null,
         ai_score: result.deepScore?.score || headlineInitialScore || null,
         // Store initial scores for feedback loop
         initial_score: headlineInitialScore,

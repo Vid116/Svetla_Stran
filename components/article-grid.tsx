@@ -332,7 +332,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
       : articles;
 
     if (activeAntidote) {
-      result = result.filter((a) => a.ai.antidote_for === activeAntidote);
+      result = result.filter((a) => a.ai.antidote_for === activeAntidote || a.ai.antidote_secondary === activeAntidote);
     }
 
     if (searchQuery.trim().length >= 3) {
@@ -419,7 +419,7 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                 onClick={() => setShowCategories(!showCategories)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                {showCategories ? '✕ Skrij teme' : '📂 Po temi ›'}
+                {showCategories ? '✕ Skrij teme' : 'Po temi ›'}
               </button>
             </div>
             {showCategories && (

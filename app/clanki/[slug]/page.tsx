@@ -41,6 +41,7 @@ function rowToArticle(s: any): PublishedArticle {
       category: s.category || "",
       emotions: s.emotions || [],
       antidote_for: s.antidote || null,
+      antidote_secondary: s.antidote_secondary || null,
     },
     references: s.research_references || undefined,
     imagePosition: s.image_position ?? 50,
