@@ -29,8 +29,63 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-// Dynamic import of the image generation module
-const { generateArticleImage } = await import('../lib/research-write/generate-image.mjs');
+// Import just the image generators + uploader (skip Claude scene description)
+const { createClient: createSBClient } = await import('@supabase/supabase-js');
+const { randomUUID } = await import('node:crypto');
+
+async function tryCloudflare(prompt) {
+  const accountId = process.env.CF_ACCOUNT_ID;
+  const apiToken = process.env.CF_API_TOKEN;
+  if (!accountId || !apiToken) return null;
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, width: 1216, height: 832 }) },
+    );
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length > 1000 ? buf : null;
+  } catch { return null; }
+}
+
+async function tryHuggingFace(prompt) {
+  const hfToken = process.env.HF_API_TOKEN;
+  if (!hfToken) return null;
+  try {
+    const res = await fetch(
+      'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+      { method: 'POST', headers: { Authorization: `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: prompt, parameters: { width: 1216, height: 832 } }) },
+    );
+    if (!res.ok) {
+      if (res.status === 503) {
+        console.log('    HuggingFace: model loading, waiting 20s...');
+        await new Promise(r => setTimeout(r, 20000));
+        const retry = await fetch(
+          'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+          { method: 'POST', headers: { Authorization: `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inputs: prompt, parameters: { width: 1216, height: 832 } }) },
+        );
+        if (!retry.ok) return null;
+        const buf = Buffer.from(await retry.arrayBuffer());
+        return buf.length > 1000 ? buf : null;
+      }
+      return null;
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length > 1000 ? buf : null;
+  } catch { return null; }
+}
+
+async function uploadToSupabase(imageBuffer, slug) {
+  const sb = createSBClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const fileName = `${slug}-${randomUUID().slice(0, 8)}.png`;
+  const { error } = await sb.storage.from('article-images').upload(fileName, imageBuffer, { contentType: 'image/png', upsert: true });
+  if (error) return null;
+  const { data } = sb.storage.from('article-images').getPublicUrl(fileName);
+  return data.publicUrl;
+}
 
 async function main() {
   console.log(`\n${'═'.repeat(60)}`);
@@ -65,12 +120,11 @@ async function main() {
   let success = 0;
   let failed = 0;
 
-  for (let i = 0; i < needsImage.length; i += BATCH_SIZE) {
-    const batch = needsImage.slice(i, i + BATCH_SIZE);
-
-    const results = await Promise.allSettled(batch.map(async (draft, j) => {
-      const idx = i + j + 1;
-      const prefix = `[${idx}/${needsImage.length}]`;
+  // Run ONE at a time — Claude Code subprocess can't handle parallel calls
+  for (let i = 0; i < needsImage.length; i++) {
+    const draft = needsImage[i];
+    const prefix = `[${i + 1}/${needsImage.length}]`;
+    {
 
       console.log(`${prefix} Processing: "${draft.title.slice(0, 50)}..." (${draft.category})`);
 
@@ -80,53 +134,48 @@ async function main() {
       }
 
       try {
-        // Generate image — this will:
-        // 1. Re-generate scene description with Claude (decides use_reference)
-        // 2. If reference needed: fetch og:image → Wikipedia fallback → describe person
-        // 3. Generate image via Nano Banana → Cloudflare → HuggingFace
-        // 4. Upload to Supabase Storage
-        const result = await generateArticleImage(
-          draft.title,
-          draft.body,
-          draft.category || 'SKUPNOST',
-          draft.slug,
-          draft.source_url || null,
-        );
-
-        if (result?.imageUrl) {
-          // Update draft with new image
-          const { error: updateErr } = await supabase
-            .from('drafts')
-            .update({
-              ai_image_url: result.imageUrl,
-              image_prompt: result.imagePrompt || draft.image_prompt,
-            })
-            .eq('id', draft.id);
-
-          if (updateErr) {
-            console.error(`${prefix} ✗ DB update failed: ${updateErr.message}`);
-            failed++;
-          } else {
-            console.log(`${prefix} ✓ Image saved`);
-            success++;
-          }
-        } else if (result?.imagePrompt) {
-          console.log(`${prefix} ⚠ No image generated, prompt saved`);
-          // Update prompt even if image failed (might have better prompt now)
-          await supabase.from('drafts').update({ image_prompt: result.imagePrompt }).eq('id', draft.id);
+        const prompt = draft.image_prompt;
+        if (!prompt) {
+          console.log(`${prefix} ⚠ No prompt saved, skipping`);
           failed++;
+          return;
+        }
+
+        // Try Cloudflare first, then HuggingFace
+        let buf = await tryCloudflare(prompt);
+        if (buf) {
+          console.log(`${prefix}   Cloudflare: ✓ ${(buf.length / 1024).toFixed(0)}KB`);
         } else {
-          console.log(`${prefix} ✗ No image or prompt generated`);
+          buf = await tryHuggingFace(prompt);
+          if (buf) {
+            console.log(`${prefix}   HuggingFace: ✓ ${(buf.length / 1024).toFixed(0)}KB`);
+          }
+        }
+
+        if (!buf) {
+          console.log(`${prefix} ✗ All image APIs failed`);
+          failed++;
+          return;
+        }
+
+        // Upload and update draft
+        const imageUrl = await uploadToSupabase(buf, draft.slug);
+        if (imageUrl) {
+          await supabase.from('drafts').update({ ai_image_url: imageUrl }).eq('id', draft.id);
+          console.log(`${prefix} ✓ Image saved`);
+          success++;
+        } else {
+          console.log(`${prefix} ✗ Upload failed`);
           failed++;
         }
       } catch (err) {
         console.error(`${prefix} ✗ Error: ${err.message}`);
         failed++;
       }
-    }));
+    }
 
-    // Delay between batches
-    if (i + BATCH_SIZE < needsImage.length) {
+    // Brief delay between images
+    if (i + 1 < needsImage.length) {
       await new Promise(r => setTimeout(r, DELAY_MS));
     }
   }
