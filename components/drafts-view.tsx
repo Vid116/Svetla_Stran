@@ -7,6 +7,7 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ICONS,
   CATEGORY_ACCENT_BAR,
+  ANTIDOTE_LABELS,
   formatDate,
 } from "@/lib/article-helpers";
 
@@ -34,6 +35,9 @@ interface Draft {
   category: string | null;
   emotions: string[];
   antidote: string | null;
+  antidote_secondary: string | null;
+  ai_score: number | null;
+  ai_image_url: string | null;
   source_name: string | null;
   source_url: string | null;
   research_queries: string[] | null;
@@ -217,9 +221,9 @@ export function DraftsView() {
               }`}
             >
               <div className="flex gap-4">
-                {draft.image_url && (
+                {(draft.image_url || draft.ai_image_url) && (
                   <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted">
-                    <img src={draft.image_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    <img src={draft.image_url || draft.ai_image_url || ''} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -234,6 +238,25 @@ export function DraftsView() {
                         draft.verification_passed ? "bg-nature/15 text-nature border-nature/30" : "bg-destructive/15 text-destructive border-destructive/30"
                       }`}>
                         {draft.verification_passed ? "Preverjeno" : "Pozor"}
+                      </Badge>
+                    )}
+                    {draft.ai_score != null && (
+                      <Badge variant="default" className={`rounded-full text-[10px] px-2 py-0 font-bold ${
+                        draft.ai_score >= 8 ? "bg-gold/20 text-gold border-gold/30" :
+                        draft.ai_score >= 6 ? "bg-sky/20 text-sky border-sky/30" :
+                        "bg-muted text-muted-foreground border-border"
+                      }`}>
+                        {draft.ai_score}/10
+                      </Badge>
+                    )}
+                    {draft.antidote && ANTIDOTE_LABELS[draft.antidote] && (
+                      <Badge variant="default" className="rounded-full text-[10px] px-2 py-0 bg-warmth/15 text-warmth border-warmth/30">
+                        {ANTIDOTE_LABELS[draft.antidote].label}
+                      </Badge>
+                    )}
+                    {draft.antidote_secondary && ANTIDOTE_LABELS[draft.antidote_secondary] && (
+                      <Badge variant="default" className="rounded-full text-[10px] px-2 py-0 bg-warmth/10 text-warmth/60 border-warmth/20">
+                        {ANTIDOTE_LABELS[draft.antidote_secondary].label}
                       </Badge>
                     )}
                     <span className="text-[10px] text-muted-foreground">
