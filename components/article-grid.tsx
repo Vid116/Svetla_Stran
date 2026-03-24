@@ -183,7 +183,7 @@ function pickFeatured(articles: PublishedArticle[]): {
   rest: PublishedArticle[];
 } {
   if (articles.length === 0) return { featured: undefined, rest: [] };
-  if (articles.length === 1) return { featured: articles[0], rest: [] };
+  if (articles.length === 1) return { featured: articles[0], rest: articles };
 
   const now = Date.now();
 
