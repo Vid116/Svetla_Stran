@@ -132,6 +132,17 @@ export async function createDraft(draft: {
   initial_antidote?: string | null;
   initial_category?: string | null;
 }) {
+  // Sanitize slug — strip diacritics, ensure ASCII-only
+  if (draft.slug) {
+    draft.slug = draft.slug
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics (š→s, č→c, ž→z)
+      .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("drafts")
