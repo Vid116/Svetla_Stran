@@ -30,7 +30,7 @@ export function MidArticleCta({ category }: { category?: string }) {
       <span>Všeč? </span>
       <button
         onClick={() => setExpanded(true)}
-        className="text-primary underline underline-offset-2 hover:text-primary/80"
+        className="text-warmth font-medium hover:text-warmth/70 transition-colors"
       >
         Vsak dan ena taka.
       </button>
