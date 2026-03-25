@@ -55,6 +55,11 @@ export function SiteFooter() {
                   O nas
                 </Link>
               </li>
+              <li>
+                <Link href="/zasebnost" className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
+                  Zasebnost
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

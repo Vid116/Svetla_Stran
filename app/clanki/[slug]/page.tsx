@@ -66,11 +66,30 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const row = await getArticleBySlug(slug);
-  if (!row) return { title: "Zgodba ni najdena" };
+  const article = await getArticleBySlug(slug);
+  if (!article) return { title: 'Članek ni najden' };
+
+  const imageUrl = article.ai_image_url || article.image_url || undefined;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://svetlastran.si';
+  const description = article.subtitle || article.body?.slice(0, 160);
+
   return {
-    title: `${row.title} | Svetla Stran`,
-    description: row.subtitle || "",
+    title: article.title,
+    description,
+    openGraph: {
+      title: article.title,
+      description,
+      url: `${baseUrl}/clanki/${slug}`,
+      type: 'article',
+      publishedTime: article.published_at,
+      images: imageUrl ? [{ url: imageUrl, width: 1200, height: 630 }] : undefined,
+    },
+    twitter: {
+      card: imageUrl ? 'summary_large_image' : 'summary',
+      title: article.title,
+      description,
+      images: imageUrl ? [imageUrl] : undefined,
+    },
   };
 }
 
