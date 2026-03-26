@@ -145,9 +145,6 @@ export default async function WelcomePage() {
               Vsako zgodbo preverimo pri izvirnih virih
               in jo napišemo tako da jo razume vsak.
             </p>
-            <p>
-              Brez senzacionalizma. Brez moraliziranja. Samo zgodbe ki si jih povedal prijatelju.
-            </p>
           </div>
         </div>
       </section>
