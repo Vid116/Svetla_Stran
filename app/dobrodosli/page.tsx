@@ -19,14 +19,22 @@ const SHOWCASE_GROUPS: { label: string; categories: string[] }[] = [
   { label: "Ponos",    categories: ["SLOVENIJA_V_SVETU", "SPORT"] },
 ];
 
-// Pick the best story from each of 4 groups
+// Same scoring as pickFeatured in article-grid.tsx: ai_score + recency (5-day decay) + image bonus
+function scoreArticle(a: any) {
+  const daysOld = (Date.now() - new Date(a.published_at || a.created_at).getTime()) / 86400000;
+  const recencyBonus = Math.max(0, 5 - daysOld);
+  const imageBonus = a.ai_image_url ? 1 : 0;
+  return (a.ai_score || 5) + recencyBonus + imageBonus;
+}
+
+// Pick the best story from each of 4 groups — same ranking as homepage featured
 function pickShowcase(articles: any[]) {
-  const withImages = articles
-    .filter((a) => a.ai_image_url && a.ai_score >= 7)
-    .sort((a, b) => (b.ai_score || 0) - (a.ai_score || 0));
+  const withImages = articles.filter((a) => a.ai_image_url);
+  const scored = withImages.map((a) => ({ ...a, _score: scoreArticle(a) }));
+  scored.sort((a, b) => b._score - a._score);
 
   return SHOWCASE_GROUPS.map((group) => {
-    const best = withImages.find((a) => group.categories.includes(a.category));
+    const best = scored.find((a) => group.categories.includes(a.category));
     return best ? { ...best, groupLabel: group.label } : null;
   }).filter(Boolean);
 }
