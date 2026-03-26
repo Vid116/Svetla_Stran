@@ -19,12 +19,12 @@ const SHOWCASE_GROUPS: { label: string; categories: string[] }[] = [
   { label: "Ponos",    categories: ["SLOVENIJA_V_SVETU", "SPORT"] },
 ];
 
-// Same scoring as pickFeatured in article-grid.tsx: ai_score + recency (5-day decay) + image bonus
+// Scoring for welcome page — heavily favors recent articles
+// An old 9/10 should NOT beat a fresh 7/10 on the landing page
 function scoreArticle(a: any) {
   const daysOld = (Date.now() - new Date(a.published_at || a.created_at).getTime()) / 86400000;
-  const recencyBonus = Math.max(0, 5 - daysOld);
-  const imageBonus = a.ai_image_url ? 1 : 0;
-  return (a.ai_score || 5) + recencyBonus + imageBonus;
+  const recencyPenalty = daysOld * 2; // lose 2 points per day old
+  return (a.ai_score || 5) - recencyPenalty;
 }
 
 // Pick the best story from each of 4 groups — same ranking as homepage featured
