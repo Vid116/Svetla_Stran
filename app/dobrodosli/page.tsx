@@ -11,30 +11,24 @@ export const metadata = {
   description: "Brez kriminala. Brez politike. Brez drame. Svet ni tak kot ga kažejo.",
 };
 
-// Pick 4 diverse, high-scoring articles with images
+// Display groups — same as article-grid.tsx
+const SHOWCASE_GROUPS: { label: string; categories: string[] }[] = [
+  { label: "Junaki",   categories: ["JUNAKI"] },
+  { label: "Divjina",  categories: ["NARAVA", "ZIVALI"] },
+  { label: "Napredek", categories: ["PODJETNISTVO", "INFRASTRUKTURA"] },
+  { label: "Ponos",    categories: ["SLOVENIJA_V_SVETU", "SPORT"] },
+];
+
+// Pick the best story from each of 4 groups
 function pickShowcase(articles: any[]) {
   const withImages = articles
     .filter((a) => a.ai_image_url && a.ai_score >= 7)
     .sort((a, b) => (b.ai_score || 0) - (a.ai_score || 0));
 
-  const picked: any[] = [];
-  const usedCategories = new Set<string>();
-
-  for (const a of withImages) {
-    if (picked.length >= 4) break;
-    if (usedCategories.has(a.category)) continue;
-    usedCategories.add(a.category);
-    picked.push(a);
-  }
-
-  // Fill remaining if not enough diverse categories
-  for (const a of withImages) {
-    if (picked.length >= 4) break;
-    if (picked.some((p) => p.slug === a.slug)) continue;
-    picked.push(a);
-  }
-
-  return picked;
+  return SHOWCASE_GROUPS.map((group) => {
+    const best = withImages.find((a) => group.categories.includes(a.category));
+    return best ? { ...best, groupLabel: group.label } : null;
+  }).filter(Boolean);
 }
 
 export default async function WelcomePage() {
@@ -117,7 +111,7 @@ export default async function WelcomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-5">
                     <span className="inline-block rounded-full bg-white/20 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-medium text-white/90 mb-2">
-                      {CATEGORY_LABELS[article.category] || article.category}
+                      {article.groupLabel}
                     </span>
                     <h3 className="text-base sm:text-lg font-semibold text-white leading-snug line-clamp-2">
                       {article.title}
