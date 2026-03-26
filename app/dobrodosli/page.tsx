@@ -62,23 +62,23 @@ export default async function WelcomePage() {
           {/* The three lines */}
           <div className="text-center space-y-8">
             {/* Line 1 — clears the table */}
-            <p className="text-sm sm:text-base tracking-wide text-muted-foreground/70 font-medium">
+            <p className="text-sm sm:text-base tracking-wide text-muted-foreground/50 font-medium">
               <span>Brez kriminala.</span>
-              <span className="mx-2 text-border/40">·</span>
+              <span className="mx-2 text-border/30">·</span>
               <span>Brez politike.</span>
-              <span className="mx-2 text-border/40">·</span>
+              <span className="mx-2 text-border/30">·</span>
               <span>Brez drame.</span>
             </p>
 
             {/* Line 2 — the reframe */}
-            <h1 className="font-brand text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground leading-tight">
+            <h1 className="font-brand text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground/70 leading-tight">
               Svet ni tak kot ga kažejo.
             </h1>
 
             {/* Line 3 — the brand promise */}
-            <p className="text-lg sm:text-xl text-muted-foreground font-light">
+            <p className="text-lg sm:text-xl text-muted-foreground/60 font-light">
               Za vsak temen dan obstaja{" "}
-              <span className="font-brand font-semibold text-foreground">svetla stran</span>.
+              <span className="font-brand font-semibold text-amber-600">svetla stran</span>.
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export default async function WelcomePage() {
           <div className="mt-12 flex flex-col items-center gap-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-8 py-3 text-sm font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-100"
+              className="inline-flex items-center gap-2 rounded-full bg-amber-600 text-white px-8 py-3 text-sm font-semibold transition-all hover:scale-105 hover:shadow-lg hover:bg-amber-500 active:scale-100"
             >
               Odkrij zgodbe
             </Link>
@@ -133,7 +133,7 @@ export default async function WelcomePage() {
       {/* ── What this is section ── */}
       <section className="mx-auto max-w-2xl px-6 py-12">
         <div className="text-center space-y-6">
-          <h2 className="font-brand text-2xl font-semibold text-foreground">
+          <h2 className="font-brand text-2xl font-semibold text-foreground/70">
             Preverjene zgodbe iz Slovenije
           </h2>
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
