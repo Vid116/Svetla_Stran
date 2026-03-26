@@ -29,7 +29,7 @@ function scoreArticle(a: any) {
 
 // Pick the best story from each of 4 groups — same ranking as homepage featured
 function pickShowcase(articles: any[]) {
-  const withImages = articles.filter((a) => a.ai_image_url);
+  const withImages = articles.filter((a) => a.ai_image_url || a.image_url);
   const scored = withImages.map((a) => ({ ...a, _score: scoreArticle(a) }));
   scored.sort((a, b) => b._score - a._score);
 
@@ -112,7 +112,7 @@ export default async function WelcomePage() {
                 <div className="relative h-48 sm:h-56">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={article.ai_image_url}
+                    src={article.ai_image_url || article.image_url}
                     alt={article.title}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
