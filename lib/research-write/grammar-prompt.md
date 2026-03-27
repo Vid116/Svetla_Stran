@@ -82,4 +82,33 @@ To so besede ki so pravilno napisane ampak NAPAČNE v kontekstu. Preveri VSAKO o
 
 ---
 
+## GLAGOLSKE NAPAKE — KRITIČNO
+
+**Osebek in glagol se MORATA ujemati. Preveri VSAK stavek:**
+
+Za vsak glagol v stavku preveri: KDO dela to dejanje? Ali je glagolska oblika prava za ta osebek?
+
+- jaz → delam, pišem, dobim, dam
+- ti → delaš, pišeš, dobiš, daš
+- on/ona/ono/žival → dela, piše, dobi, da
+- mi → delamo, pišemo, dobimo, damo
+- vi → delate, pišete, dobite, date
+- oni/one → delajo, pišejo, dobijo, dajo
+
+**Pogosta AI napaka — zamenjava osebe:**
+- "Ko dobi žival ime" ✓ (žival = ona, 3. oseba)
+- "Ko dobiš žival ime" ✗ (dobiš = ti, 2. oseba — ampak stavek govori o živali!)
+- "Ko daš živali ime" ✓ (ti daš — če nagovarjaš bralca)
+
+**TEST:** Preberi vsak stavek in vpraši: KDO je osebek? Ali glagol ustreza TEMU osebku? Če stavek govori o živali/osebi (3. oseba) ampak glagol je v 2. osebi — POPRAVI.
+
+**Zamenjava dati/dobiti:**
+- "dati ime" = poimenovati (TI daš ime nekomu)
+- "dobiti ime" = biti poimenovan (NEKDO dobi ime)
+- NE mešaj: "dobiš žival ime" je NAPAČNO — ali "daš živali ime" ali "žival dobi ime"
+
+**Splošno pravilo:** Če stavek zveni čudno ko ga prebereš naglas — je verjetno napaka. Preberi VSAK stavek naglas v glavi preden ga odobriš.
+
+---
+
 Besedilo za pregled:
