@@ -83,10 +83,11 @@ export function ProcessingView() {
 
   useEffect(() => {
     fetchProcessed();
-    // Poll every 15s to catch when processing finishes
-    const interval = setInterval(fetchProcessed, 15000);
+    const hasProcessing = headlines.some((h) => h.status === "processing");
+    const pollInterval = hasProcessing ? 30000 : 120000;
+    const interval = setInterval(fetchProcessed, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchProcessed]);
+  }, [fetchProcessed, headlines]);
 
   if (loading) {
     return (

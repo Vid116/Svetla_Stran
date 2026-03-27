@@ -6,7 +6,7 @@ export async function getInboxHeadlines(categories?: string[]) {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("headlines")
-    .select("*")
+    .select("id, status, source_url, source_name, raw_title, raw_content, full_content, ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at")
     .eq("status", "new")
     .order("ai_score", { ascending: false });
 
@@ -53,7 +53,7 @@ export async function getProcessedHeadlines(categories?: string[]) {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("headlines")
-    .select("*, drafts(id, title, slug, status, created_at, ai_score, category, antidote, antidote_secondary, ai_image_url, image_url, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
+    .select("id, status, source_url, source_name, raw_title, raw_content, full_content, ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at, drafts(id, title, slug, status, created_at, ai_score, category, antidote, antidote_secondary, ai_image_url, image_url, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
     .in("status", ["processing", "picked"])
     .order("scraped_at", { ascending: false });
 
@@ -158,7 +158,7 @@ export async function getDrafts() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("drafts")
-    .select("*")
+    .select("id, headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote, antidote_secondary, ai_score, ai_image_url, source_name, source_url, research_queries, research_sources_found, research_sources_used, research_references, verification_passed, verification_summary, verification_claims, status, created_at")
     .in("status", ["ready", "editing"])
     .order("created_at", { ascending: false });
 
@@ -272,7 +272,18 @@ export async function getPublishedArticles() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("articles")
-    .select("*")
+    .select("id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, emotions, ai_score, source_url, source_name, published_at, created_at")
+    .order("published_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getPublishedArticlesLight() {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("articles")
+    .select("id, headline_id, title, subtitle, slug, image_url, ai_image_url, category, ai_score, source_name, source_url, published_at, created_at")
     .order("published_at", { ascending: false });
 
   if (error) throw error;
@@ -291,6 +302,8 @@ export async function getArticleBySlug(slug: string) {
   return data;
 }
 
+const EMOTION_MATCH_COLUMNS = 'id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, published_at, created_at';
+
 export async function getEmotionMatchedArticles(
   currentSlug: string,
   antidote: string | null,
@@ -302,7 +315,7 @@ export async function getEmotionMatchedArticles(
   if (!antidote) {
     const { data, error } = await supabase
       .from('articles')
-      .select('*')
+      .select(EMOTION_MATCH_COLUMNS)
       .neq('slug', currentSlug)
       .eq('category', category)
       .order('published_at', { ascending: false })
@@ -314,7 +327,7 @@ export async function getEmotionMatchedArticles(
   // Best: same antidote (primary or secondary) + same category
   const { data: bestMatch, error: e1 } = await supabase
     .from('articles')
-    .select('*')
+    .select(EMOTION_MATCH_COLUMNS)
     .neq('slug', currentSlug)
     .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
     .eq('category', category)
@@ -328,7 +341,7 @@ export async function getEmotionMatchedArticles(
   const excludeSlugs = [currentSlug, ...(bestMatch || []).map((a: any) => a.slug)];
   const { data: antidoteMatch, error: e2 } = await supabase
     .from('articles')
-    .select('*')
+    .select(EMOTION_MATCH_COLUMNS)
     .not('slug', 'in', `(${excludeSlugs.join(',')})`)
     .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
     .order('published_at', { ascending: false })
@@ -342,7 +355,7 @@ export async function getEmotionMatchedArticles(
   const usedSlugs = [currentSlug, ...combined.map((a: any) => a.slug)];
   const { data: categoryFill, error: e3 } = await supabase
     .from('articles')
-    .select('*')
+    .select(EMOTION_MATCH_COLUMNS)
     .not('slug', 'in', `(${usedSlugs.join(',')})`)
     .eq('category', category)
     .order('published_at', { ascending: false })

@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
-import { getPublishedArticles } from '@/lib/db';
+import { getPublishedArticlesLight } from '@/lib/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://svetlastran.si';
 
-  const articles = await getPublishedArticles();
+  const articles = await getPublishedArticlesLight();
 
   const articleEntries = articles
     .filter((a: any) => a.slug && a.title)

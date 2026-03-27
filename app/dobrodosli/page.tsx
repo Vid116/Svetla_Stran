@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { NewsletterSignup } from "@/components/newsletter-signup";
-import { getPublishedArticles } from "@/lib/db";
+import { getPublishedArticlesLight } from "@/lib/db";
 import { CATEGORY_LABELS } from "@/lib/article-helpers";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ function pickShowcase(articles: any[]) {
 }
 
 export default async function WelcomePage() {
-  const rows = await getPublishedArticles();
+  const rows = await getPublishedArticlesLight();
   const showcase = pickShowcase(rows);
   const articleCount = rows.length;
 

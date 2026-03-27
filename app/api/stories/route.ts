@@ -3,7 +3,7 @@ import { requireAuthAPI, getAuthEditor } from "@/lib/require-auth-api";
 import {
   getInboxHeadlines,
   getProcessedHeadlines,
-  getPublishedArticles,
+  getPublishedArticlesLight,
   dismissHeadline,
   getHeadlineById,
   setHeadlineProcessing,
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (view === "published") {
-      const articles = await getPublishedArticles();
+      const articles = await getPublishedArticlesLight();
       return NextResponse.json(articles);
     }
 
