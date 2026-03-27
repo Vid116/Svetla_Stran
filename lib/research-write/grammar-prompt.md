@@ -111,4 +111,48 @@ Za vsak glagol v stavku preveri: KDO dela to dejanje? Ali je glagolska oblika pr
 
 ---
 
+## LOČILA — VEJICE IN PIKE
+
+**Vejica VEDNO pred podrednimi vezniki:**
+- ki, ko, ker, da, če, čeprav, dokler, kadar, medtem ko, preden, potem ko, zato ker
+- "Pes, ki ga je rešila, danes živi pri njej." ✓
+- "Pes ki ga je rešila danes živi pri njej." ✗
+
+**Zaporni vejici — vejica na OBEH straneh vstavljenega odvisnika:**
+- "Projekt, ki ga vodijo prostovoljci, je uspel." ✓
+- "Projekt, ki ga vodijo prostovoljci je uspel." ✗ (manjka zaključna vejica)
+- TEST: Če odstraniš vstavljen del, mora stavek še vedno delovati: "Projekt je uspel." ✓
+
+**BREZ vejice pred prirednimi vezniki (in, ter, ali, pa):**
+- "Rdeče, modre in zelene." ✓
+- "Rdeče, modre, in zelene." ✗ (angleška navada)
+- "Tekel je, plaval in kolesaril." ✓
+
+**Vejica pred "kot" — odvisno od konteksta:**
+- Primerjava brez glagola: "Hitrejši kot veter." — BREZ vejice
+- Z glagolom (uvaja odvisnik): "Storil je, kot je obljubil." — Z vejico
+
+**Pika pri vrstilnih številkah (1., 2., 3. ...):**
+- "Na 1. mestu" ✓ (= na prvem mestu)
+- "Na 1 mestu" ✗ (manjka pika)
+- "27. marca 2026" ✓
+- "27 marca 2026" ✗
+- Datumi VEDNO z vrstilno piko: dan in mesec
+
+**Okrajšave vedno s piko:**
+- npr., itd., oz., dr., mag., t. i., tj., idr.
+- Če okrajšava konča stavek — SAMO ena pika: "... itd." ✓ ne "... itd.." ✗
+
+---
+
+PRIMER:
+
+Vnos:
+{"title": "Pes ki je pobegnil našel nov dom", "subtitle": "Zgodba o psu ki je po treh mesecih na ulici končno dobil družino", "body": "Pes ki je živel v zavetišču je pobegnil pred dvema mesecema. Prostovoljci so ga iskali ampak ga niso našli. Na koncu ga je našla družina iz Ljubljane ki je bila na sprehodu v parku. Pes je bil star komaj 2 leti in je tehtal le 5 kilogramov. Rekel je: \"To je najlepši dan v mojem življenju.\" Danes živi pri njih in je srečen kot še nikoli.", "slug": "pes-ki-je-pobegnil-nasel-nov-dom"}
+
+Popravek:
+{"title": "Pes, ki je pobegnil, našel nov dom", "subtitle": "Zgodba o psu, ki je po treh mesecih na ulici končno dobil družino", "body": "Pes, ki je živel v zavetišču, je pobegnil pred dvema mesecema. Prostovoljci so ga iskali, ampak ga niso našli. Na koncu ga je našla družina iz Ljubljane, ki je bila na sprehodu v parku. Pes je bil star komaj 2 leti in je tehtal le 5 kilogramov. Rekel je: \"To je najlepši dan v mojem življenju.\" Danes živi pri njih in je srečen kot še nikoli.", "slug": "pes-ki-je-pobegnil-nasel-nov-dom"}
+
+---
+
 Besedilo za pregled:
