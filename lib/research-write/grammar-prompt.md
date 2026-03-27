@@ -55,4 +55,31 @@
 
 ---
 
+## KONTEKSTNE NAPAKE — ZAMENJAVE BESED
+
+To so besede ki so pravilno napisane ampak NAPAČNE v kontekstu. Preveri VSAKO od teh:
+
+**Živali vs rastline:**
+- "mladiče" (živali) ✓ vs "mladice" (rastline) ✗ — če gre za žival, ribo, ptice → mladiče
+- "vrsta" (živalska/rastlinska) — preveri ali se sklanja pravilno za kontekst
+- "leglo" (živali) vs "ležišče" (za spanje)
+
+**Pogosto zamenjane besede:**
+- "izdaja" (izdajstvo) vs "izvedba" (edition, ponovitev) — če gre za dogodek, koncert, tekmovanje → "izvedba" ali "ponovitev"
+- "zastopati" (braniti) vs "predstavljati" (represent) — pogosta napaka
+- "odkrivati" (razkrivati skrivnost) vs "odkrivati" (to discover) — preveri kontekst
+- "naslov" (tytle/address) — preveri ali gre za naslov članka ali naslov stanovanja
+- "postava" (figure/body) vs "postavitev" (placement/setup)
+- "odpreti" vs "odpirati" — dovršni vs nedovršni vid
+- "preiskava" (kriminalistična) vs "raziskava" (znanstvena)
+
+**Napačne predložne zveze:**
+- "v januarju" ✓ ne "na januarju" ✗
+- "na koncu" ✓ ne "v koncu" ✗
+- "na vrhu" ✓ ne "v vrhu" ✗
+
+**Kontekstualni test:** Za vsako besedo ki ima več pomenov, preveri ali pomen ustreza kontekstu stavka. Če bi bralec lahko razumel napačen pomen, zamenjaj z nedvoumno besedo.
+
+---
+
 Besedilo za pregled:
