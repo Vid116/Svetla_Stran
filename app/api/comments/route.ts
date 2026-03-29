@@ -6,7 +6,7 @@ import {
   moderateComment,
   deleteComment,
 } from "@/lib/db";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSQL } from "@/lib/neon";
 
 export async function GET(req: NextRequest) {
   try {
@@ -93,25 +93,15 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      // Fetch parent comment to get article_id
-      const supabase = getSupabaseAdmin();
-      const { data: parent, error: parentErr } = await supabase
-        .from("comments")
-        .select("article_id")
-        .eq("id", commentId)
-        .single();
-
-      if (parentErr || !parent) {
-        return NextResponse.json(
-          { error: "Komentar ne obstaja" },
-          { status: 404 },
-        );
+      const sql = getSQL();
+      const parents = await sql`SELECT article_id FROM comments WHERE id = ${commentId}`;
+      if (parents.length === 0) {
+        return NextResponse.json({ error: "Komentar ne obstaja" }, { status: 404 });
       }
 
       const editor = await getAuthEditor();
-
       await createComment({
-        article_id: parent.article_id,
+        article_id: parents[0].article_id,
         parent_id: commentId,
         author_name: editor!.name,
         author_type: "editor",

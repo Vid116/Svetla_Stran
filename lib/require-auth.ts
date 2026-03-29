@@ -1,29 +1,19 @@
 import { redirect } from "next/navigation";
-import { getSupabaseServer, getSupabaseAdmin } from "./supabase";
+import { getSession } from "./auth";
+import { getSQL } from "./neon";
 
-/**
- * Call at the top of any protected server component.
- * Redirects to /prijava if not authenticated.
- */
 export async function requireAuth() {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getSession();
+  if (!session) redirect("/prijava");
 
-  if (!user) {
-    redirect("/prijava");
-  }
+  const sql = getSQL();
+  const rows = await sql`
+    SELECT id, username, name, role, categories, active
+    FROM editors WHERE id = ${session.userId}
+  `;
+  const editor = rows[0];
 
-  // Look up editor record for role + categories
-  const admin = getSupabaseAdmin();
-  const { data: editor } = await admin
-    .from("editors")
-    .select("id, username, name, role, categories, active")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!editor || !editor.active) {
-    redirect("/prijava");
-  }
+  if (!editor || !editor.active) redirect("/prijava");
 
   return {
     user: {

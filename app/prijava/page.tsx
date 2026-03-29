@@ -1,53 +1,28 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
-
-function getSupabaseBrowser() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+import { loginAction } from "./actions";
 
 function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/urednik";
+  const [state, formAction, pending] = useActionState(loginAction, null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    const supabase = getSupabaseBrowser();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: `${username}@svetlastran.si`,
-      password,
-    });
-
-    if (authError) {
-      setError("Napacno uporabnisko ime ali geslo");
-      setLoading(false);
-    } else {
-      window.location.href = redirectTo;
-    }
+  // Redirect on success
+  if (state?.success) {
+    window.location.href = redirectTo;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form action={formAction} className="space-y-4">
       <div>
         <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           Uporabnisko ime
         </label>
         <input
           type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          name="username"
           required
           autoFocus
           autoComplete="username"
@@ -62,26 +37,25 @@ function LoginForm() {
         </label>
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
           required
           autoComplete="current-password"
           className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
       </div>
 
-      {error && (
+      {state?.error && (
         <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
-          {error}
+          {state.error}
         </div>
       )}
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={pending}
         className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? "Prijavljam..." : "Prijava"}
+        {pending ? "Prijavljam..." : "Prijava"}
       </button>
     </form>
   );

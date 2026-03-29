@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createBrowserClient } from "@supabase/ssr";
-import { useRouter } from "next/navigation";
 
 export function UserMenu() {
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    // Fetch editor info from API
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -21,11 +17,7 @@ export function UserMenu() {
   if (!displayName) return null;
 
   async function handleSignOut() {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.auth.signOut();
+    await fetch("/api/me", { method: "DELETE" });
     window.location.href = "/prijava";
   }
 

@@ -9,7 +9,7 @@ import {
   setHeadlineProcessing,
   deleteDraftsByHeadlineId,
 } from "@/lib/db";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSQL } from "@/lib/neon";
 
 // GET — inbox headlines (filtered by user's categories)
 // ?view=processing returns processing+picked headlines
@@ -70,25 +70,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "articleId je obvezen" }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
+    const sql = getSQL();
 
-    // Get article to find headline_id
-    const { data: article } = await supabase
-      .from("articles")
-      .select("headline_id")
-      .eq("id", articleId)
-      .single();
+    const articles = await sql`SELECT headline_id FROM articles WHERE id = ${articleId}`;
+    const headlineId = articles[0]?.headline_id;
 
-    // Delete article
-    const { error } = await supabase.from("articles").delete().eq("id", articleId);
-    if (error) throw error;
+    await sql`DELETE FROM articles WHERE id = ${articleId}`;
 
-    // Reset headline back to "new" so it can be re-processed
-    if (article?.headline_id) {
-      await supabase
-        .from("headlines")
-        .update({ status: "new" })
-        .eq("id", article.headline_id);
+    if (headlineId) {
+      await sql`UPDATE headlines SET status = 'new' WHERE id = ${headlineId}`;
     }
 
     return NextResponse.json({ ok: true });
@@ -98,7 +88,6 @@ export async function DELETE(req: NextRequest) {
 }
 
 // POST — rerun research on a published article
-// Unpublishes, then triggers research-write pipeline
 export async function POST(req: NextRequest) {
   const denied = await requireAuthAPI();
   if (denied) return denied;
@@ -114,35 +103,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "articleId je obvezen" }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
+    const sql = getSQL();
 
-    // Get article to find headline
-    const { data: article } = await supabase
-      .from("articles")
-      .select("headline_id")
-      .eq("id", articleId)
-      .single();
-
-    if (!article?.headline_id) {
+    const articles = await sql`SELECT headline_id FROM articles WHERE id = ${articleId}`;
+    if (!articles[0]?.headline_id) {
       return NextResponse.json({ error: "Clanek nima povezane novice" }, { status: 400 });
     }
+    const headlineId = articles[0].headline_id;
 
-    // Delete article
-    await supabase.from("articles").delete().eq("id", articleId);
+    await sql`DELETE FROM articles WHERE id = ${articleId}`;
+    await deleteDraftsByHeadlineId(headlineId);
 
-    // Delete any existing drafts for this headline
-    await deleteDraftsByHeadlineId(article.headline_id);
-
-    // Get headline data for research
-    const headline = await getHeadlineById(article.headline_id);
+    const headline = await getHeadlineById(headlineId);
     if (!headline) {
       return NextResponse.json({ error: "Novica ne obstaja vec" }, { status: 404 });
     }
 
-    // Set to processing
-    await setHeadlineProcessing(article.headline_id);
+    await setHeadlineProcessing(headlineId);
 
-    // Fire research-write in background (don't await)
+    // Fire research-write in background
     fetch(`${req.nextUrl.origin}/api/research-write`, {
       method: "POST",
       headers: {
@@ -161,7 +140,7 @@ export async function POST(req: NextRequest) {
         ai_headline: headline.ai_headline,
         ai_antidote: headline.ai_antidote,
       }),
-    }).catch(() => {}); // Fire and forget
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true, headlineId: headline.id });
   } catch (err: any) {

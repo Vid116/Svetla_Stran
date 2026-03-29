@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSQL } from "@/lib/neon";
 
 const ALL_CATEGORIES = [
   "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, categories } = body;
 
-    // Validate email
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email je obvezen." }, { status: 400 });
     }
@@ -21,60 +20,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Neveljaven email naslov." }, { status: 400 });
     }
 
-    // Validate categories (optional — default to all)
     let selectedCategories = ALL_CATEGORIES;
     if (categories && Array.isArray(categories) && categories.length > 0) {
       selectedCategories = categories.filter((c: string) => ALL_CATEGORIES.includes(c));
-      if (selectedCategories.length === 0) {
-        selectedCategories = ALL_CATEGORIES;
-      }
+      if (selectedCategories.length === 0) selectedCategories = ALL_CATEGORIES;
     }
 
-    const supabase = getSupabaseAdmin();
+    const sql = getSQL();
 
-    // Check if already subscribed
-    const { data: existing } = await supabase
-      .from("subscribers")
-      .select("id, status")
-      .eq("email", emailTrimmed)
-      .single();
+    const existing = await sql`SELECT id, status FROM subscribers WHERE email = ${emailTrimmed}`;
 
-    if (existing) {
-      if (existing.status === "active") {
-        // Already active — update categories silently
-        await supabase
-          .from("subscribers")
-          .update({ categories: selectedCategories })
-          .eq("id", existing.id);
+    if (existing.length > 0) {
+      const row = existing[0];
+      if (row.status === "active") {
+        await sql`UPDATE subscribers SET categories = ${selectedCategories} WHERE id = ${row.id}`;
         return NextResponse.json({ success: true, message: "Nastavitve posodobljene." });
       }
 
-      // Was unsubscribed — resubscribe
-      await supabase
-        .from("subscribers")
-        .update({
-          status: "active",
-          categories: selectedCategories,
-          unsubscribed_at: null,
-        })
-        .eq("id", existing.id);
+      await sql`
+        UPDATE subscribers SET status = 'active', categories = ${selectedCategories}, unsubscribed_at = null
+        WHERE id = ${row.id}
+      `;
       return NextResponse.json({ success: true, message: "Dobrodošli nazaj!" });
     }
 
-    // New subscriber
-    const { error } = await supabase.from("subscribers").insert({
-      email: emailTrimmed,
-      categories: selectedCategories,
-      source: "website",
-    });
-
-    if (error) {
-      if (error.code === "23505") {
-        // Unique constraint — race condition, already exists
-        return NextResponse.json({ success: true });
-      }
-      throw error;
-    }
+    await sql`
+      INSERT INTO subscribers (email, categories, source)
+      VALUES (${emailTrimmed}, ${selectedCategories}, 'website')
+      ON CONFLICT (email) DO NOTHING
+    `;
 
     return NextResponse.json({ success: true, message: "Uspešno! Dobrodošli." });
   } catch (e: any) {

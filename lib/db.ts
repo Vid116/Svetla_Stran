@@ -1,105 +1,113 @@
-import { getSupabaseAdmin } from "./supabase";
+import { getSQL } from "./neon";
 
 // ── Headline queries ────────────────────────────────────────────────────────
 
 export async function getInboxHeadlines(categories?: string[]) {
-  const supabase = getSupabaseAdmin();
-  let query = supabase
-    .from("headlines")
-    .select("id, status, source_url, source_name, raw_title, raw_content, full_content, ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at")
-    .eq("status", "new")
-    .order("ai_score", { ascending: false });
-
+  const sql = getSQL();
   if (categories && categories.length > 0) {
-    query = query.in("ai_category", categories);
+    return sql`
+      SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
+             ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at
+      FROM headlines
+      WHERE status = 'new' AND ai_category = ANY(${categories})
+      ORDER BY ai_score DESC
+    `;
   }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  return sql`
+    SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
+           ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at
+    FROM headlines
+    WHERE status = 'new'
+    ORDER BY ai_score DESC
+  `;
 }
 
 export async function dismissHeadline(id: string, reason?: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("headlines")
-    .update({ status: "dismissed", dismissed_reason: reason || null })
-    .eq("id", id);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`UPDATE headlines SET status = 'dismissed', dismissed_reason = ${reason || null} WHERE id = ${id}`;
 }
 
 export async function pickHeadline(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("headlines")
-    .update({ status: "picked" })
-    .eq("id", id);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`UPDATE headlines SET status = 'picked' WHERE id = ${id}`;
 }
 
 export async function setHeadlineProcessing(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("headlines")
-    .update({ status: "processing" })
-    .eq("id", id);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`UPDATE headlines SET status = 'processing' WHERE id = ${id}`;
 }
 
 export async function getProcessedHeadlines(categories?: string[]) {
-  const supabase = getSupabaseAdmin();
-  let query = supabase
-    .from("headlines")
-    .select("id, status, source_url, source_name, raw_title, raw_content, full_content, ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at, drafts(id, title, slug, status, created_at, ai_score, category, antidote, antidote_secondary, ai_image_url, image_url, verification_passed, verification_summary, verification_claims, research_queries, research_sources_found, research_sources_used, research_references)")
-    .in("status", ["processing", "picked"])
-    .order("scraped_at", { ascending: false });
+  const sql = getSQL();
 
+  // Fetch headlines
+  let headlines: any[];
   if (categories && categories.length > 0) {
-    query = query.in("ai_category", categories);
+    headlines = await sql`
+      SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
+             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at
+      FROM headlines
+      WHERE status IN ('processing', 'picked') AND ai_category = ANY(${categories})
+      ORDER BY scraped_at DESC
+    `;
+  } else {
+    headlines = await sql`
+      SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
+             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at
+      FROM headlines
+      WHERE status IN ('processing', 'picked')
+      ORDER BY scraped_at DESC
+    `;
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  if (headlines.length === 0) return [];
+
+  // Fetch drafts for these headlines
+  const headlineIds = headlines.map(h => h.id);
+  const drafts = await sql`
+    SELECT id, headline_id, title, slug, status, created_at, ai_score, category,
+           antidote, antidote_secondary, ai_image_url, image_url,
+           verification_passed, verification_summary, verification_claims,
+           research_queries, research_sources_found, research_sources_used, research_references
+    FROM drafts
+    WHERE headline_id = ANY(${headlineIds})
+  `;
+
+  // Group drafts by headline_id
+  const draftsByHeadline: Record<string, any[]> = {};
+  for (const d of drafts) {
+    if (!draftsByHeadline[d.headline_id]) draftsByHeadline[d.headline_id] = [];
+    draftsByHeadline[d.headline_id].push(d);
+  }
+
+  // Attach drafts to headlines
+  return headlines.map(h => ({
+    ...h,
+    drafts: draftsByHeadline[h.id] || [],
+  }));
 }
 
 export async function deleteDraftsByHeadlineId(headlineId: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("drafts")
-    .delete()
-    .eq("headline_id", headlineId);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`DELETE FROM drafts WHERE headline_id = ${headlineId}`;
 }
 
 export async function getDraftByHeadlineId(headlineId: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("drafts")
-    .select("id, title, slug, status, created_at, verification_passed, verification_summary")
-    .eq("headline_id", headlineId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error) return null;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`
+    SELECT id, title, slug, status, created_at, verification_passed, verification_summary
+    FROM drafts
+    WHERE headline_id = ${headlineId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  return rows[0] || null;
 }
 
 export async function getHeadlineById(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("headlines")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`SELECT * FROM headlines WHERE id = ${id}`;
+  return rows[0] || null;
 }
 
 // ── Draft queries ───────────────────────────────────────────────────────────
@@ -132,10 +140,10 @@ export async function createDraft(draft: {
   initial_antidote?: string | null;
   initial_category?: string | null;
 }) {
-  // Sanitize slug — strip diacritics, ensure ASCII-only
+  // Sanitize slug
   if (draft.slug) {
     draft.slug = draft.slug
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics (š→s, č→c, ž→z)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/đ/g, 'd').replace(/Đ/g, 'd')
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
@@ -143,166 +151,158 @@ export async function createDraft(draft: {
       .replace(/^-|-$/g, '');
   }
 
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("drafts")
-    .insert({ ...draft, status: "ready" })
-    .select("id")
-    .single();
-
-  if (error) throw error;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`
+    INSERT INTO drafts (
+      headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
+      antidote_secondary, source_name, source_url, research_queries, research_sources_found,
+      research_sources_used, research_references, verification_passed, verification_summary,
+      verification_claims, long_form, ai_image_url, image_prompt, ai_score,
+      initial_score, initial_antidote, initial_category, status
+    ) VALUES (
+      ${draft.headline_id}, ${draft.title}, ${draft.subtitle || null}, ${draft.body}, ${draft.slug},
+      ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
+      ${draft.antidote_secondary ?? null}, ${draft.source_name || null}, ${draft.source_url || null},
+      ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
+      ${draft.research_sources_used ?? null}, ${draft.research_references ? JSON.stringify(draft.research_references) : null}::jsonb,
+      ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
+      ${draft.verification_claims ? JSON.stringify(draft.verification_claims) : null}::jsonb,
+      ${draft.long_form ? JSON.stringify(draft.long_form) : null}::jsonb,
+      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score ?? null},
+      ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
+      'ready'
+    ) RETURNING id
+  `;
+  return rows[0];
 }
 
 export async function getDrafts() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("drafts")
-    .select("id, headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote, antidote_secondary, ai_score, ai_image_url, source_name, source_url, research_queries, research_sources_found, research_sources_used, research_references, verification_passed, verification_summary, verification_claims, status, created_at")
-    .in("status", ["ready", "editing"])
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT id, headline_id, title, subtitle, body, slug, image_url, category, emotions,
+           antidote, antidote_secondary, ai_score, ai_image_url, source_name, source_url,
+           research_queries, research_sources_found, research_sources_used, research_references,
+           verification_passed, verification_summary, verification_claims, status, created_at
+    FROM drafts
+    WHERE status IN ('ready', 'editing')
+    ORDER BY created_at DESC
+  `;
 }
 
 export async function getDraftById(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("drafts")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`SELECT * FROM drafts WHERE id = ${id}`;
+  return rows[0] || null;
 }
 
 export async function updateDraft(id: string, updates: Record<string, any>) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("drafts")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", id);
+  const sql = getSQL();
+  // Build SET clause dynamically
+  const sets: string[] = [];
+  const vals: any[] = [];
+  updates.updated_at = new Date().toISOString();
 
-  if (error) throw error;
+  // For dynamic updates, use a simple approach: serialize to JSON and use jsonb_populate_record
+  // Actually, let's just handle the common fields
+  await sql`
+    UPDATE drafts SET
+      title = COALESCE(${updates.title ?? null}, title),
+      subtitle = COALESCE(${updates.subtitle ?? null}, subtitle),
+      body = COALESCE(${updates.body ?? null}, body),
+      slug = COALESCE(${updates.slug ?? null}, slug),
+      image_url = COALESCE(${updates.image_url ?? null}, image_url),
+      category = COALESCE(${updates.category ?? null}, category),
+      antidote = COALESCE(${updates.antidote ?? null}, antidote),
+      antidote_secondary = COALESCE(${updates.antidote_secondary ?? null}, antidote_secondary),
+      ai_image_url = COALESCE(${updates.ai_image_url ?? null}, ai_image_url),
+      image_prompt = COALESCE(${updates.image_prompt ?? null}, image_prompt),
+      ai_score = COALESCE(${updates.ai_score ?? null}, ai_score),
+      status = COALESCE(${updates.status ?? null}, status),
+      updated_at = ${updates.updated_at}
+    WHERE id = ${id}
+  `;
 }
 
 export async function deleteDraft(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("drafts")
-    .delete()
-    .eq("id", id);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`DELETE FROM drafts WHERE id = ${id}`;
 }
 
 // ── Article queries ─────────────────────────────────────────────────────────
 
 export async function publishDraft(draftId: string) {
-  const supabase = getSupabaseAdmin();
+  const sql = getSQL();
 
   // Fetch the draft
-  const { data: draft, error: fetchErr } = await supabase
-    .from("drafts")
-    .select("*")
-    .eq("id", draftId)
-    .single();
+  const drafts = await sql`SELECT * FROM drafts WHERE id = ${draftId}`;
+  const draft = drafts[0];
+  if (!draft) throw new Error("Draft not found");
 
-  if (fetchErr || !draft) throw fetchErr || new Error("Draft not found");
-
-  // Fetch ai_score from the headline as fallback
+  // Fetch ai_score from headline as fallback
   let headlineScore: number | null = null;
   if (draft.headline_id) {
-    const { data: headline } = await supabase
-      .from("headlines")
-      .select("ai_score")
-      .eq("id", draft.headline_id)
-      .single();
-    headlineScore = headline?.ai_score ?? null;
+    const hRows = await sql`SELECT ai_score FROM headlines WHERE id = ${draft.headline_id}`;
+    headlineScore = hRows[0]?.ai_score ?? null;
   }
 
   // Insert into articles
-  const { error: insertErr } = await supabase.from("articles").insert({
-    headline_id: draft.headline_id,
-    title: draft.title,
-    subtitle: draft.subtitle,
-    body: draft.body,
-    slug: draft.slug,
-    image_url: draft.image_url,
-    category: draft.category,
-    emotions: draft.emotions,
-    antidote: draft.antidote,
-    antidote_secondary: draft.antidote_secondary || null,
-    source_name: draft.source_name,
-    source_url: draft.source_url,
-    image_position: 50,
-    research_references: draft.research_references || [],
-    raw_title: draft.raw_title || null,
-    ai_score: draft.ai_score || headlineScore || 0,
-    initial_score: draft.initial_score || null,
-    initial_antidote: draft.initial_antidote || null,
-    initial_category: draft.initial_category || null,
-    ai_image_url: draft.ai_image_url || null,
-    verification_passed: draft.verification_passed ?? null,
-    verification_summary: draft.verification_summary || null,
-    verification_claims: draft.verification_claims || [],
-    research_queries: draft.research_queries || [],
-    research_sources_found: draft.research_sources_found ?? null,
-    research_sources_used: draft.research_sources_used ?? null,
-    long_form: draft.long_form || null,
-  });
+  await sql`
+    INSERT INTO articles (
+      headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
+      antidote_secondary, source_name, source_url, image_position, research_references,
+      raw_title, ai_score, initial_score, initial_antidote, initial_category, ai_image_url,
+      verification_passed, verification_summary, verification_claims,
+      research_queries, research_sources_found, research_sources_used, long_form
+    ) VALUES (
+      ${draft.headline_id}, ${draft.title}, ${draft.subtitle}, ${draft.body}, ${draft.slug},
+      ${draft.image_url}, ${draft.category}, ${draft.emotions || []}, ${draft.antidote},
+      ${draft.antidote_secondary || null}, ${draft.source_name}, ${draft.source_url},
+      50, ${JSON.stringify(draft.research_references || [])}::jsonb,
+      ${draft.raw_title || null}, ${draft.ai_score || headlineScore || 0},
+      ${draft.initial_score || null}, ${draft.initial_antidote || null}, ${draft.initial_category || null},
+      ${draft.ai_image_url || null},
+      ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
+      ${JSON.stringify(draft.verification_claims || [])}::jsonb,
+      ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
+      ${draft.research_sources_used ?? null}, ${draft.long_form ? JSON.stringify(draft.long_form) : null}::jsonb
+    )
+  `;
 
-  if (insertErr) throw insertErr;
-
-  // Mark headline as published so it leaves "V obdelavi"
+  // Mark headline as published
   if (draft.headline_id) {
-    await supabase
-      .from("headlines")
-      .update({ status: "published" })
-      .eq("id", draft.headline_id);
+    await sql`UPDATE headlines SET status = 'published' WHERE id = ${draft.headline_id}`;
   }
 
   // Remove the draft
-  await supabase.from("drafts").delete().eq("id", draftId);
+  await sql`DELETE FROM drafts WHERE id = ${draftId}`;
 }
 
 export async function getPublishedArticles() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, emotions, ai_score, source_url, source_name, published_at, created_at")
-    .order("published_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT id, title, subtitle, body, slug, image_url, ai_image_url, category,
+           antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
+           published_at, created_at
+    FROM articles
+    ORDER BY published_at DESC
+  `;
 }
 
 export async function getPublishedArticlesLight() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id, headline_id, title, subtitle, slug, image_url, ai_image_url, category, ai_score, source_name, source_url, published_at, created_at")
-    .order("published_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT id, headline_id, title, subtitle, slug, image_url, ai_image_url, category,
+           ai_score, source_name, source_url, published_at, created_at
+    FROM articles
+    ORDER BY published_at DESC
+  `;
 }
 
 export async function getArticleBySlug(slug: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (error) return null;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`SELECT * FROM articles WHERE slug = ${slug}`;
+  return rows[0] || null;
 }
-
-const EMOTION_MATCH_COLUMNS = 'id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, published_at, created_at';
 
 export async function getEmotionMatchedArticles(
   currentSlug: string,
@@ -310,72 +310,64 @@ export async function getEmotionMatchedArticles(
   category: string | null,
   limit: number = 3
 ): Promise<any[]> {
-  const supabase = getSupabaseAdmin();
+  const sql = getSQL();
+  const cols = `id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, published_at, created_at`;
 
   if (!antidote) {
-    const { data, error } = await supabase
-      .from('articles')
-      .select(EMOTION_MATCH_COLUMNS)
-      .neq('slug', currentSlug)
-      .eq('category', category)
-      .order('published_at', { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return data || [];
+    return sql`
+      SELECT ${sql.unsafe(cols)}
+      FROM articles
+      WHERE slug != ${currentSlug} AND category = ${category}
+      ORDER BY published_at DESC
+      LIMIT ${limit}
+    `;
   }
 
-  // Best: same antidote (primary or secondary) + same category
-  const { data: bestMatch, error: e1 } = await supabase
-    .from('articles')
-    .select(EMOTION_MATCH_COLUMNS)
-    .neq('slug', currentSlug)
-    .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
-    .eq('category', category)
-    .order('published_at', { ascending: false })
-    .limit(limit);
-  if (e1) throw e1;
+  // Best: same antidote + same category
+  const bestMatch = await sql`
+    SELECT ${sql.unsafe(cols)}
+    FROM articles
+    WHERE slug != ${currentSlug}
+      AND (antidote = ${antidote} OR antidote_secondary = ${antidote})
+      AND category = ${category}
+    ORDER BY published_at DESC
+    LIMIT ${limit}
+  `;
 
-  if (bestMatch && bestMatch.length >= limit) return bestMatch;
+  if (bestMatch.length >= limit) return bestMatch;
 
-  // Good: same antidote (primary or secondary), any category
-  const excludeSlugs = [currentSlug, ...(bestMatch || []).map((a: any) => a.slug)];
-  const { data: antidoteMatch, error: e2 } = await supabase
-    .from('articles')
-    .select(EMOTION_MATCH_COLUMNS)
-    .not('slug', 'in', `(${excludeSlugs.join(',')})`)
-    .or(`antidote.eq.${antidote},antidote_secondary.eq.${antidote}`)
-    .order('published_at', { ascending: false })
-    .limit(limit - (bestMatch?.length || 0));
-  if (e2) throw e2;
+  // Good: same antidote, any category
+  const excludeSlugs = [currentSlug, ...bestMatch.map((a: any) => a.slug)];
+  const antidoteMatch = await sql`
+    SELECT ${sql.unsafe(cols)}
+    FROM articles
+    WHERE slug != ALL(${excludeSlugs})
+      AND (antidote = ${antidote} OR antidote_secondary = ${antidote})
+    ORDER BY published_at DESC
+    LIMIT ${limit - bestMatch.length}
+  `;
 
-  const combined = [...(bestMatch || []), ...(antidoteMatch || [])];
+  const combined = [...bestMatch, ...antidoteMatch];
   if (combined.length >= limit) return combined.slice(0, limit);
 
   // Fallback: category-only
   const usedSlugs = [currentSlug, ...combined.map((a: any) => a.slug)];
-  const { data: categoryFill, error: e3 } = await supabase
-    .from('articles')
-    .select(EMOTION_MATCH_COLUMNS)
-    .not('slug', 'in', `(${usedSlugs.join(',')})`)
-    .eq('category', category)
-    .order('published_at', { ascending: false })
-    .limit(limit - combined.length);
-  if (e3) throw e3;
+  const categoryFill = await sql`
+    SELECT ${sql.unsafe(cols)}
+    FROM articles
+    WHERE slug != ALL(${usedSlugs}) AND category = ${category}
+    ORDER BY published_at DESC
+    LIMIT ${limit - combined.length}
+  `;
 
-  return [...combined, ...(categoryFill || [])].slice(0, limit);
+  return [...combined, ...categoryFill].slice(0, limit);
 }
 
 // ── Sources queries ──────────────────────────────────────────────────────────
 
 export async function getSources() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("sources")
-    .select("*")
-    .order("name");
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`SELECT * FROM sources ORDER BY name`;
 }
 
 export async function addSource(source: {
@@ -386,67 +378,60 @@ export async function addSource(source: {
   link_selector?: string;
   link_pattern?: string;
 }) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("sources").insert(source);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`
+    INSERT INTO sources (name, url, type, category, link_selector, link_pattern)
+    VALUES (${source.name}, ${source.url}, ${source.type}, ${source.category || null},
+            ${source.link_selector || null}, ${source.link_pattern || null})
+  `;
 }
 
 export async function updateSource(url: string, updates: Record<string, any>) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("sources").update(updates).eq("url", url);
-  if (error) throw error;
+  const sql = getSQL();
+  // Simple approach: update all settable fields
+  await sql`
+    UPDATE sources SET
+      name = COALESCE(${updates.name ?? null}, name),
+      type = COALESCE(${updates.type ?? null}, type),
+      category = COALESCE(${updates.category ?? null}, category),
+      link_selector = COALESCE(${updates.link_selector ?? null}, link_selector),
+      link_pattern = COALESCE(${updates.link_pattern ?? null}, link_pattern),
+      active = COALESCE(${updates.active ?? null}, active),
+      scrape_tier = COALESCE(${updates.scrape_tier ?? null}, scrape_tier)
+    WHERE url = ${url}
+  `;
 }
 
 export async function deleteSource(url: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("sources").delete().eq("url", url);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`DELETE FROM sources WHERE url = ${url}`;
 }
 
 // ── Source stats ─────────────────────────────────────────────────────────────
 
 export async function getSourceStats() {
-  const supabase = getSupabaseAdmin();
+  const sql = getSQL();
+  const headlineRows = await sql`SELECT source_name, count(*)::int AS cnt FROM headlines GROUP BY source_name`;
+  const articleRows = await sql`SELECT source_name, count(*)::int AS cnt FROM articles GROUP BY source_name`;
 
-  // Count headlines per source_name
-  const { data: headlineCounts } = await supabase
-    .from("headlines")
-    .select("source_name")
-    .then(({ data }) => {
-      const counts: Record<string, number> = {};
-      for (const h of data || []) {
-        counts[h.source_name] = (counts[h.source_name] || 0) + 1;
-      }
-      return { data: counts };
-    });
+  const headlines: Record<string, number> = {};
+  for (const r of headlineRows) headlines[r.source_name] = r.cnt;
 
-  // Count published articles per source_name
-  const { data: articleCounts } = await supabase
-    .from("articles")
-    .select("source_name")
-    .then(({ data }) => {
-      const counts: Record<string, number> = {};
-      for (const a of data || []) {
-        counts[a.source_name] = (counts[a.source_name] || 0) + 1;
-      }
-      return { data: counts };
-    });
+  const articles: Record<string, number> = {};
+  for (const r of articleRows) articles[r.source_name] = r.cnt;
 
-  return { headlines: headlineCounts || {}, articles: articleCounts || {} };
+  return { headlines, articles };
 }
 
 // ── Source suggestion queries ────────────────────────────────────────────────
 
 export async function getSourceSuggestions(status: string = "pending") {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("source_suggestions")
-    .select("*")
-    .eq("status", status)
-    .order("confidence", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT * FROM source_suggestions
+    WHERE status = ${status}
+    ORDER BY confidence DESC
+  `;
 }
 
 export async function addSourceSuggestion(suggestion: {
@@ -460,69 +445,60 @@ export async function addSourceSuggestion(suggestion: {
   confidence?: number;
   headline_id?: string;
 }) {
-  const supabase = getSupabaseAdmin();
+  const sql = getSQL();
 
-  // Check if domain already exists (any status)
-  const { data: existing } = await supabase
-    .from("source_suggestions")
-    .select("id, status, confidence")
-    .eq("domain", suggestion.domain)
-    .single();
+  // Check if domain already exists
+  const existing = await sql`
+    SELECT id, status, confidence FROM source_suggestions WHERE domain = ${suggestion.domain}
+  `;
 
-  if (existing) {
-    // If pending, bump confidence (seen in more researches = stronger signal)
-    if (existing.status === "pending") {
-      const newConfidence = Math.min(1.0, (existing.confidence || 0) + 0.15);
-      await supabase
-        .from("source_suggestions")
-        .update({ confidence: newConfidence, reason: suggestion.reason })
-        .eq("id", existing.id);
+  if (existing.length > 0) {
+    const row = existing[0];
+    if (row.status === "pending") {
+      const newConfidence = Math.min(1.0, (row.confidence || 0) + 0.15);
+      await sql`
+        UPDATE source_suggestions SET confidence = ${newConfidence}, reason = ${suggestion.reason || null}
+        WHERE id = ${row.id}
+      `;
     }
-    // If approved or dismissed, skip — editor already decided
     return;
   }
 
-  // New domain — insert
-  const { error } = await supabase
-    .from("source_suggestions")
-    .insert(suggestion);
-
-  if (error && error.code !== "23505") throw error;
+  // New domain
+  await sql`
+    INSERT INTO source_suggestions (domain, name, url, rss_url, suggested_type, category, reason, confidence, headline_id)
+    VALUES (${suggestion.domain}, ${suggestion.name || null}, ${suggestion.url},
+            ${suggestion.rss_url || null}, ${suggestion.suggested_type || 'unknown'},
+            ${suggestion.category || null}, ${suggestion.reason || null},
+            ${suggestion.confidence || 0}, ${suggestion.headline_id || null})
+    ON CONFLICT (domain) DO NOTHING
+  `;
 }
 
 export async function updateSuggestionStatus(id: string, status: "approved" | "dismissed") {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("source_suggestions")
-    .update({ status })
-    .eq("id", id);
-
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`UPDATE source_suggestions SET status = ${status} WHERE id = ${id}`;
 }
 
 // ── Editors queries ──────────────────────────────────────────────────────────
 
 export async function getEditors() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("editors")
-    .select("id, auth_id, username, name, role, categories, active, created_at")
-    .order("created_at");
-
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT id, auth_id, username, name, role, categories, active, created_at
+    FROM editors
+    ORDER BY created_at
+  `;
 }
 
 export async function getEditorByUsername(username: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("editors")
-    .select("id, auth_id, username, name, role, categories, active")
-    .eq("username", username)
-    .single();
-
-  if (error) return null;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`
+    SELECT id, auth_id, username, name, role, categories, active
+    FROM editors
+    WHERE username = ${username}
+  `;
+  return rows[0] || null;
 }
 
 export async function addEditor(editor: {
@@ -532,43 +508,48 @@ export async function addEditor(editor: {
   role: string;
   categories: string[];
 }) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("editors").insert(editor);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`
+    INSERT INTO editors (auth_id, username, name, role, categories)
+    VALUES (${editor.auth_id || null}, ${editor.username}, ${editor.name}, ${editor.role}, ${editor.categories})
+  `;
 }
 
 export async function updateEditor(id: string, updates: Record<string, any>) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase
-    .from("editors")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`
+    UPDATE editors SET
+      username = COALESCE(${updates.username ?? null}, username),
+      name = COALESCE(${updates.name ?? null}, name),
+      role = COALESCE(${updates.role ?? null}, role),
+      categories = COALESCE(${updates.categories ?? null}, categories),
+      active = COALESCE(${updates.active ?? null}, active),
+      updated_at = now()
+    WHERE id = ${id}
+  `;
 }
 
 export async function deleteEditor(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("editors").delete().eq("id", id);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`DELETE FROM editors WHERE id = ${id}`;
 }
 
 // ── Comments queries ─────────────────────────────────────────────────────────
 
 export async function getCommentsByArticle(articleId: string, includeAll = false) {
-  const supabase = getSupabaseAdmin();
-  let query = supabase
-    .from("comments")
-    .select("*")
-    .eq("article_id", articleId)
-    .order("created_at", { ascending: true });
-
-  if (!includeAll) {
-    query = query.eq("status", "approved");
+  const sql = getSQL();
+  if (includeAll) {
+    return sql`
+      SELECT * FROM comments
+      WHERE article_id = ${articleId}
+      ORDER BY created_at ASC
+    `;
   }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  return sql`
+    SELECT * FROM comments
+    WHERE article_id = ${articleId} AND status = 'approved'
+    ORDER BY created_at ASC
+  `;
 }
 
 export async function createComment(comment: {
@@ -580,69 +561,46 @@ export async function createComment(comment: {
   body: string;
   status: string;
 }) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("comments")
-    .insert(comment)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  const sql = getSQL();
+  const rows = await sql`
+    INSERT INTO comments (article_id, parent_id, author_name, author_type, editor_id, body, status)
+    VALUES (${comment.article_id}, ${comment.parent_id || null}, ${comment.author_name},
+            ${comment.author_type}, ${comment.editor_id || null}, ${comment.body}, ${comment.status})
+    RETURNING *
+  `;
+  return rows[0];
 }
 
 export async function moderateComment(id: string, status: string, rejectionReason?: string) {
-  const supabase = getSupabaseAdmin();
+  const sql = getSQL();
+  await sql`
+    UPDATE comments SET status = ${status}, rejection_reason = ${rejectionReason || null}, updated_at = now()
+    WHERE id = ${id}
+  `;
 
-  const updates: Record<string, any> = {
-    status,
-    updated_at: new Date().toISOString(),
-  };
-  if (rejectionReason) {
-    updates.rejection_reason = rejectionReason;
-  }
-
-  const { error } = await supabase
-    .from("comments")
-    .update(updates)
-    .eq("id", id);
-
-  if (error) throw error;
-
-  // If rejected, also reject all child comments
   if (status === "rejected") {
-    const { error: childErr } = await supabase
-      .from("comments")
-      .update({ status: "rejected", updated_at: new Date().toISOString() })
-      .eq("parent_id", id);
-
-    if (childErr) throw childErr;
+    await sql`UPDATE comments SET status = 'rejected', updated_at = now() WHERE parent_id = ${id}`;
   }
 }
 
 export async function deleteComment(id: string) {
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("comments").delete().eq("id", id);
-  if (error) throw error;
+  const sql = getSQL();
+  await sql`DELETE FROM comments WHERE id = ${id}`;
 }
 
 export async function getPendingCommentCount() {
-  const supabase = getSupabaseAdmin();
-  const { count, error } = await supabase
-    .from("comments")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  if (error) throw error;
-  return count || 0;
+  const sql = getSQL();
+  const rows = await sql`SELECT count(*)::int AS count FROM comments WHERE status = 'pending'`;
+  return rows[0]?.count || 0;
 }
 
 export async function getPendingComments() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("comments")
-    .select("*, articles(title, slug)")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true });
-  if (error) throw error;
-  return data || [];
+  const sql = getSQL();
+  return sql`
+    SELECT c.*, json_build_object('title', a.title, 'slug', a.slug) AS articles
+    FROM comments c
+    JOIN articles a ON a.id = c.article_id
+    WHERE c.status = 'pending'
+    ORDER BY c.created_at ASC
+  `;
 }

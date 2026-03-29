@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function KomentarjiPage() {
   await requireAuth();
-  const pending = await getPendingComments();
+  const pending = await getPendingComments() as any[];
 
   return (
     <main className="min-h-screen">

@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
     // Fetch headline's initial score for feedback loop (frontend doesn't send ai_score)
     let headlineInitialScore: number | null = null;
     if (headlineId) {
-      const { getSupabaseAdmin } = await import("@/lib/supabase");
-      const { data: hl } = await getSupabaseAdmin().from("headlines").select("ai_score").eq("id", headlineId).single();
-      headlineInitialScore = hl?.ai_score ?? null;
+      const { getSQL } = await import("@/lib/neon");
+      const sql = getSQL();
+      const rows = await sql`SELECT ai_score FROM headlines WHERE id = ${headlineId}`;
+      headlineInitialScore = rows[0]?.ai_score ?? null;
     }
 
     const result = await runResearchScript(story) as any;
@@ -47,11 +48,9 @@ export async function POST(req: NextRequest) {
     // Dedup: pipeline detected duplicate, skip
     if (result.skipped) {
       if (headlineId) {
-        const { getSupabaseAdmin } = await import("@/lib/supabase");
-        await getSupabaseAdmin().from("headlines").update({
-          status: "dismissed",
-          dismissed_reason: result.reason,
-        }).eq("id", headlineId);
+        const { getSQL } = await import("@/lib/neon");
+        const sql = getSQL();
+        await sql`UPDATE headlines SET status = 'dismissed', dismissed_reason = ${result.reason} WHERE id = ${headlineId}`;
       }
       return NextResponse.json(result);
     }
@@ -105,8 +104,9 @@ export async function POST(req: NextRequest) {
     // Revert headline to "new" so it stays in inbox on failure
     if (headlineId) {
       try {
-        const { getSupabaseAdmin } = await import("@/lib/supabase");
-        await getSupabaseAdmin().from("headlines").update({ status: "new" }).eq("id", headlineId);
+        const { getSQL } = await import("@/lib/neon");
+        const sql = getSQL();
+        await sql`UPDATE headlines SET status = 'new' WHERE id = ${headlineId}`;
       } catch {}
     }
 

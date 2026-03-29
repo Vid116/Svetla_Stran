@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { StoryCard } from "./story-card";
 
-// Headlines table shape (from Supabase)
+// Headlines table shape
 interface Headline {
   id: string;
   status: string;

@@ -10,7 +10,7 @@
  *   - Eager content caching: full article text saved immediately for title-filter passes
  *   - Source failure tracking: consecutive failures flagged in DB
  *   - Dual discovery: HTML backups for critical RSS sources (dedup prevents doubles)
- *   - Writes to `headlines` table in Supabase (editorial inbox reads from there)
+ *   - Writes to `headlines` table in Neon (editorial inbox reads from there)
  *
  * Usage:
  *   node scripts/scrape-cycle.mjs                # all sources
@@ -24,7 +24,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { createHash } from 'crypto';
 import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
-import { createClient } from '@supabase/supabase-js';
+import postgres from 'postgres';
 import { config } from 'dotenv';
 
 // Load .env.local for standalone execution
@@ -41,14 +41,13 @@ const AUTO_WRITE_MIN_SCORE = 8;
 const CUTOFF_HOURS = 24 * 365 * 2; // 2 years — dedup handles freshness, not cutoff
 const USER_AGENT = 'SvetlaStran/1.0 (+https://svetlastran.si)';
 
-// ── SUPABASE ────────────────────────────────────────────────────────────────
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+// ── DATABASE ────────────────────────────────────────────────────────────────
+const dbUrl = process.env.NEON_DB_URL;
+if (!dbUrl) {
+  console.error('Missing NEON_DB_URL');
   process.exit(1);
 }
-const supabase = createClient(supabaseUrl, supabaseKey);
+const sql = postgres(dbUrl, { ssl: 'require', max: 3 });
 
 // ── AGENT SDK (dynamic import) ───────────────────────────────────────────────
 // Clear CLAUDECODE to allow nested CC subprocess, and ANTHROPIC_API_KEY so
@@ -57,21 +56,16 @@ delete process.env.CLAUDECODE;
 delete process.env.ANTHROPIC_API_KEY;
 const { query } = await import('@anthropic-ai/claude-agent-sdk');
 
-// ── SOURCES (loaded from Supabase `sources` table) ──────────────────────────
+// ── SOURCES (loaded from `sources` table) ────────────────────────────────────
 
 async function loadSources() {
-  const { data, error } = await supabase
-    .from('sources')
-    .select('*')
-    .eq('active', true)
-    .order('name');
-
-  if (error) {
+  let sources;
+  try {
+    sources = await sql`SELECT * FROM sources WHERE active = true ORDER BY name`;
+  } catch (error) {
     console.error(`[Sources] DB load failed: ${error.message}`);
     return { rss: [], html: [] };
   }
-
-  let sources = data || [];
 
   // Filter by tier if specified
   if (TIER_FILTER) {
@@ -291,34 +285,33 @@ function contentHash(title, content) {
 
 async function recordSuccess(source) {
   if (!source._dbId) return;
-  await supabase.from('sources').update({
-    consecutive_failures: 0,
-    last_success_at: new Date().toISOString(),
-    last_scraped_at: new Date().toISOString(),
-  }).eq('id', source._dbId).then(() => {});
+  await sql`
+    UPDATE sources SET consecutive_failures = 0,
+      last_success_at = ${new Date().toISOString()},
+      last_scraped_at = ${new Date().toISOString()}
+    WHERE id = ${source._dbId}
+  `.catch(() => {});
 }
 
 async function recordFailure(source, errorMsg) {
   if (!source._dbId) return;
-  await supabase.from('sources').update({
-    consecutive_failures: supabase.rpc ? undefined : 1, // incremented below
-    last_failure_at: new Date().toISOString(),
-    last_scraped_at: new Date().toISOString(),
-  }).eq('id', source._dbId).then(() => {});
-  // Increment consecutive_failures
-  await supabase.rpc('increment_source_failures', { source_id: source._dbId }).catch(() => {
-    // Fallback: just set to 1 if RPC doesn't exist yet
-    supabase.from('sources').update({ consecutive_failures: 1 }).eq('id', source._dbId);
-  });
+  await sql`
+    UPDATE sources SET consecutive_failures = consecutive_failures + 1,
+      last_failure_at = ${new Date().toISOString()},
+      last_scraped_at = ${new Date().toISOString()}
+    WHERE id = ${source._dbId}
+  `.catch(() => {});
 }
 
 async function saveEtag(source, etag, lastModified) {
   if (!source._dbId) return;
-  const updates = {};
-  if (etag) updates.last_etag = etag;
-  if (lastModified) updates.last_modified = lastModified;
-  if (Object.keys(updates).length > 0) {
-    await supabase.from('sources').update(updates).eq('id', source._dbId).then(() => {});
+  if (etag || lastModified) {
+    await sql`
+      UPDATE sources SET
+        last_etag = COALESCE(${etag || null}, last_etag),
+        last_modified = COALESCE(${lastModified || null}, last_modified)
+      WHERE id = ${source._dbId}
+    `.catch(() => {});
   }
 }
 
@@ -539,13 +532,21 @@ async function saveHeadlineToDB(story) {
     scraped_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from('headlines').upsert(row, {
-    onConflict: 'source_url',
-    ignoreDuplicates: true,
-  });
-
-  if (error && error.code !== '23505') {
-    console.error(`  DB save fail [${story.rawTitle.slice(0, 40)}]: ${error.message}`);
+  try {
+    await sql`
+      INSERT INTO headlines (source_url, source_name, raw_title, raw_content, full_content, content_hash,
+        ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, ai_antidote_secondary,
+        ai_rejected_because, hero_image, status, scraped_at)
+      VALUES (${row.source_url}, ${row.source_name}, ${row.raw_title}, ${row.raw_content}, ${row.full_content},
+        ${row.content_hash}, ${row.ai_score}, ${row.ai_emotions}, ${row.ai_reason}, ${row.ai_category},
+        ${row.ai_headline}, ${row.ai_antidote}, ${row.ai_antidote_secondary}, ${row.ai_rejected_because},
+        ${row.hero_image}, ${row.status}, ${row.scraped_at})
+      ON CONFLICT (source_url) DO NOTHING
+    `;
+  } catch (error) {
+    if (error.code !== '23505') {
+      console.error(`  DB save fail [${story.rawTitle.slice(0, 40)}]: ${error.message}`);
+    }
   }
 }
 
@@ -587,10 +588,7 @@ async function main() {
   console.log(`\n[2/6] Deduplicating...`);
 
   // Also check DB for existing URLs
-  const { data: existingHeadlines } = await supabase
-    .from('headlines')
-    .select('source_url, content_hash')
-    .then(({ data }) => ({ data: data || [] }));
+  const existingHeadlines = await sql`SELECT source_url, content_hash FROM headlines`;
 
   const dbUrlSet = new Set(existingHeadlines.map(h => h.source_url));
   const dbHashSet = new Set(existingHeadlines.map(h => h.content_hash).filter(Boolean));

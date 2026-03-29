@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthEditor } from "@/lib/require-auth-api";
 import { getEditors, addEditor, updateEditor, deleteEditor } from "@/lib/db";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { hashPassword } from "@/lib/auth";
+import { getSQL } from "@/lib/neon";
 
 async function requireAdmin() {
   const editor = await getAuthEditor();
@@ -34,26 +35,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Uporabnisko ime, geslo in ime so obvezni" }, { status: 400 });
     }
 
-    // Create Supabase Auth user with synthetic email
-    const supabase = getSupabaseAdmin();
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: `${username}@svetlastran.si`,
-      password,
-      email_confirm: true,
-    });
+    const hash = await hashPassword(password);
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
-    }
-
-    // Create editor record linked to auth user
     await addEditor({
-      auth_id: authData.user.id,
       username,
       name,
       role: role || "urednik",
       categories: categories || [],
     });
+
+    // Set password hash on the newly created editor
+    const sql = getSQL();
+    await sql`UPDATE editors SET password_hash = ${hash} WHERE username = ${username}`;
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
@@ -69,26 +62,17 @@ export async function PUT(req: NextRequest) {
     const { id, password, username, ...updates } = await req.json();
     if (!id) return NextResponse.json({ error: "ID je obvezen" }, { status: 400 });
 
-    const supabase = getSupabaseAdmin();
+    const sql = getSQL();
 
-    // Get editor to find auth_id
-    const editors = await getEditors();
-    const editor = editors.find((e: any) => e.id === id);
-    if (!editor?.auth_id) {
-      return NextResponse.json({ error: "Urednik nima auth racuna" }, { status: 400 });
-    }
-
-    // If password changed, update in Supabase Auth
+    // If password changed, hash and update
     if (password) {
-      await supabase.auth.admin.updateUserById(editor.auth_id, { password });
+      const hash = await hashPassword(password);
+      await sql`UPDATE editors SET password_hash = ${hash} WHERE id = ${id}`;
     }
 
-    // If username changed, update in Supabase Auth and editors table
+    // If username changed, update
     const toUpdate: Record<string, any> = { ...updates };
-    if (username && username !== editor.username) {
-      await supabase.auth.admin.updateUserById(editor.auth_id, {
-        email: `${username}@svetlastran.si`,
-      });
+    if (username) {
       toUpdate.username = username;
     }
 
@@ -106,13 +90,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: "ID je obvezen" }, { status: 400 });
-
-    const editors = await getEditors();
-    const editor = editors.find((e: any) => e.id === id);
-    if (editor?.auth_id) {
-      const supabase = getSupabaseAdmin();
-      await supabase.auth.admin.deleteUser(editor.auth_id);
-    }
 
     await deleteEditor(id);
     return NextResponse.json({ ok: true });
