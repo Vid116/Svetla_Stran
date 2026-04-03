@@ -74,7 +74,7 @@ export function ProcessingView() {
       const res = await fetch("/api/stories?view=processing");
       if (res.ok) {
         const data = await res.json();
-        setHeadlines(data);
+        setHeadlines(Array.isArray(data) ? data : []);
       }
     } catch {} finally {
       setLoading(false);
@@ -83,11 +83,11 @@ export function ProcessingView() {
 
   useEffect(() => {
     fetchProcessed();
-    const hasProcessing = headlines.some((h) => h.status === "processing");
-    const pollInterval = hasProcessing ? 30000 : 120000;
-    const interval = setInterval(fetchProcessed, pollInterval);
-    return () => clearInterval(interval);
-  }, [fetchProcessed, headlines]);
+    const id = setInterval(() => {
+      fetchProcessed();
+    }, 30000);
+    return () => clearInterval(id);
+  }, [fetchProcessed]);
 
   if (loading) {
     return (
@@ -214,10 +214,12 @@ function ProcessingCard({
     }
   }
 
-  const claims = draft?.verification_claims || [];
+  const rawClaims = draft?.verification_claims;
+  const claims: VerificationClaim[] = Array.isArray(rawClaims) ? rawClaims : typeof rawClaims === 'string' ? (() => { try { const p = JSON.parse(rawClaims); return Array.isArray(p) ? p : []; } catch { return []; } })() : [];
   const failedClaims = claims.filter((c: VerificationClaim) => c.status !== "confirmed" && c.status !== "verified");
   const confirmedCount = claims.filter((c: VerificationClaim) => c.status === "confirmed" || c.status === "verified" || c.status === "ok").length;
-  const refs = draft?.research_references || [];
+  const rawRefs = draft?.research_references;
+  const refs: Reference[] = Array.isArray(rawRefs) ? rawRefs : typeof rawRefs === 'string' ? (() => { try { const p = JSON.parse(rawRefs); return Array.isArray(p) ? p : []; } catch { return []; } })() : [];
 
   return (
     <Card

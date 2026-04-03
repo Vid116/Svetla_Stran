@@ -164,10 +164,10 @@ export async function createDraft(draft: {
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
       ${draft.antidote_secondary ?? null}, ${draft.source_name || null}, ${draft.source_url || null},
       ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
-      ${draft.research_sources_used ?? null}, ${draft.research_references ? JSON.stringify(draft.research_references) : null}::jsonb,
+      ${draft.research_sources_used ?? null}, ${draft.research_references ? (typeof draft.research_references === 'string' ? draft.research_references : JSON.stringify(draft.research_references)) : null}::jsonb,
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
-      ${draft.verification_claims ? JSON.stringify(draft.verification_claims) : null}::jsonb,
-      ${draft.long_form ? JSON.stringify(draft.long_form) : null}::jsonb,
+      ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
+      ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score ?? null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       'ready'
@@ -197,27 +197,24 @@ export async function getDraftById(id: string) {
 
 export async function updateDraft(id: string, updates: Record<string, any>) {
   const sql = getSQL();
-  // Build SET clause dynamically
-  const sets: string[] = [];
-  const vals: any[] = [];
   updates.updated_at = new Date().toISOString();
 
-  // For dynamic updates, use a simple approach: serialize to JSON and use jsonb_populate_record
-  // Actually, let's just handle the common fields
+  // Use CASE to distinguish "not provided" (undefined) from "set to null" (null)
+  const has = (key: string) => key in updates;
   await sql`
     UPDATE drafts SET
-      title = COALESCE(${updates.title ?? null}, title),
-      subtitle = COALESCE(${updates.subtitle ?? null}, subtitle),
-      body = COALESCE(${updates.body ?? null}, body),
-      slug = COALESCE(${updates.slug ?? null}, slug),
-      image_url = COALESCE(${updates.image_url ?? null}, image_url),
-      category = COALESCE(${updates.category ?? null}, category),
-      antidote = COALESCE(${updates.antidote ?? null}, antidote),
-      antidote_secondary = COALESCE(${updates.antidote_secondary ?? null}, antidote_secondary),
-      ai_image_url = COALESCE(${updates.ai_image_url ?? null}, ai_image_url),
-      image_prompt = COALESCE(${updates.image_prompt ?? null}, image_prompt),
-      ai_score = COALESCE(${updates.ai_score ?? null}, ai_score),
-      status = COALESCE(${updates.status ?? null}, status),
+      title = ${has('title') ? updates.title : sql`title`},
+      subtitle = ${has('subtitle') ? updates.subtitle : sql`subtitle`},
+      body = ${has('body') ? updates.body : sql`body`},
+      slug = ${has('slug') ? updates.slug : sql`slug`},
+      image_url = ${has('image_url') ? updates.image_url : sql`image_url`},
+      category = ${has('category') ? updates.category : sql`category`},
+      antidote = ${has('antidote') ? updates.antidote : sql`antidote`},
+      antidote_secondary = ${has('antidote_secondary') ? updates.antidote_secondary : sql`antidote_secondary`},
+      ai_image_url = ${has('ai_image_url') ? updates.ai_image_url : sql`ai_image_url`},
+      image_prompt = ${has('image_prompt') ? updates.image_prompt : sql`image_prompt`},
+      ai_score = ${has('ai_score') ? updates.ai_score : sql`ai_score`},
+      status = ${has('status') ? updates.status : sql`status`},
       updated_at = ${updates.updated_at}
     WHERE id = ${id}
   `;
@@ -257,14 +254,14 @@ export async function publishDraft(draftId: string) {
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle}, ${draft.body}, ${draft.slug},
       ${draft.image_url}, ${draft.category}, ${draft.emotions || []}, ${draft.antidote},
       ${draft.antidote_secondary || null}, ${draft.source_name}, ${draft.source_url},
-      50, ${JSON.stringify(draft.research_references || [])}::jsonb,
+      50, ${typeof draft.research_references === 'string' ? draft.research_references : JSON.stringify(draft.research_references || [])}::jsonb,
       ${draft.raw_title || null}, ${draft.ai_score || headlineScore || 0},
       ${draft.initial_score || null}, ${draft.initial_antidote || null}, ${draft.initial_category || null},
       ${draft.ai_image_url || null},
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
-      ${JSON.stringify(draft.verification_claims || [])}::jsonb,
+      ${typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims || [])}::jsonb,
       ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
-      ${draft.research_sources_used ?? null}, ${draft.long_form ? JSON.stringify(draft.long_form) : null}::jsonb
+      ${draft.research_sources_used ?? null}, ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb
     )
   `;
 
