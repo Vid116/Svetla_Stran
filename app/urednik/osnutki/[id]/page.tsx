@@ -17,6 +17,12 @@ import { LongFormSection } from "@/components/long-form-section";
 
 export const dynamic = "force-dynamic";
 
+function safeArray(val: unknown): any[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') { try { const p = JSON.parse(val); if (Array.isArray(p)) return p; } catch {} }
+  return [];
+}
+
 export default async function DraftPreviewPage({
   params,
 }: {
@@ -33,7 +39,9 @@ export default async function DraftPreviewPage({
     .filter(Boolean);
 
   const accentBar = CATEGORY_ACCENT_BAR[draft.category] ?? "bg-primary";
-  const references = draft.research_references || [];
+  const references = safeArray(draft.research_references);
+  const verificationClaims = safeArray(draft.verification_claims);
+  const longForm = typeof draft.long_form === 'string' ? (() => { try { return JSON.parse(draft.long_form); } catch { return null; } })() : draft.long_form;
 
   return (
     <div className="min-h-screen">
@@ -139,8 +147,8 @@ export default async function DraftPreviewPage({
         </div>
 
         {/* Long-form article (if available) */}
-        {draft.long_form && (
-          <LongFormSection longForm={draft.long_form} accentBar={accentBar} />
+        {longForm && (
+          <LongFormSection longForm={longForm} accentBar={accentBar} />
         )}
 
         {/* Sources */}
@@ -194,7 +202,7 @@ export default async function DraftPreviewPage({
           verification={{
             passed: draft.verification_passed ?? null,
             summary: draft.verification_summary || null,
-            claims: draft.verification_claims || [],
+            claims: verificationClaims,
           }}
           research={{
             queries: draft.research_queries || [],
