@@ -1,0 +1,10 @@
+# Svetla Stran — VPS Cron Jobs
+# Install with: crontab /opt/svetla-stran/scripts/crontab.example
+
+PATH=/usr/local/bin:/usr/bin:/bin
+HOME=/root
+
+# Scrapers (with flock to prevent overlapping runs)
+*/15 * * * * flock -n /tmp/svetla-tier1.lock cd /opt/svetla-stran && node scripts/scrape-cycle.mjs --tier 1 >> /var/log/svetla-scrape.log 2>&1
+*/30 * * * * flock -n /tmp/svetla-tier2.lock cd /opt/svetla-stran && node scripts/scrape-cycle.mjs --tier 2 >> /var/log/svetla-scrape.log 2>&1
+0 * * * * flock -n /tmp/svetla-tier3.lock cd /opt/svetla-stran && node scripts/scrape-cycle.mjs --tier 3 >> /var/log/svetla-scrape.log 2>&1

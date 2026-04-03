@@ -168,7 +168,7 @@ export async function createDraft(draft: {
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
-      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score ?? null},
+      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       'ready'
     ) RETURNING id
@@ -199,22 +199,22 @@ export async function updateDraft(id: string, updates: Record<string, any>) {
   const sql = getSQL();
   updates.updated_at = new Date().toISOString();
 
-  // Use CASE to distinguish "not provided" (undefined) from "set to null" (null)
+  // CASE WHEN true → set new value (including null), CASE WHEN false → keep current
   const has = (key: string) => key in updates;
   await sql`
     UPDATE drafts SET
-      title = ${has('title') ? updates.title : sql`title`},
-      subtitle = ${has('subtitle') ? updates.subtitle : sql`subtitle`},
-      body = ${has('body') ? updates.body : sql`body`},
-      slug = ${has('slug') ? updates.slug : sql`slug`},
-      image_url = ${has('image_url') ? updates.image_url : sql`image_url`},
-      category = ${has('category') ? updates.category : sql`category`},
-      antidote = ${has('antidote') ? updates.antidote : sql`antidote`},
-      antidote_secondary = ${has('antidote_secondary') ? updates.antidote_secondary : sql`antidote_secondary`},
-      ai_image_url = ${has('ai_image_url') ? updates.ai_image_url : sql`ai_image_url`},
-      image_prompt = ${has('image_prompt') ? updates.image_prompt : sql`image_prompt`},
-      ai_score = ${has('ai_score') ? updates.ai_score : sql`ai_score`},
-      status = ${has('status') ? updates.status : sql`status`},
+      title = CASE WHEN ${has('title')} THEN ${updates.title ?? null}::text ELSE title END,
+      subtitle = CASE WHEN ${has('subtitle')} THEN ${updates.subtitle ?? null}::text ELSE subtitle END,
+      body = CASE WHEN ${has('body')} THEN ${updates.body ?? null}::text ELSE body END,
+      slug = CASE WHEN ${has('slug')} THEN ${updates.slug ?? null}::text ELSE slug END,
+      image_url = CASE WHEN ${has('image_url')} THEN ${updates.image_url ?? null}::text ELSE image_url END,
+      category = CASE WHEN ${has('category')} THEN ${updates.category ?? null}::text ELSE category END,
+      antidote = CASE WHEN ${has('antidote')} THEN ${updates.antidote ?? null}::text ELSE antidote END,
+      antidote_secondary = CASE WHEN ${has('antidote_secondary')} THEN ${updates.antidote_secondary ?? null}::text ELSE antidote_secondary END,
+      ai_image_url = CASE WHEN ${has('ai_image_url')} THEN ${updates.ai_image_url ?? null}::text ELSE ai_image_url END,
+      image_prompt = CASE WHEN ${has('image_prompt')} THEN ${updates.image_prompt ?? null}::text ELSE image_prompt END,
+      ai_score = CASE WHEN ${has('ai_score')} THEN ${updates.ai_score != null ? Math.round(updates.ai_score) : null}::int ELSE ai_score END,
+      status = CASE WHEN ${has('status')} THEN ${updates.status ?? null}::text ELSE status END,
       updated_at = ${updates.updated_at}
     WHERE id = ${id}
   `;
@@ -385,16 +385,16 @@ export async function addSource(source: {
 
 export async function updateSource(url: string, updates: Record<string, any>) {
   const sql = getSQL();
-  // Simple approach: update all settable fields
+  const has = (key: string) => key in updates;
   await sql`
     UPDATE sources SET
-      name = COALESCE(${updates.name ?? null}, name),
-      type = COALESCE(${updates.type ?? null}, type),
-      category = COALESCE(${updates.category ?? null}, category),
-      link_selector = COALESCE(${updates.link_selector ?? null}, link_selector),
-      link_pattern = COALESCE(${updates.link_pattern ?? null}, link_pattern),
-      active = COALESCE(${updates.active ?? null}, active),
-      scrape_tier = COALESCE(${updates.scrape_tier ?? null}, scrape_tier)
+      name = CASE WHEN ${has('name')} THEN ${updates.name ?? null}::text ELSE name END,
+      type = CASE WHEN ${has('type')} THEN ${updates.type ?? null}::text ELSE type END,
+      category = CASE WHEN ${has('category')} THEN ${updates.category ?? null}::text ELSE category END,
+      link_selector = CASE WHEN ${has('link_selector')} THEN ${updates.link_selector ?? null}::text ELSE link_selector END,
+      link_pattern = CASE WHEN ${has('link_pattern')} THEN ${updates.link_pattern ?? null}::text ELSE link_pattern END,
+      active = CASE WHEN ${has('active')} THEN ${updates.active ?? null}::boolean ELSE active END,
+      scrape_tier = CASE WHEN ${has('scrape_tier')} THEN ${updates.scrape_tier ?? null}::int ELSE scrape_tier END
     WHERE url = ${url}
   `;
 }
@@ -514,13 +514,14 @@ export async function addEditor(editor: {
 
 export async function updateEditor(id: string, updates: Record<string, any>) {
   const sql = getSQL();
+  const has = (key: string) => key in updates;
   await sql`
     UPDATE editors SET
-      username = COALESCE(${updates.username ?? null}, username),
-      name = COALESCE(${updates.name ?? null}, name),
-      role = COALESCE(${updates.role ?? null}, role),
-      categories = COALESCE(${updates.categories ?? null}, categories),
-      active = COALESCE(${updates.active ?? null}, active),
+      username = CASE WHEN ${has('username')} THEN ${updates.username ?? null}::text ELSE username END,
+      name = CASE WHEN ${has('name')} THEN ${updates.name ?? null}::text ELSE name END,
+      role = CASE WHEN ${has('role')} THEN ${updates.role ?? null}::text ELSE role END,
+      categories = CASE WHEN ${has('categories')} THEN ${updates.categories ?? null}::text[] ELSE categories END,
+      active = CASE WHEN ${has('active')} THEN ${updates.active ?? null}::boolean ELSE active END,
       updated_at = now()
     WHERE id = ${id}
   `;

@@ -1,0 +1,16 @@
+[Unit]
+Description=Svetla Stran VPS Worker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/svetla-stran
+ExecStart=/usr/local/bin/node scripts/worker.mjs
+Restart=always
+RestartSec=5
+Environment=HOME=/root
+StandardOutput=append:/var/log/svetla-worker.log
+StandardError=append:/var/log/svetla-worker.log
+
+[Install]
+WantedBy=multi-user.target
