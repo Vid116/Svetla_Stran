@@ -82,10 +82,10 @@ async function createDraft(draft) {
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
       ${draft.antidote_secondary ?? null}, ${draft.source_name || null}, ${draft.source_url || null},
       ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
-      ${draft.research_sources_used ?? null}, ${draft.research_references ? JSON.stringify(draft.research_references) : null}::jsonb,
+      ${draft.research_sources_used ?? null}, ${draft.research_references ? (typeof draft.research_references === 'string' ? draft.research_references : JSON.stringify(draft.research_references)) : null}::jsonb,
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
-      ${draft.verification_claims ? JSON.stringify(draft.verification_claims) : null}::jsonb,
-      ${draft.long_form ? JSON.stringify(draft.long_form) : null}::jsonb,
+      ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
+      ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score ?? null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       'ready'
