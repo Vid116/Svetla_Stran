@@ -86,7 +86,7 @@ async function createDraft(draft) {
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
-      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score ?? null},
+      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       'ready'
     )
@@ -197,7 +197,7 @@ async function handleResearchWrite(story) {
         emotions: story.ai_emotions || [],
         antidote: result.deepScore?.antidote || story.ai_antidote,
         antidote_secondary: result.deepScore?.antidote_secondary || null,
-        ai_score: result.deepScore?.score || headlineInitialScore || null,
+        ai_score: Math.round(result.deepScore?.score || headlineInitialScore || 0) || null,
         initial_score: headlineInitialScore,
         initial_antidote: story.ai_antidote || null,
         initial_category: story.ai_category || null,
