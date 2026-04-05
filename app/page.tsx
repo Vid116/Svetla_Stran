@@ -99,6 +99,19 @@ export default async function HomePage() {
         ) : (
           <ArticleGrid articles={articles} />
         )}
+
+        {/* Archive link */}
+        {articles.length > 0 && (
+          <div className="mt-12 text-center">
+            <Link
+              href="/arhiv"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Starejše zgodbe
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Newsletter signup */}

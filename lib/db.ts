@@ -281,6 +281,19 @@ export async function getPublishedArticles() {
            antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
            published_at, created_at
     FROM articles
+    WHERE published_at >= now() - interval '14 days'
+    ORDER BY published_at DESC
+  `;
+}
+
+export async function getArchivedArticles() {
+  const sql = getSQL();
+  return sql`
+    SELECT id, title, subtitle, slug, image_url, ai_image_url, category,
+           antidote, antidote_secondary, ai_score, source_name,
+           published_at, created_at
+    FROM articles
+    WHERE published_at < now() - interval '14 days'
     ORDER BY published_at DESC
   `;
 }

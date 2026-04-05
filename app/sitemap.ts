@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${baseUrl}/o-nas`, lastModified: new Date('2026-03-01'), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/arhiv`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.4 },
     ...articleEntries,
   ];
 }
