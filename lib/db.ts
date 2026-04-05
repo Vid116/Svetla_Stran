@@ -281,8 +281,8 @@ export async function getPublishedArticles() {
            antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
            published_at, created_at
     FROM articles
-    WHERE published_at >= now() - interval '14 days'
     ORDER BY published_at DESC
+    LIMIT 72
   `;
 }
 
@@ -293,8 +293,8 @@ export async function getArchivedArticles() {
            antidote, antidote_secondary, ai_score, source_name,
            published_at, created_at
     FROM articles
-    WHERE published_at < now() - interval '14 days'
     ORDER BY published_at DESC
+    OFFSET 72
   `;
 }
 
