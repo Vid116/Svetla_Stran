@@ -19,6 +19,21 @@ interface Headline {
   ai_headline: string | null;
   ai_antidote: string | null;
   hero_image?: string | null;
+  created_at?: string;
+}
+
+function formatFoundAt(iso?: string): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const diffMin = Math.round((Date.now() - then) / 60000);
+  if (diffMin < 1) return "pravkar";
+  if (diffMin < 60) return `pred ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `pred ${diffH} h`;
+  const diffD = Math.round(diffH / 24);
+  if (diffD < 7) return `pred ${diffD} ${diffD === 1 ? "dnem" : "dnevi"}`;
+  return new Date(iso).toLocaleDateString("sl-SI", { day: "numeric", month: "short" });
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -159,6 +174,11 @@ export function StoryCard({
                   <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
                 </svg>
                 Raziskujem
+              </span>
+            )}
+            {dbStory.created_at && (
+              <span className="text-xs text-muted-foreground" title={new Date(dbStory.created_at).toLocaleString("sl-SI")}>
+                Najdeno {formatFoundAt(dbStory.created_at)}
               </span>
             )}
           </div>

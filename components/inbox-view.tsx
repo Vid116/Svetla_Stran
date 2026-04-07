@@ -20,6 +20,7 @@ interface Headline {
   ai_antidote: string | null;
   ai_rejected_because: string | null;
   scraped_at: string;
+  created_at: string;
 }
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {

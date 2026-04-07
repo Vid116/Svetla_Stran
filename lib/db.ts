@@ -7,7 +7,7 @@ export async function getInboxHeadlines(categories?: string[]) {
   if (categories && categories.length > 0) {
     return sql`
       SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
-             ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at
+             ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at, created_at
       FROM headlines
       WHERE status = 'new' AND ai_category = ANY(${categories})
       ORDER BY ai_score DESC
@@ -15,7 +15,7 @@ export async function getInboxHeadlines(categories?: string[]) {
   }
   return sql`
     SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
-           ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at
+           ai_score, ai_emotions, ai_reason, ai_category, ai_headline, ai_antidote, hero_image, scraped_at, created_at
     FROM headlines
     WHERE status = 'new'
     ORDER BY ai_score DESC
