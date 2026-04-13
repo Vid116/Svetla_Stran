@@ -64,7 +64,9 @@ export function InboxView() {
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<"score" | "category">("score");
+  const [sortBy, setSortBy] = useState<
+    "score" | "newest" | "oldest" | "category" | "source" | "antidote"
+  >("score");
   const [reviewed, setReviewed] = useState<Set<string>>(new Set());
 
   const fetchHeadlines = useCallback(async () => {
@@ -130,8 +132,22 @@ export function InboxView() {
     : headlines;
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "score") return (b.ai_score || 0) - (a.ai_score || 0);
-    return (a.ai_category || "").localeCompare(b.ai_category || "");
+    switch (sortBy) {
+      case "score":
+        return (b.ai_score || 0) - (a.ai_score || 0);
+      case "newest":
+        return new Date(b.scraped_at).getTime() - new Date(a.scraped_at).getTime();
+      case "oldest":
+        return new Date(a.scraped_at).getTime() - new Date(b.scraped_at).getTime();
+      case "category":
+        return (a.ai_category || "").localeCompare(b.ai_category || "");
+      case "source":
+        return (a.source_name || "").localeCompare(b.source_name || "");
+      case "antidote":
+        return (a.ai_antidote || "").localeCompare(b.ai_antidote || "");
+      default:
+        return 0;
+    }
   });
 
   return (
@@ -195,27 +211,29 @@ export function InboxView() {
           );
         })}
 
-        <div className="ml-auto flex items-center gap-1 rounded-full bg-secondary p-0.5">
-          <button
-            onClick={() => setSortBy("score")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
-              sortBy === "score"
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Po oceni
-          </button>
-          <button
-            onClick={() => setSortBy("category")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
-              sortBy === "category"
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Po kategoriji
-          </button>
+        <div className="ml-auto flex flex-wrap items-center gap-1 rounded-full bg-secondary p-0.5">
+          {(
+            [
+              { id: "score", label: "Po oceni" },
+              { id: "newest", label: "Najnovejse" },
+              { id: "oldest", label: "Najstarejse" },
+              { id: "category", label: "Po kategoriji" },
+              { id: "source", label: "Po viru" },
+              { id: "antidote", label: "Po custvu" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setSortBy(opt.id)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                sortBy === opt.id
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
