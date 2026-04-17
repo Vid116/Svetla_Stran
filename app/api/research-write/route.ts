@@ -92,18 +92,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Production: forward to VPS worker (fire and forget)
+    // Production: forward to VPS worker and wait for acknowledgment
     if (WORKER_URL && WORKER_SECRET) {
-      fetch(`${WORKER_URL}/research-write`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-worker-secret": WORKER_SECRET,
-        },
-        body: JSON.stringify(story),
-      }).catch((err) => {
+      try {
+        const workerRes = await fetch(`${WORKER_URL}/research-write`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-worker-secret": WORKER_SECRET,
+          },
+          body: JSON.stringify(story),
+        });
+        console.log(`[research-write] Worker responded: ${workerRes.status}`);
+      } catch (err: any) {
         console.error("[research-write] Worker call failed:", err.message);
-      });
+      }
 
       return NextResponse.json({ ok: true, queued: true });
     }
