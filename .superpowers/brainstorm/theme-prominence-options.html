@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theme Prominence Options — Svetla Stran</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafaf8; color: #1a1a1a; }
+  .section { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 12px; font-weight: 600; }
+  .tier-label { display: inline-block; background: #1a1a1a; color: white; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px; margin-bottom: 20px; }
+  h2 { font-size: 28px; font-weight: 300; margin-bottom: 40px; padding-bottom: 16px; border-bottom: 1px solid #e8e4dc; }
+  .spacer { height: 60px; border-bottom: 2px dashed #e0dcd4; margin-bottom: 60px; }
+
+  /* Fake article cards for context */
+  .fake-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+  .fake-card { background: white; border-radius: 12px; border: 1px solid #e8e4dc; height: 280px; overflow: hidden; }
+  .fake-card .img { height: 140px; background: linear-gradient(135deg, #e8dff5 0%, #d4ecfc 100%); }
+  .fake-card .body { padding: 16px; }
+  .fake-card .body .title { font-size: 13px; font-weight: 600; line-height: 1.4; color: #333; }
+  .fake-card .body .meta { font-size: 11px; color: #999; margin-top: 8px; }
+
+  /* Fake cloud row for context */
+  .fake-clouds { display: flex; gap: 16px; justify-content: center; margin: 24px 0; }
+  .fake-cloud { background: #f0ebe0; padding: 12px 28px; border-radius: 40px; font-size: 13px; font-weight: 500; color: #7a6530; }
+</style>
+</head>
+<body>
+
+<div class="section">
+  <h2>Nedeljska zgodba — 3 tiers (Sunday only)</h2>
+  <p style="color:#888; font-size:14px; margin-bottom:40px;">Each option is shown as it would appear on a Sunday. On other days, nothing renders.</p>
+
+  <!-- TIER 1: Soft card between clouds and grid -->
+  <div class="tier-label">Tier 1 — Featured card</div>
+  <p class="label">Between theme clouds and article grid</p>
+
+  <div class="fake-clouds">
+    <div class="fake-cloud">Med nami</div>
+    <div class="fake-cloud">Naprej</div>
+    <div class="fake-cloud" style="background:#e8dff5;color:#5b2d8e">Skupaj</div>
+    <div class="fake-cloud" style="background:#f8e0d0;color:#7a3a1a">Heroji</div>
+    <div class="fake-cloud" style="background:#fce8f0;color:#8a2050">Drobne radosti</div>
+  </div>
+
+  <!-- Tier 1 design -->
+  <div style="max-width:700px; margin: 0 auto 32px; background: linear-gradient(135deg, #ede4d8 0%, #f5eed8 100%); border-radius: 16px; border: 1px solid #d4c8a830; padding: 32px 40px; text-align: center;">
+    <p style="font-size:10px; text-transform:uppercase; letter-spacing:3px; color:#6b4a20; opacity:0.6; margin-bottom:8px;">Nedeljska zgodba</p>
+    <p style="font-size:22px; font-weight:400; color:#6b4a20; line-height:1.4; margin-bottom:12px;">Oddaja Ambienti po desetletjih<br>združila brata in sestro</p>
+    <p style="font-size:13px; color:#6b4a20; opacity:0.65; margin-bottom:16px;">Ena zgodba, vsako nedeljo. Za jutra, ki se jim ne mudi.</p>
+    <a style="display:inline-block; background:#c8a878; color:white; padding:8px 24px; border-radius:8px; font-size:13px; font-weight:500; text-decoration:none;">Preberi &rarr;</a>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 2: Wide banner with image slot -->
+  <div class="tier-label">Tier 2 — Wide banner</div>
+  <p class="label">Full-width section between hero and clouds — pushes everything down on Sunday</p>
+
+  <div style="background: linear-gradient(135deg, #ede4d8 0%, #faf5eb 50%, #f0e8d8 100%); border-radius: 20px; border: 1px solid #d4c09840; padding: 48px; display: flex; align-items: center; gap: 40px; margin-bottom: 32px;">
+    <div style="flex:1;">
+      <p style="font-size:10px; text-transform:uppercase; letter-spacing:3px; color:#6b4a20; opacity:0.5; margin-bottom:12px;">Nedeljska zgodba</p>
+      <p style="font-size:28px; font-weight:300; color:#3a2410; line-height:1.35; margin-bottom:16px;">Oddaja Ambienti po desetletjih združila brata in sestro</p>
+      <p style="font-size:14px; color:#6b4a20; opacity:0.7; line-height:1.6; margin-bottom:24px;">Ena zgodba, vsako nedeljo. Dolga, počasi napisana, vredna kave.</p>
+      <a style="display:inline-flex; align-items:center; gap:8px; background:#6b4a20; color:white; padding:12px 28px; border-radius:12px; font-size:14px; font-weight:500; text-decoration:none;">Preberi nedeljsko zgodbo <span style="opacity:0.7">&rarr;</span></a>
+    </div>
+    <div style="width:280px; height:200px; border-radius:16px; background: linear-gradient(135deg, #d4c098 0%, #e8d8c0 100%); flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+      <span style="font-size:48px; opacity:0.3;">&#9749;</span>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 3: Full-bleed takeover -->
+  <div class="tier-label">Tier 3 — Sunday takeover</div>
+  <p class="label">Replaces the hero article on Sundays. The Sunday story IS the hero.</p>
+
+  <div style="background: linear-gradient(180deg, #ede4d8 0%, #faf8f0 40%, transparent 100%); border-radius: 20px; overflow:hidden; border: 1px solid #d4c09820; margin-bottom: 32px;">
+    <div style="padding: 48px 48px 24px; text-align:center;">
+      <div style="display:inline-flex; align-items:center; gap:8px; background:#6b4a2015; padding:6px 16px; border-radius:20px; margin-bottom:20px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#c8a878;"></span>
+        <span style="font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#6b4a20; font-weight:600;">Nedeljska zgodba</span>
+      </div>
+      <p style="font-size:13px; color:#6b4a20; opacity:0.6; margin-bottom:24px; font-style:italic;">&ldquo;Beremo, da bi vedeli, da nismo sami.&rdquo;</p>
+    </div>
+    <div style="position:relative; height:320px; background: linear-gradient(135deg, #c8a878 0%, #d4b888 100%); margin: 0 24px; border-radius: 16px 16px 0 0; display:flex; align-items:flex-end;">
+      <div style="position:absolute;inset:0;background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%); border-radius:16px 16px 0 0;"></div>
+      <div style="position:relative; padding: 32px 40px; color:white;">
+        <p style="font-size:32px; font-weight:600; line-height:1.3; margin-bottom:12px;">Oddaja Ambienti po desetletjih združila brata in sestro</p>
+        <p style="font-size:14px; opacity:0.8; margin-bottom:20px;">Ko je Mateja v oddaji zaslišala glas, ki ga ni slišala 30 let, se je ustavil čas.</p>
+        <a style="display:inline-flex; align-items:center; gap:8px; background:white; color:#3a2410; padding:12px 28px; border-radius:12px; font-size:14px; font-weight:600; text-decoration:none;">Preberi nedeljsko zgodbo <span>&rarr;</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<div class="section" style="border-top: 3px solid #e8e2d6; margin-top: 40px;">
+  <h2>Tiho delo — 3 tiers (always visible)</h2>
+  <p style="color:#888; font-size:14px; margin-bottom:40px;">Persistent section — always on the homepage, not gated by day-of-week.</p>
+
+  <!-- TIER 1: Accent strip -->
+  <div class="tier-label">Tier 1 — Accent strip</div>
+  <p class="label">Thin full-width strip between clouds and grid</p>
+
+  <div style="background: #e8e2d6; border-radius: 12px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#5a4a30; font-weight:600;">Tiho delo</span>
+      <span style="font-size:13px; color:#5a4a30; opacity:0.7;">Slovenija stoji, ker nekdo zgodaj vstane.</span>
+    </div>
+    <a style="font-size:12px; color:#5a4a30; text-decoration:none; font-weight:500; display:flex; align-items:center; gap:4px;">Preberi zgodbe <span>&rarr;</span></a>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 2: Featured spotlight card -->
+  <div class="tier-label">Tier 2 — Spotlight card</div>
+  <p class="label">Featured card with manifesto + latest story, between clouds and grid</p>
+
+  <div style="background: linear-gradient(135deg, #e8e2d6 0%, #f2ede4 100%); border-radius: 20px; border: 1px solid #d4c8a830; padding: 40px; display: flex; gap: 32px; align-items: center; margin-bottom: 32px;">
+    <div style="flex:1;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+        <span style="width:5px; height:5px; border-radius:50%; background:#a89878;"></span>
+        <span style="font-size:10px; text-transform:uppercase; letter-spacing:2.5px; color:#5a4a30; font-weight:600;">Tiho delo</span>
+      </div>
+      <p style="font-size:15px; color:#5a4a30; opacity:0.75; line-height:1.6; margin-bottom:20px;">Medicinske sestre na nočni izmeni. Cestarji ob šestih zjutraj. Knjižničarke, vzgojiteljice, voznice rešilcev. Slovenija stoji, ker nekdo zgodaj vstane.</p>
+      <a style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#5a4a30; font-weight:500; text-decoration:none; background:#5a4a3012; padding:8px 20px; border-radius:8px;">Vse zgodbe tihega dela <span>&rarr;</span></a>
+    </div>
+    <div style="width:240px; flex-shrink:0;">
+      <div style="background:white; border-radius:12px; border:1px solid #e0d8c8; overflow:hidden;">
+        <div style="height:120px; background: linear-gradient(135deg, #d4c8a8 0%, #e8dcc8 100%);"></div>
+        <div style="padding:14px;">
+          <p style="font-size:12px; font-weight:600; color:#333; line-height:1.4;">890 prostovoljcev je v letu 2025 pomagalo 6.825 ljudem</p>
+          <p style="font-size:11px; color:#999; margin-top:6px;">Najnovejša zgodba &rarr;</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- TIER 3: Immersive section with story grid -->
+  <div class="tier-label">Tier 3 — Dedicated section</div>
+  <p class="label">Full section between hero and grid — manifesto + 3 latest stories as mini cards</p>
+
+  <div style="background: linear-gradient(180deg, #e8e2d6 0%, #f5f0e8 60%, #fafaf8 100%); border-radius: 24px; padding: 48px 40px 40px; margin-bottom: 32px;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="display:inline-flex; align-items:center; gap:8px; background:#5a4a3012; padding:6px 16px; border-radius:20px; margin-bottom:16px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#a89878;"></span>
+        <span style="font-size:11px; text-transform:uppercase; letter-spacing:2.5px; color:#5a4a30; font-weight:600;">Tiho delo</span>
+      </div>
+      <p style="font-size:20px; font-weight:300; color:#3a2e1a; line-height:1.5; max-width:600px; margin:0 auto 8px;">Medicinske sestre na nočni izmeni. Cestarji ob šestih zjutraj.<br>Slovenija stoji, ker nekdo zgodaj vstane.</p>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:16px;">
+      <div style="background:white; border-radius:12px; border:1px solid #e0d8c8; overflow:hidden;">
+        <div style="height:100px; background: linear-gradient(135deg, #d4c8a8 0%, #e0d8c0 100%);"></div>
+        <div style="padding:14px;">
+          <p style="font-size:12px; font-weight:600; color:#333; line-height:1.3;">890 prostovoljcev je v letu 2025 pomagalo 6.825 ljudem</p>
+          <p style="font-size:11px; color:#999; margin-top:6px;">15. apr.</p>
+        </div>
+      </div>
+      <div style="background:white; border-radius:12px; border:1px solid #e0d8c8; overflow:hidden;">
+        <div style="height:100px; background: linear-gradient(135deg, #c8c0a8 0%, #d8d0c0 100%);"></div>
+        <div style="padding:14px;">
+          <p style="font-size:12px; font-weight:600; color:#333; line-height:1.3;">Prostovoljci Karitas opravili dela za 87 zaposlenih</p>
+          <p style="font-size:11px; color:#999; margin-top:6px;">14. apr.</p>
+        </div>
+      </div>
+      <div style="background:white; border-radius:12px; border:1px solid #e0d8c8; overflow:hidden;">
+        <div style="height:100px; background: linear-gradient(135deg, #d0c8b0 0%, #e0d8c8 100%);"></div>
+        <div style="padding:14px;">
+          <p style="font-size:12px; font-weight:600; color:#333; line-height:1.3;">Župan sprejel prostovoljne voznike, sam je eden od njih</p>
+          <p style="font-size:11px; color:#999; margin-top:6px;">12. apr.</p>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:20px;">
+      <a style="font-size:13px; color:#5a4a30; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">Vse zgodbe tihega dela <span>&rarr;</span></a>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-bottom:80px; text-align:center; color:#999; font-size:13px;">
+  Open this file in a browser to preview: <code>Code/.superpowers/brainstorm/theme-prominence-options.html</code>
+</div>
+
+</body>
+</html>

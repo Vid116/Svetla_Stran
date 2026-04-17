@@ -10,6 +10,7 @@ import {
   formatDate,
 } from "@/lib/article-helpers";
 import { DraftActions } from "./draft-actions";
+import { DraftThemeTags } from "./draft-theme-tags";
 import { ImageAdder } from "./image-adder";
 import { RemoveImageButton } from "./remove-image-button";
 import { ResearchDetails } from "@/components/research-details";
@@ -196,6 +197,9 @@ export default async function DraftPreviewPage({
             </ol>
           </div>
         )}
+
+        {/* Theme tags — editor-set ritual themes */}
+        <DraftThemeTags draftId={draft.id} initialThemes={draft.themes || []} />
 
         {/* Expandable research & verification details */}
         <ResearchDetails

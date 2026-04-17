@@ -1,13 +1,27 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Sun } from "lucide-react";
 import { LogoLink } from "@/components/logo-link";
 import { ArticleGrid } from "@/components/article-grid";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
 import { NavSearch } from "@/components/nav-search";
-import { getPublishedArticles } from "@/lib/db";
+import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
+import { TihoDeloSection } from "@/components/tiho-delo-section";
+import { getPublishedArticles, getArticlesByTag } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+
+// Legacy ?antidote=X query param → /tema/{slug} (antidote is now hidden matcher)
+const ANTIDOTE_TO_THEME: Record<string, string> = {
+  jeza: "med-nami",
+  cinizem: "med-nami",
+  skrb: "naprej",
+  obup: "naprej",
+  osamljenost: "med-nami",
+  strah: "heroji",
+  dolgcas: "drobne-radosti",
+};
 
 export interface PublishedArticle {
   title: string;
@@ -66,11 +80,37 @@ function rowToArticle(s: any): PublishedArticle {
   };
 }
 
-export default async function HomePage() {
-  const rows = await getPublishedArticles();
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ antidote?: string }>;
+}) {
+  const params = (await searchParams) || {};
+  if (params.antidote && ANTIDOTE_TO_THEME[params.antidote]) {
+    redirect(`/tema/${ANTIDOTE_TO_THEME[params.antidote]}`);
+  }
+
+  // Check if today is Sunday in Slovenia
+  const now = new Date();
+  const dayInSlovenia = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    timeZone: "Europe/Ljubljana",
+  }).format(now);
+  const isSunday = dayInSlovenia === "Sun";
+
+  // Fetch data in parallel
+  const [rows, nedeljskaRows, tihoDeloRows] = await Promise.all([
+    getPublishedArticles(),
+    isSunday ? getArticlesByTag("nedeljska-zgodba", 1) : Promise.resolve([]),
+    getArticlesByTag("tiho-delo", 3),
+  ]);
+
   const articles = rows
     .filter((s: any) => s.title && s.body)
     .map(rowToArticle);
+
+  const nedeljskaArticle = (nedeljskaRows as any[])[0] || null;
+  const tihoDeloArticles = (tihoDeloRows as any[]).filter((a: any) => a.title && a.slug);
 
   return (
     <main className="min-h-screen">
@@ -97,7 +137,11 @@ export default async function HomePage() {
             <p className="text-sm">Prve bodo tu kmalu. Vrni se čez dan ali dva.</p>
           </div>
         ) : (
-          <ArticleGrid articles={articles} />
+          <ArticleGrid
+            articles={articles}
+            nedeljskaArticle={nedeljskaArticle}
+            tihoDeloArticles={tihoDeloArticles}
+          />
         )}
 
         {/* Archive link */}

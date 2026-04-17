@@ -76,7 +76,7 @@ async function createDraft(draft) {
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
       verification_claims, long_form, ai_image_url, image_prompt, ai_score,
-      initial_score, initial_antidote, initial_category, status
+      initial_score, initial_antidote, initial_category, themes, status
     ) VALUES (
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle || null}, ${draft.body}, ${draft.slug},
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
@@ -88,6 +88,7 @@ async function createDraft(draft) {
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
+      ${draft.themes || []},
       'ready'
     )
   `;
@@ -211,6 +212,7 @@ async function handleResearchWrite(story) {
         verification_summary: result.verification?.summary || null,
         verification_claims: result.verification?.claims || [],
         long_form: result.longFormArticle || null,
+        themes: Array.isArray(result.deepScore?.themes) ? result.deepScore.themes : [],
       });
     }
 

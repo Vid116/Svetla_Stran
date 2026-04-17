@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSQL } from "@/lib/neon";
-
-const ALL_CATEGORIES = [
-  "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
-  "ZIVALI", "INFRASTRUKTURA", "SLOVENIJA_V_SVETU", "KULTURA",
-];
+import { ALL_THEME_SLUGS } from "@/lib/article-helpers";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, categories } = body;
+    const { email, themes } = body;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email je obvezen." }, { status: 400 });
@@ -20,10 +16,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Neveljaven email naslov." }, { status: 400 });
     }
 
-    let selectedCategories = ALL_CATEGORIES;
-    if (categories && Array.isArray(categories) && categories.length > 0) {
-      selectedCategories = categories.filter((c: string) => ALL_CATEGORIES.includes(c));
-      if (selectedCategories.length === 0) selectedCategories = ALL_CATEGORIES;
+    // Empty themes array = "send me everything" (same convention as legacy categories)
+    let selectedThemes: string[] = [];
+    if (themes && Array.isArray(themes) && themes.length > 0) {
+      selectedThemes = themes.filter((t: string) => ALL_THEME_SLUGS.includes(t));
     }
 
     const sql = getSQL();
@@ -33,20 +29,20 @@ export async function POST(req: NextRequest) {
     if (existing.length > 0) {
       const row = existing[0];
       if (row.status === "active") {
-        await sql`UPDATE subscribers SET categories = ${selectedCategories} WHERE id = ${row.id}`;
+        await sql`UPDATE subscribers SET themes = ${selectedThemes} WHERE id = ${row.id}`;
         return NextResponse.json({ success: true, message: "Nastavitve posodobljene." });
       }
 
       await sql`
-        UPDATE subscribers SET status = 'active', categories = ${selectedCategories}, unsubscribed_at = null
+        UPDATE subscribers SET status = 'active', themes = ${selectedThemes}, unsubscribed_at = null
         WHERE id = ${row.id}
       `;
       return NextResponse.json({ success: true, message: "Dobrodošli nazaj!" });
     }
 
     await sql`
-      INSERT INTO subscribers (email, categories, source)
-      VALUES (${emailTrimmed}, ${selectedCategories}, 'website')
+      INSERT INTO subscribers (email, themes, source)
+      VALUES (${emailTrimmed}, ${selectedThemes}, 'website')
       ON CONFLICT (email) DO NOTHING
     `;
 

@@ -2,38 +2,34 @@
 
 import { useState } from "react";
 import { Sun } from "lucide-react";
-import { CATEGORY_LABELS } from "@/lib/article-helpers";
-import { CategoryIcon } from "@/lib/category-icons";
+import { THEMES, TOPICAL_THEME_ORDER, RITUAL_THEME_ORDER } from "@/lib/article-helpers";
 
-const CATEGORIES = [
-  "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
-  "ZIVALI", "INFRASTRUKTURA", "SLOVENIJA_V_SVETU", "KULTURA",
-] as const;
+const ALL_THEMES = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
 interface Props {
   email: string;
   onComplete: () => void;
-  /** Pre-select this category on open */
-  initialCategory?: string;
+  /** Pre-select this theme slug on open */
+  initialTheme?: string;
 }
 
-export function ThemePickerModal({ email, onComplete, initialCategory }: Props) {
+export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
   const [selected, setSelected] = useState<string[]>(
-    initialCategory ? [initialCategory] : [...CATEGORIES]
+    initialTheme ? [initialTheme] : [...ALL_THEMES]
   );
   const [submitting, setSubmitting] = useState(false);
 
-  function toggle(cat: string) {
+  function toggle(slug: string) {
     setSelected((prev) => {
-      if (prev.includes(cat)) {
+      if (prev.includes(slug)) {
         if (prev.length <= 1) return prev;
-        return prev.filter((c) => c !== cat);
+        return prev.filter((c) => c !== slug);
       }
-      return [...prev, cat];
+      return [...prev, slug];
     });
   }
 
-  const allSelected = selected.length === CATEGORIES.length;
+  const allSelected = selected.length === ALL_THEMES.length;
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -43,7 +39,7 @@ export function ThemePickerModal({ email, onComplete, initialCategory }: Props) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          categories: allSelected ? [] : selected,
+          themes: allSelected ? [] : selected,
         }),
       });
     } catch {}
@@ -79,21 +75,29 @@ export function ThemePickerModal({ email, onComplete, initialCategory }: Props) 
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => toggle(cat)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all cursor-pointer ${
-                selected.includes(cat)
-                  ? "bg-foreground text-background shadow-sm"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted opacity-60 hover:opacity-100"
-              }`}
-            >
-              <CategoryIcon category={cat} className="w-3.5 h-3.5" />
-              {CATEGORY_LABELS[cat]}
-            </button>
-          ))}
+          {ALL_THEMES.map((slug) => {
+            const theme = THEMES[slug];
+            const isSelected = selected.includes(slug);
+            return (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => toggle(slug)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all cursor-pointer border ${
+                  isSelected
+                    ? "shadow-sm"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: isSelected ? theme.colors.soft : "transparent",
+                  color: isSelected ? theme.colors.activeText : theme.colors.text,
+                  borderColor: isSelected ? theme.colors.fill : `${theme.colors.text}30`,
+                }}
+              >
+                {theme.label}
+              </button>
+            );
+          })}
         </div>
 
         <button

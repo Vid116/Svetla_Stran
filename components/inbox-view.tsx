@@ -44,6 +44,22 @@ const ANTIDOTES: Record<string, string> = {
   strah: "Zdravilo za strah",
 };
 
+// Theme filter — maps antidote values to reader-facing themes
+const THEME_FILTERS: { key: string; label: string; antidotes: string[]; color: string }[] = [
+  { key: "med-nami", label: "Med nami", antidotes: ["jeza", "cinizem", "osamljenost"], color: "#8a2020" },
+  { key: "napredek", label: "Napredek", antidotes: ["skrb", "obup"], color: "#1a5f8a" },
+  { key: "heroji", label: "Heroji", antidotes: ["strah"], color: "#7a3a1a" },
+  { key: "drobne-radosti", label: "Drobne radosti", antidotes: ["dolgcas"], color: "#8a2050" },
+];
+
+function antidoteToThemeKey(antidote: string | null): string | null {
+  if (!antidote) return null;
+  for (const t of THEME_FILTERS) {
+    if (t.antidotes.includes(antidote)) return t.key;
+  }
+  return null;
+}
+
 const REVIEWED_KEY = "svetla-stran-reviewed";
 
 function loadReviewed(): Set<string> {
@@ -63,7 +79,8 @@ function saveReviewed(set: Set<string>) {
 export function InboxView() {
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string | null>(null);
+  const [themeFilter, setThemeFilter] = useState<string | null>(null);
+  const [catFilter, setCatFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<
     "score" | "newest" | "oldest" | "category" | "source" | "antidote"
   >("score");
@@ -127,24 +144,27 @@ export function InboxView() {
   const newCount = headlines.filter((s) => !reviewed.has(s.id)).length;
   const categories = [...new Set(headlines.map((s) => s.ai_category).filter(Boolean))].sort();
 
-  const filtered = filter
-    ? headlines.filter((s) => s.ai_category === filter)
-    : headlines;
+  const filtered = headlines.filter((s) => {
+    if (themeFilter) {
+      const theme = antidoteToThemeKey(s.ai_antidote);
+      if (theme !== themeFilter) return false;
+    }
+    if (catFilter) {
+      if (s.ai_category !== catFilter) return false;
+    }
+    return true;
+  });
 
   const sorted = [...filtered].sort((a, b) => {
     switch (sortBy) {
       case "score":
-        return (b.ai_score || 0) - (a.ai_score || 0);
+        return ((b as any)._boosted_score || b.ai_score || 0) - ((a as any)._boosted_score || a.ai_score || 0);
       case "newest":
         return new Date(b.scraped_at).getTime() - new Date(a.scraped_at).getTime();
       case "oldest":
         return new Date(a.scraped_at).getTime() - new Date(b.scraped_at).getTime();
-      case "category":
-        return (a.ai_category || "").localeCompare(b.ai_category || "");
       case "source":
         return (a.source_name || "").localeCompare(b.source_name || "");
-      case "antidote":
-        return (a.ai_antidote || "").localeCompare(b.ai_antidote || "");
       default:
         return 0;
     }
@@ -180,60 +200,88 @@ export function InboxView() {
         </div>
       </div>
 
-      {/* Category filter */}
-      <div className="mb-8 flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setFilter(null)}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-            filter === null
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-secondary text-secondary-foreground hover:bg-accent"
-          }`}
-        >
-          Vse ({headlines.length})
-        </button>
-        {categories.map((cat) => {
-          const info = CATEGORIES[cat!] || { label: cat, color: "bg-muted" };
-          const count = headlines.filter((s) => s.ai_category === cat).length;
-          if (count === 0) return null;
-          return (
-            <button
-              key={cat}
-              onClick={() => setFilter(filter === cat ? null : cat!)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-                filter === cat
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-secondary text-secondary-foreground hover:bg-accent"
-              }`}
-            >
-              {info.label} ({count})
-            </button>
-          );
-        })}
+      {/* Theme + category filters */}
+      <div className="mb-8 space-y-3">
+        {/* Primary: theme filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => { setThemeFilter(null); setCatFilter(null); }}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+              !themeFilter && !catFilter
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-secondary text-secondary-foreground hover:bg-accent"
+            }`}
+          >
+            Vse ({headlines.length})
+          </button>
+          {THEME_FILTERS.map((t) => {
+            const count = headlines.filter((s) => antidoteToThemeKey(s.ai_antidote) === t.key).length;
+            if (count === 0) return null;
+            const active = themeFilter === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { setThemeFilter(active ? null : t.key); setCatFilter(null); }}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all border ${
+                  active ? "shadow-sm" : "hover:opacity-80"
+                }`}
+                style={{
+                  backgroundColor: active ? t.color : "transparent",
+                  color: active ? "white" : t.color,
+                  borderColor: active ? t.color : `${t.color}30`,
+                }}
+              >
+                {t.label} ({count})
+              </button>
+            );
+          })}
 
-        <div className="ml-auto flex flex-wrap items-center gap-1 rounded-full bg-secondary p-0.5">
-          {(
-            [
-              { id: "score", label: "Po oceni" },
-              { id: "newest", label: "Najnovejse" },
-              { id: "oldest", label: "Najstarejse" },
-              { id: "category", label: "Po kategoriji" },
-              { id: "source", label: "Po viru" },
-              { id: "antidote", label: "Po custvu" },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setSortBy(opt.id)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
-                sortBy === opt.id
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {/* Sort controls */}
+          <div className="ml-auto flex flex-wrap items-center gap-1 rounded-full bg-secondary p-0.5">
+            {(
+              [
+                { id: "score", label: "Po oceni" },
+                { id: "newest", label: "Najnovejše" },
+                { id: "oldest", label: "Najstarejše" },
+                { id: "source", label: "Po viru" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setSortBy(opt.id)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                  sortBy === opt.id
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Secondary: category filter (smaller pills) */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40 mr-1">Kategorija:</span>
+          {categories.map((cat) => {
+            const info = CATEGORIES[cat!] || { label: cat, color: "bg-muted" };
+            const count = headlines.filter((s) => s.ai_category === cat).length;
+            if (count === 0) return null;
+            return (
+              <button
+                key={cat}
+                onClick={() => setCatFilter(catFilter === cat ? null : cat!)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
+                  catFilter === cat
+                    ? "bg-foreground text-background"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {info.label} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { NewsletterSignup } from './newsletter-signup';
 
-export function MidArticleCta({ category }: { category?: string }) {
+export function MidArticleCta({ theme }: { theme?: string }) {
   const [expanded, setExpanded] = useState(false);
 
   if (expanded) {
     return (
       <div className="my-4">
-        <NewsletterSignup variant="inline" category={category} />
+        <NewsletterSignup variant="inline" theme={theme} />
       </div>
     );
   }

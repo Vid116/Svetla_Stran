@@ -4,6 +4,7 @@ import { useState } from "react";
 import { InboxView } from "./inbox-view";
 import { ProcessingView } from "./processing-view";
 import { PublishedView } from "./published-view";
+import { ThemeBalance } from "./theme-balance";
 
 const TABS = [
   { id: "inbox", label: "Inbox" },
@@ -34,6 +35,9 @@ export function EditorTabs({ defaultTab = "inbox" }: { defaultTab?: TabId }) {
           </button>
         ))}
       </div>
+
+      {/* Theme balance indicator */}
+      {active === "inbox" && <ThemeBalance />}
 
       {/* Tab content */}
       {active === "inbox" && <InboxView />}

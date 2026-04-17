@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useMemo, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { PublishedArticle } from "@/app/page";
 import {
-  CATEGORY_PILL,
-  CATEGORY_ACCENT_BAR,
-  CATEGORY_LABELS,
   formatDate,
   readingTime,
-  ANTIDOTE_LABELS,
+  THEMES,
+  TOPICAL_THEME_ORDER,
+  RITUAL_THEME_ORDER,
 } from "@/lib/article-helpers";
-import { EmotionSection } from "@/components/emotion-section";
 import { CategoryIcon } from "@/lib/category-icons";
 import {
   RevealOnScroll,
@@ -21,27 +19,8 @@ import {
   HeroReveal,
 } from "@/components/motion-wrappers";
 import { SafeImage } from "@/components/safe-image";
-
-// ── Display groups: 6 reader-facing buttons → multiple DB categories each ──
-const DISPLAY_GROUPS: { key: string; label: string; categories: string[] }[] = [
-  { key: "junaki",     label: "Junaki",     categories: ["JUNAKI"] },
-  { key: "sport",      label: "Šport",      categories: ["SPORT"] },
-  { key: "divjina",    label: "Divjina",    categories: ["NARAVA", "ZIVALI"] },
-  { key: "sosedje",    label: "Sosedje",    categories: ["SKUPNOST", "KULTURA"] },
-  { key: "napredek",   label: "Napredek",   categories: ["PODJETNISTVO", "INFRASTRUKTURA"] },
-  { key: "ponos",      label: "Ponos",      categories: ["SLOVENIJA_V_SVETU"] },
-];
-
-// Cloud color schemes per display group
-const CLOUD_COLORS: Record<string, { soft: string; fill: string; text: string; activeText: string }> = {
-  VSE:       { soft: "#f0ebe0", fill: "#d4b878", text: "#7a6530", activeText: "#3d3010" },
-  junaki:    { soft: "#fce0e0", fill: "#f0a0a0", text: "#8a2020", activeText: "#400000" },
-  sport:     { soft: "#d4ecfc", fill: "#7cc4f5", text: "#1a5f8a", activeText: "#ffffff" },
-  divjina:   { soft: "#d4f0d8", fill: "#7ecd8a", text: "#1f6b2f", activeText: "#0a3515" },
-  sosedje:   { soft: "#e8dff5", fill: "#c4a8e8", text: "#5b2d8e", activeText: "#2a0050" },
-  napredek:  { soft: "#f5eac8", fill: "#d4b45a", text: "#6b5010", activeText: "#3d2e00" },
-  ponos:     { soft: "#d8daf8", fill: "#8088e0", text: "#2a2e7a", activeText: "#ffffff" },
-};
+import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
+import { TihoDeloSection } from "@/components/tiho-delo-section";
 
 // Cloud puffs: [leftPercent, topPercent, size(px)]
 // Circle centers sit ON the button edge (0/100%) — half sticks out, half fills in.
@@ -115,34 +94,28 @@ const CLOUD_PUFFS: [number, number, number][][] = [
   ],
 ];
 
-/** Cloud-shaped button — tightly overlapping circles wrap all the way around */
-function CloudButton({
+/** Cloud-shaped link — tightly overlapping circles wrap all the way around */
+function CloudLink({
   children,
-  active,
-  category,
+  href,
   shapeIndex,
-  onClick,
-  colors: colorsProp,
+  colors,
 }: {
   children: React.ReactNode;
-  active: boolean;
-  category: string;
+  href: string;
   shapeIndex: number;
-  onClick: () => void;
-  colors?: { soft: string; fill: string; text: string; activeText: string };
+  colors: { soft: string; fill: string; text: string; activeText: string };
 }) {
-  const colors = colorsProp ?? CLOUD_COLORS[category] ?? { soft: "#e8e8e8", fill: "#aaa", text: "#333", activeText: "#000" };
   const puffs = CLOUD_PUFFS[shapeIndex % CLOUD_PUFFS.length];
-  const bg = active ? colors.fill : colors.soft;
-  const fg = active ? colors.activeText : colors.text;
+  const bg = colors.soft;
+  const fg = colors.text;
 
   return (
-    <button
-      onClick={onClick}
+    <Link
+      href={href}
       className="group relative cursor-pointer transition-all duration-300 hover:-translate-y-1.5 active:translate-y-0"
       style={{ color: fg }}
     >
-      {/* Puffs — circles all around the edge, sizes in % so they scale with button */}
       {puffs.map((p, i) => (
         <div
           key={i}
@@ -157,7 +130,6 @@ function CloudButton({
           }}
         />
       ))}
-      {/* Inner fill — solid center, fully rounded so no straight edges show */}
       <div
         className="absolute transition-colors duration-300"
         style={{
@@ -166,11 +138,10 @@ function CloudButton({
           backgroundColor: bg,
         }}
       />
-      {/* Content */}
       <span className="relative z-10 inline-flex items-center gap-2 px-8 py-4 text-sm font-medium whitespace-nowrap">
         {children}
       </span>
-    </button>
+    </Link>
   );
 }
 
@@ -270,90 +241,37 @@ function matchesSearch(searchText: string, query: string): boolean {
   });
 }
 
-export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
+export function ArticleGrid({
+  articles,
+  nedeljskaArticle,
+  tihoDeloArticles,
+}: {
+  articles: PublishedArticle[];
+  nedeljskaArticle?: any;
+  tihoDeloArticles?: any[];
+}) {
   const searchParams = useSearchParams();
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [activeAntidote, setActiveAntidote] = useState<string | null>(null);
   const hasInteracted = useRef(false);
 
   // Read search query from URL (?q=)
   const searchQuery = searchParams.get("q") ?? "";
 
-  function handleGroupChange(groupKey: string | null) {
-    hasInteracted.current = true;
-    setActiveGroup(groupKey);
-  }
-
-  function handleAntidoteSelect(antidote: string | null) {
-    hasInteracted.current = true;
-    setActiveAntidote(antidote);
-  }
-
-  // Sync group from URL (?tema=)
-  useEffect(() => {
-    const tema = searchParams.get("tema");
-    if (tema && DISPLAY_GROUPS.some((g) => g.key === tema)) {
-      setActiveGroup(tema);
-    } else if (!tema) {
-      setActiveGroup(null);
-    }
-  }, [searchParams]);
-
-  // Sync antidote from URL (?antidote=)
-  useEffect(() => {
-    const antidote = searchParams.get("antidote");
-    if (antidote && ANTIDOTE_LABELS[antidote]) {
-      setActiveAntidote(antidote);
-    } else if (!antidote) {
-      setActiveAntidote(null);
-    }
-  }, [searchParams]);
-
-  // Listen for logo click reset
-  useEffect(() => {
-    function onReset() {
-      hasInteracted.current = true;
-      setActiveGroup(null);
-    }
-    window.addEventListener("svetla-reset", onReset);
-    return () => window.removeEventListener("svetla-reset", onReset);
-  }, []);
-
-  // Count articles per display group
-  const groupCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const g of DISPLAY_GROUPS) {
-      counts[g.key] = articles.filter((a) => g.categories.includes(a.ai.category)).length;
-    }
-    return counts;
-  }, [articles]);
-
   const filtered = useMemo(() => {
-    const group = DISPLAY_GROUPS.find((g) => g.key === activeGroup);
-    let result = group
-      ? articles.filter((a) => group.categories.includes(a.ai.category))
-      : articles;
-
-    if (activeAntidote) {
-      result = result.filter((a) => a.ai.antidote_for === activeAntidote || a.ai.antidote_secondary === activeAntidote);
-    }
-
-    if (searchQuery.trim().length >= 3) {
-      result = result.filter((a) => {
-        const searchText = `${a.title} ${a.subtitle} ${a.body}`;
-        return matchesSearch(searchText, searchQuery);
-      });
-    }
-
-    return result;
-  }, [articles, activeGroup, activeAntidote, searchQuery]);
+    if (searchQuery.trim().length < 3) return articles;
+    return articles.filter((a) => {
+      const searchText = `${a.title} ${a.subtitle} ${a.body}`;
+      return matchesSearch(searchText, searchQuery);
+    });
+  }, [articles, searchQuery]);
 
   const { featured, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
 
   return (
     <>
-      {/* ── Featured hero article ── */}
-      {featured && (
+      {/* ── Hero: Nedeljska takeover on Sundays, normal featured otherwise ── */}
+      {nedeljskaArticle ? (
+        <NedeljskaTakeover article={nedeljskaArticle} />
+      ) : featured ? (
         <RevealOnScroll className="mb-10" skip={hasInteracted.current}>
           <Link href={`/clanki/${featured.slug}`} className="group block">
             <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
@@ -373,7 +291,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
 
                 <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
                   <div className="flex items-center gap-3 mb-4">
-                    <CategoryIcon category={featured.ai.category} className="w-4 h-4 text-white/70" />
                     <time className="text-xs text-white/70">
                       {formatDate(featured.publishedAt)}
                     </time>
@@ -396,75 +313,56 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
             </article>
           </Link>
         </RevealOnScroll>
-      )}
+      ) : null}
 
 
-      {/* ── Category filter ── */}
+      {/* ── Theme navigation — 5 topical theme clouds, 4 ritual links ── */}
       {articles.length > 0 && (
         <HeroReveal delay={0.4}>
-          <nav
-            aria-label="Filtriraj po kategoriji"
-            className="mb-6"
-          >
-            {/* Category groups — always visible */}
-            <div className="flex flex-col items-center gap-2">
-              {/* Selected — top row */}
-              <div className="flex justify-center">
-                {activeGroup === null ? (
-                  <CloudButton
-                    active
-                    category="VSE"
-                    shapeIndex={0}
-                    onClick={() => handleGroupChange(null)}
+          <nav aria-label="Teme" className="mb-6">
+            <div className="flex flex-wrap gap-5 justify-center">
+              {TOPICAL_THEME_ORDER.map((slug, i) => {
+                const theme = THEMES[slug];
+                return (
+                  <CloudLink
+                    key={slug}
+                    href={`/tema/${slug}`}
+                    shapeIndex={i + 1}
+                    colors={theme.colors}
                   >
-                    Vse zgodbe
-                    <span className="text-xs opacity-50">{articles.length}</span>
-                  </CloudButton>
-                ) : (
-                  <CloudButton
-                    active
-                    category={activeGroup}
-                    shapeIndex={DISPLAY_GROUPS.findIndex((g) => g.key === activeGroup) + 1}
-                    onClick={() => handleGroupChange(null)}
-                  >
-                    {DISPLAY_GROUPS.find((g) => g.key === activeGroup)?.label}
-                    <span className="text-xs opacity-50">
-                      {groupCounts[activeGroup] ?? 0}
-                    </span>
-                  </CloudButton>
-                )}
-              </div>
-              {/* Rest — second row */}
-              <div className="flex flex-wrap gap-5 justify-center">
-                {activeGroup !== null && (
-                  <CloudButton
-                    active={false}
-                    category="VSE"
-                    shapeIndex={0}
-                    onClick={() => handleGroupChange(null)}
-                  >
-                    Vse zgodbe
-                    <span className="text-xs opacity-50">{articles.length}</span>
-                  </CloudButton>
-                )}
-                {DISPLAY_GROUPS
-                  .filter((g) => g.key !== activeGroup)
-                  .map((g, i) => (
-                    <CloudButton
-                      key={g.key}
-                      active={false}
-                      category={g.key}
-                      shapeIndex={i + 1}
-                      onClick={() => handleGroupChange(g.key)}
+                    {theme.label}
+                  </CloudLink>
+                );
+              })}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3 justify-center">
+              {RITUAL_THEME_ORDER
+                .filter((slug) => slug !== "tiho-delo" && slug !== "nedeljska-zgodba")
+                .map((slug) => {
+                  const theme = THEMES[slug];
+                  return (
+                    <Link
+                      key={slug}
+                      href={`/tema/${slug}`}
+                      className="rounded-full px-5 py-2 text-xs font-medium border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                      style={{
+                        backgroundColor: theme.colors.soft,
+                        color: theme.colors.text,
+                        borderColor: `${theme.colors.fill}40`,
+                      }}
                     >
-                      {g.label}
-                      <span className="text-xs opacity-50">{groupCounts[g.key] ?? 0}</span>
-                    </CloudButton>
-                  ))}
-              </div>
+                      {theme.label}
+                    </Link>
+                  );
+                })}
             </div>
           </nav>
         </HeroReveal>
+      )}
+
+      {/* ── Tiho delo spotlight ── */}
+      {tihoDeloArticles && tihoDeloArticles.length > 0 && (
+        <TihoDeloSection articles={tihoDeloArticles} />
       )}
 
       {/* ── Tagline ── */}
@@ -476,21 +374,9 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
         </p>
       </div>
 
-      {/* ── Antidote pill slider ── */}
-      <div className="mb-8">
-        <EmotionSection activeAntidote={activeAntidote} onSelect={handleAntidoteSelect} />
-      </div>
-
-      {/* ── Antidote filter heading ── */}
-      {activeAntidote && ANTIDOTE_LABELS[activeAntidote] && (
-        <p className="mb-4 text-center text-sm text-muted-foreground">
-          {ANTIDOTE_LABELS[activeAntidote].label} — {filtered.length} {filtered.length === 1 ? 'zgodba' : 'zgodb'}
-        </p>
-      )}
-
       {filtered.length === 0 && (
         <p className="py-12 text-center text-lg text-muted-foreground">
-          {searchQuery.length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb v tej kategoriji."}
+          {searchQuery.length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb."}
         </p>
       )}
 
@@ -515,16 +401,6 @@ export function ArticleGrid({ articles }: { articles: PublishedArticle[] }) {
                     ) : (
                       <CategoryGradient category={article.ai.category} />
                     )}
-                    <div className="absolute top-3 left-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border backdrop-blur-sm bg-white/80 ${
-                          CATEGORY_PILL[article.ai.category] ?? "bg-muted text-foreground border-border"
-                        }`}
-                      >
-                        <CategoryIcon category={article.ai.category} className="w-3 h-3" />
-                        {CATEGORY_LABELS[article.ai.category] ?? ""}
-                      </span>
-                    </div>
                   </div>
 
                   <div className="flex flex-col flex-1 p-5">

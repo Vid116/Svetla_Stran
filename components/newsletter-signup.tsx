@@ -2,42 +2,37 @@
 
 import { useState } from "react";
 import { Sun } from "lucide-react";
-import { CATEGORY_LABELS } from "@/lib/article-helpers";
-import { CategoryIcon } from "@/lib/category-icons";
+import { THEMES, TOPICAL_THEME_ORDER, RITUAL_THEME_ORDER } from "@/lib/article-helpers";
 import { ThemePickerModal } from "@/components/theme-picker-modal";
 
-const CATEGORIES = [
-  "JUNAKI", "PODJETNISTVO", "SKUPNOST", "SPORT", "NARAVA",
-  "ZIVALI", "INFRASTRUKTURA", "SLOVENIJA_V_SVETU", "KULTURA",
-] as const;
+const ALL_THEMES = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
 interface Props {
   /** "hero" = large with description, "inline" = compact for article footer, "afterglow" = end-of-article intimate */
   variant?: "hero" | "inline" | "afterglow";
-  /** Pre-select this category in the theme picker modal */
-  category?: string;
+  /** Pre-select this theme slug in the picker modal */
+  theme?: string;
 }
 
-export function NewsletterSignup({ variant = "hero", category }: Props) {
+export function NewsletterSignup({ variant = "hero", theme }: Props) {
   const [email, setEmail] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([...CATEGORIES]);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([...ALL_THEMES]);
   const [showTopics, setShowTopics] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const toggleCategory = (cat: string) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(cat)) {
-        // Don't allow deselecting all
+  const toggleTheme = (slug: string) => {
+    setSelectedThemes((prev) => {
+      if (prev.includes(slug)) {
         if (prev.length <= 1) return prev;
-        return prev.filter((c) => c !== cat);
+        return prev.filter((c) => c !== slug);
       }
-      return [...prev, cat];
+      return [...prev, slug];
     });
   };
 
-  const allSelected = selectedCategories.length === CATEGORIES.length;
+  const allSelected = selectedThemes.length === ALL_THEMES.length;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +53,7 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          categories: allSelected ? [] : selectedCategories,
+          themes: allSelected ? [] : selectedThemes,
         }),
       });
 
@@ -135,27 +130,29 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
         </button>
         {showTopics && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => toggleCategory(cat)}
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-all ${
-                  selectedCategories.includes(cat)
-                    ? "bg-foreground text-background"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <CategoryIcon category={cat} className="w-3 h-3" />
-                {CATEGORY_LABELS[cat]}
-              </button>
-            ))}
+            {ALL_THEMES.map((slug) => {
+              const t = THEMES[slug];
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => toggleTheme(slug)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-all ${
+                    selectedThemes.includes(slug)
+                      ? "bg-foreground text-background"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         )}
         {showModal && (
           <ThemePickerModal
             email={email}
-            initialCategory={category}
+            initialTheme={theme}
             onComplete={() => {
               setShowModal(false);
               setStatus("success");
@@ -209,27 +206,29 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
         </button>
         {showTopics && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => toggleCategory(cat)}
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-all ${
-                  selectedCategories.includes(cat)
-                    ? "bg-foreground text-background"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <CategoryIcon category={cat} className="w-3 h-3" />
-                {CATEGORY_LABELS[cat]}
-              </button>
-            ))}
+            {ALL_THEMES.map((slug) => {
+              const t = THEMES[slug];
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => toggleTheme(slug)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-all ${
+                    selectedThemes.includes(slug)
+                      ? "bg-foreground text-background"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         )}
         {showModal && (
           <ThemePickerModal
             email={email}
-            initialCategory={category}
+            initialTheme={theme}
             onComplete={() => {
               setShowModal(false);
               setStatus("success");
@@ -288,21 +287,23 @@ export function NewsletterSignup({ variant = "hero", category }: Props) {
 
         {showTopics && (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => toggleCategory(cat)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                  selectedCategories.includes(cat)
-                    ? "bg-foreground text-background scale-105"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted opacity-60 hover:opacity-100"
-                }`}
-              >
-                <CategoryIcon category={cat} className="w-3 h-3" />
-                {CATEGORY_LABELS[cat]}
-              </button>
-            ))}
+            {ALL_THEMES.map((slug) => {
+              const t = THEMES[slug];
+              return (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => toggleTheme(slug)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                    selectedThemes.includes(slug)
+                      ? "bg-foreground text-background scale-105"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         )}
 

@@ -235,8 +235,8 @@ Vrni SAMO JSON brez markdown:
   // "cinizem" = zgodba ki dokaže da so ljudje dobri brez skritih agend, nesebična dobrota
   // "osamljenost" = zgodba o povezovanju, skupnosti, sosedih, tujcih ki postanejo prijatelji
   // "obup" = zgodba o vztrajnosti, obnovi, naravi ki se vrača, premagani oviri
-  // "strah" = zgodba o pogumu — običajni ljudje ki naredijo izredne stvari v nevarnih situacijah
-  // "dolgcas" = zgodba ki te nasmeje, ogreje srce, instant smile — živali, otroci, simpatični trenutki
+  // "strah" = zgodba o pogumu — NE samo fizična nevarnost! Tudi: učitelj ki se postavi za učenca, žvižgač ki spregovori, nekdo ki začne znova, nekdo ki stoji za prepričanja ko je težko, reševalci, gasilci, pogumne odločitve v vsakdanjem življenju
+  // "dolgcas" = zgodba ki te nasmeje ali ogreje srce — živali, otroci, simpatični trenutki, nenavadni rekordi, čudni dosežki, smešne naključja, presenetljive dobrote, "feel-good" zgodbe
 }`;
 
 const WRITING_PROMPT = `Si novinar za Svetla Stran - slovensko spletno stran pozitivnih novic.

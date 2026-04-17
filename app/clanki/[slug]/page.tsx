@@ -6,13 +6,11 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
   CATEGORY_ACCENT_BAR,
-  CATEGORY_LABELS,
   formatDate,
   readingTime,
+  getThemeForArticle,
 } from "@/lib/article-helpers";
-import { CategoryIcon } from "@/lib/category-icons";
 import { ShareButton, ShareBar } from "@/components/share-button";
-import { EmotionTag } from "@/components/emotion-tag";
 import { LongFormSection } from "@/components/long-form-section";
 import { CommentSection } from "@/components/comment-section";
 import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
@@ -120,6 +118,7 @@ export default async function ArticlePage({
     .filter(Boolean);
 
   const accentBar = CATEGORY_ACCENT_BAR[article.ai.category] ?? "bg-primary";
+  const articleTheme = getThemeForArticle(article.ai.antidote_for, article.ai.category);
 
   return (
     <div className="min-h-screen">
@@ -135,12 +134,11 @@ export default async function ArticlePage({
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           <div className="absolute top-0 left-0 right-0 p-6">
             <Link
-              href={`/?kategorija=${article.ai.category}`}
+              href={articleTheme ? `/tema/${articleTheme.slug}` : "/"}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-white/80 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-3 py-1.5"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
-              <CategoryIcon category={article.ai.category} className="w-3.5 h-3.5" />
-              {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
+              {articleTheme?.label ?? "Vse zgodbe"}
             </Link>
           </div>
         </div>
@@ -159,17 +157,15 @@ export default async function ArticlePage({
         <div className="relative mx-auto max-w-3xl px-6 pt-8 pb-10">
           {!article.imageUrl && (
             <Link
-              href={`/?kategorija=${article.ai.category}`}
+              href={articleTheme ? `/tema/${articleTheme.slug}` : "/"}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group mb-8 block"
             >
               <span className="group-hover:-translate-x-0.5 transition-transform" aria-hidden>←</span>
-              <CategoryIcon category={article.ai.category} className="w-3.5 h-3.5" />
-              {CATEGORY_LABELS[article.ai.category] ?? article.ai.category}
+              {articleTheme?.label ?? "Vse zgodbe"}
             </Link>
           )}
 
           <div className="flex flex-wrap items-center gap-3 mb-6">
-            <CategoryIcon category={article.ai.category} className="w-5 h-5 text-muted-foreground" />
             <time className="text-xs text-muted-foreground" dateTime={article.publishedAt}>
               {formatDate(article.publishedAt)}
             </time>
@@ -181,8 +177,6 @@ export default async function ArticlePage({
               <ShareButton title={article.title} />
             </div>
           </div>
-
-          <EmotionTag antidote={article.ai.antidote_for} />
 
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight text-foreground mb-5">
             {article.title}
@@ -208,7 +202,7 @@ export default async function ArticlePage({
               >
                 {p}
               </p>
-              {i === 2 && paragraphs.length > 4 && <MidArticleCta category={article.ai.category} />}
+              {i === 2 && paragraphs.length > 4 && <MidArticleCta theme={articleTheme?.slug} />}
             </div>
           ))}
         </div>
@@ -266,6 +260,25 @@ export default async function ArticlePage({
         <div className="mt-10">
           <ShareBar title={article.title} />
         </div>
+
+        {/* Theme link — "Več iz teme" */}
+        {articleTheme && (
+          <div className="mt-10 pt-8 border-t border-border/30 text-center">
+            <Link
+              href={`/tema/${articleTheme.slug}`}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <span>Več iz teme</span>
+              <span
+                className="font-medium"
+                style={{ color: articleTheme.colors.text }}
+              >
+                {articleTheme.label}
+              </span>
+              <span aria-hidden className="group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
+          </div>
+        )}
       </main>
 
       {/* Emotion-matched next reads */}
@@ -277,7 +290,7 @@ export default async function ArticlePage({
 
       {/* Newsletter signup */}
       <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <NewsletterSignup variant="afterglow" category={article.ai.category} />
+        <NewsletterSignup variant="afterglow" theme={articleTheme?.slug} />
       </div>
 
       {/* Comments */}

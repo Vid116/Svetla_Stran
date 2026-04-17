@@ -94,3 +94,132 @@ export function readingTime(text: string): string {
   const minutes = Math.max(1, Math.round(words / 200));
   return `${minutes} min branja`;
 }
+
+// ── Themes (reader-facing destination pages) ────────────────────────
+//
+// Themes live on two axes:
+//   topical — emotional/subject-based, matched via hidden antidote tags + legacy categories
+//   ritual  — format-based, matched via manual tags in articles.themes[] or date cutoffs
+//
+// Antidote is the hidden matcher: the AI tags each article with one, but readers
+// never see the word. Categories are retired to silent tags (kept in DB for the
+// legacy pipeline, not surfaced in nav).
+
+export type ThemeKind = "topical" | "tagged" | "archive" | "events";
+
+export interface Theme {
+  slug: string;
+  label: string;
+  manifesto: string;
+  colors: { soft: string; fill: string; text: string; activeText: string; whisper: string };
+  kind: ThemeKind;
+  // topical: match by antidote (primary or secondary) OR category
+  antidoteMatch: string[];
+  categoryMatch: string[];
+  // archive: articles older than this cutoff qualify
+  minAgeDays?: number;
+}
+
+export const THEMES: Record<string, Theme> = {
+  "med-nami": {
+    slug: "med-nami",
+    label: "Med nami",
+    manifesto: "Drobne geste med sosedi, neznanci, mimoidočimi. Stvari, ki se zgodijo, ko nihče ne gleda — in jih je veliko več, kot bi mislili.",
+    colors: ANTIDOTE_CLOUD_COLORS.jeza,
+    kind: "topical",
+    antidoteMatch: ["jeza", "cinizem", "osamljenost"],
+    categoryMatch: [],
+  },
+  "naprej": {
+    slug: "naprej",
+    label: "Napredek",
+    manifesto: "Projekti, ki so trajali leta. Ljudje, ki niso odnehali. Začetki, ki so se izšli. Slovenija, ki gradi — počasi, vztrajno, naprej.",
+    colors: ANTIDOTE_CLOUD_COLORS.skrb,
+    kind: "topical",
+    antidoteMatch: ["skrb", "obup"],
+    categoryMatch: [],
+  },
+  "heroji": {
+    slug: "heroji",
+    label: "Heroji",
+    manifesto: "Reševalec, ki je skočil v reko. Učiteljica, ki ostane po pouku. Sosed, ki ga ni nihče prosil. Ljudje, ki so v ključnem trenutku rekli ja.",
+    colors: ANTIDOTE_CLOUD_COLORS.strah,
+    kind: "topical",
+    antidoteMatch: ["strah"],
+    categoryMatch: ["JUNAKI"],
+  },
+  "drobne-radosti": {
+    slug: "drobne-radosti",
+    label: "Drobne radosti",
+    manifesto: "Pes, ki vsako jutro pospremi otroke v šolo. Star nasmeh na novi fotografiji. Drobne stvari, ob katerih se nehote nasmehneš.",
+    colors: ANTIDOTE_CLOUD_COLORS.dolgcas,
+    kind: "topical",
+    antidoteMatch: ["dolgcas"],
+    categoryMatch: [],
+  },
+
+  // Ritual themes — tagged manually by editors or computed from dates
+
+  "tiho-delo": {
+    slug: "tiho-delo",
+    label: "Tiha dela",
+    manifesto: "Medicinske sestre na nočni izmeni. Cestarji ob šestih zjutraj. Knjižničarke, vzgojiteljice, voznice rešilcev. Slovenija stoji, ker nekdo zgodaj vstane.",
+    colors: { soft: "#e8e2d6", fill: "#a89878", text: "#5a4a30", activeText: "#2a1d08", whisper: "#9a8868" },
+    kind: "tagged",
+    antidoteMatch: [],
+    categoryMatch: [],
+  },
+  "nedeljska-zgodba": {
+    slug: "nedeljska-zgodba",
+    label: "Nedeljska zgodba",
+    manifesto: "Ena zgodba, vsako nedeljo. Dolga, počasi napisana, vredna kave. Za jutra, ki se jim ne mudi.",
+    colors: { soft: "#ede4d8", fill: "#c8a878", text: "#6b4a20", activeText: "#3a2410", whisper: "#b09870" },
+    kind: "tagged",
+    antidoteMatch: [],
+    categoryMatch: [],
+  },
+  "iz-arhiva": {
+    slug: "iz-arhiva",
+    label: "Iz arhiva",
+    manifesto: "Dobre zgodbe ne zastarajo. Tu se vračajo tiste, ki so nas pred meseci ali leti premaknile — in še vedno držijo.",
+    colors: { soft: "#e4dce8", fill: "#9888a8", text: "#4a3a5a", activeText: "#2a1d3a", whisper: "#88789a" },
+    kind: "archive",
+    antidoteMatch: [],
+    categoryMatch: [],
+    minAgeDays: 90,
+  },
+  "dogodki": {
+    slug: "dogodki",
+    label: "Dogodki",
+    manifesto: "Festivali, koncerti, predstave, pohodi, odprtja. Tukaj zbiramo, kaj se ta teden dogaja po Sloveniji — in kam je vredno iti.",
+    colors: { soft: "#d8e8e0", fill: "#78b098", text: "#204a38", activeText: "#102a18", whisper: "#70a088" },
+    kind: "events",
+    antidoteMatch: [],
+    categoryMatch: [],
+  },
+};
+
+export const TOPICAL_THEME_ORDER = ["med-nami", "naprej", "heroji", "drobne-radosti"];
+export const RITUAL_THEME_ORDER = ["tiho-delo", "nedeljska-zgodba", "iz-arhiva", "dogodki"];
+export const ALL_THEME_SLUGS = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
+
+export function getTheme(slug: string): Theme | null {
+  return THEMES[slug] ?? null;
+}
+
+// Find the primary theme an article belongs to. Antidote wins over category when
+// both match (the article was tagged emotionally, so the emotional axis is truer).
+// Only topical themes are candidates — ritual themes come from manual tags.
+export function getThemeForArticle(antidote: string | null, category: string | null): Theme | null {
+  if (antidote) {
+    for (const slug of TOPICAL_THEME_ORDER) {
+      if (THEMES[slug].antidoteMatch.includes(antidote)) return THEMES[slug];
+    }
+  }
+  if (category) {
+    for (const slug of TOPICAL_THEME_ORDER) {
+      if (THEMES[slug].categoryMatch.includes(category)) return THEMES[slug];
+    }
+  }
+  return null;
+}

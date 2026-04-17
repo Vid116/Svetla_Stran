@@ -1,4 +1,5 @@
 import { getSQL } from "./neon";
+import type { Theme } from "./article-helpers";
 
 // ── Headline queries ────────────────────────────────────────────────────────
 
@@ -139,6 +140,7 @@ export async function createDraft(draft: {
   initial_score?: number | null;
   initial_antidote?: string | null;
   initial_category?: string | null;
+  themes?: string[];
 }) {
   // Sanitize slug
   if (draft.slug) {
@@ -158,7 +160,7 @@ export async function createDraft(draft: {
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
       verification_claims, long_form, ai_image_url, image_prompt, ai_score,
-      initial_score, initial_antidote, initial_category, status
+      initial_score, initial_antidote, initial_category, themes, status
     ) VALUES (
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle || null}, ${draft.body}, ${draft.slug},
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
@@ -170,6 +172,7 @@ export async function createDraft(draft: {
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
+      ${draft.themes || []},
       'ready'
     ) RETURNING id
   `;
@@ -215,6 +218,7 @@ export async function updateDraft(id: string, updates: Record<string, any>) {
       image_prompt = CASE WHEN ${has('image_prompt')} THEN ${updates.image_prompt ?? null}::text ELSE image_prompt END,
       ai_score = CASE WHEN ${has('ai_score')} THEN ${updates.ai_score != null ? Math.round(updates.ai_score) : null}::int ELSE ai_score END,
       status = CASE WHEN ${has('status')} THEN ${updates.status ?? null}::text ELSE status END,
+      themes = CASE WHEN ${has('themes')} THEN ${updates.themes ?? []}::text[] ELSE themes END,
       updated_at = ${updates.updated_at}
     WHERE id = ${id}
   `;
@@ -249,7 +253,7 @@ export async function publishDraft(draftId: string) {
       antidote_secondary, source_name, source_url, image_position, research_references,
       raw_title, ai_score, initial_score, initial_antidote, initial_category, ai_image_url,
       verification_passed, verification_summary, verification_claims,
-      research_queries, research_sources_found, research_sources_used, long_form
+      research_queries, research_sources_found, research_sources_used, long_form, themes
     ) VALUES (
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle}, ${draft.body}, ${draft.slug},
       ${draft.image_url}, ${draft.category}, ${draft.emotions || []}, ${draft.antidote},
@@ -261,7 +265,8 @@ export async function publishDraft(draftId: string) {
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims || [])}::jsonb,
       ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
-      ${draft.research_sources_used ?? null}, ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb
+      ${draft.research_sources_used ?? null}, ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
+      ${draft.themes || []}
     )
   `;
 
@@ -308,10 +313,87 @@ export async function getPublishedArticlesLight() {
   `;
 }
 
+export async function getRecentThemeCounts(days: number = 14) {
+  const sql = getSQL();
+  return sql`
+    SELECT
+      CASE WHEN antidote IN ('jeza','cinizem','osamljenost') THEN 'med-nami'
+           WHEN antidote IN ('skrb','obup') THEN 'napredek'
+           WHEN antidote = 'strah' THEN 'heroji'
+           WHEN antidote = 'dolgcas' THEN 'drobne-radosti'
+      END AS theme,
+      count(*)::int AS cnt
+    FROM articles
+    WHERE published_at > NOW() - (${days} || ' days')::interval
+    GROUP BY theme
+  `;
+}
+
+export async function getArticlesByTag(tag: string, limit: number = 3) {
+  const sql = getSQL();
+  return sql`
+    SELECT id, title, subtitle, body, slug, image_url, ai_image_url, category,
+           antidote, antidote_secondary, ai_score, source_url, source_name,
+           published_at, created_at
+    FROM articles
+    WHERE ${tag} = ANY(themes)
+    ORDER BY published_at DESC
+    LIMIT ${limit}
+  `;
+}
+
 export async function getArticleBySlug(slug: string) {
   const sql = getSQL();
   const rows = await sql`SELECT * FROM articles WHERE slug = ${slug}`;
   return rows[0] || null;
+}
+
+export async function getArticlesByTheme(theme: Theme) {
+  const sql = getSQL();
+  const cols = `id, title, subtitle, body, slug, image_url, ai_image_url, category,
+                antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
+                published_at, created_at, themes`;
+
+  if (theme.kind === "topical") {
+    // Match on PRIMARY antidote only (not secondary) so each article lands in
+    // exactly one topical theme. Category match is a fallback for articles
+    // whose category was absorbed into a theme (e.g. JUNAKI → heroji).
+    const antArr = theme.antidoteMatch.length > 0 ? theme.antidoteMatch : ["__none__"];
+    const catArr = theme.categoryMatch.length > 0 ? theme.categoryMatch : ["__none__"];
+    return sql`
+      SELECT ${sql.unsafe(cols)}
+      FROM articles
+      WHERE antidote = ANY(${antArr})
+         OR category = ANY(${catArr})
+      ORDER BY published_at DESC
+      LIMIT 72
+    `;
+  }
+
+  if (theme.kind === "tagged") {
+    return sql`
+      SELECT ${sql.unsafe(cols)}
+      FROM articles
+      WHERE ${theme.slug} = ANY(themes)
+      ORDER BY published_at DESC
+      LIMIT 72
+    `;
+  }
+
+  if (theme.kind === "archive") {
+    const days = theme.minAgeDays ?? 90;
+    return sql`
+      SELECT ${sql.unsafe(cols)}
+      FROM articles
+      WHERE published_at < NOW() - (${days} || ' days')::interval
+      ORDER BY published_at DESC
+      LIMIT 72
+    `;
+  }
+
+  // kind === "events" — not backed by articles table yet. Return empty until
+  // the events data model lands.
+  return [];
 }
 
 export async function getEmotionMatchedArticles(

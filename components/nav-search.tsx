@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export function NavSearch() {
+export function NavSearch({ basePath = "/" }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQ = searchParams.get("q") ?? "";
@@ -18,9 +18,9 @@ export function NavSearch() {
     debounceRef.current = setTimeout(() => {
       const trimmed = query.trim();
       if (trimmed.length >= 2) {
-        router.push(`/?q=${encodeURIComponent(trimmed)}`, { scroll: false });
+        router.push(`${basePath}?q=${encodeURIComponent(trimmed)}`, { scroll: false });
       } else if (trimmed.length === 0 && initialQ) {
-        router.push("/", { scroll: false });
+        router.push(basePath, { scroll: false });
       }
     }, 250);
     return () => clearTimeout(debounceRef.current);
@@ -30,7 +30,7 @@ export function NavSearch() {
     setQuery("");
     setExpanded(false);
     if (initialQ) {
-      router.push("/", { scroll: false });
+      router.push(basePath, { scroll: false });
     }
   }
 
