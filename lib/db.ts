@@ -141,6 +141,8 @@ export async function createDraft(draft: {
   initial_antidote?: string | null;
   initial_category?: string | null;
   themes?: string[];
+  sunday_fit_score?: number | null;
+  sunday_fit_dimensions?: any;
 }) {
   // Sanitize slug
   if (draft.slug) {
@@ -160,7 +162,8 @@ export async function createDraft(draft: {
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
       verification_claims, long_form, ai_image_url, image_prompt, ai_score,
-      initial_score, initial_antidote, initial_category, themes, status
+      initial_score, initial_antidote, initial_category, themes, status,
+      sunday_fit_score, sunday_fit_dimensions
     ) VALUES (
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle || null}, ${draft.body}, ${draft.slug},
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
@@ -173,7 +176,9 @@ export async function createDraft(draft: {
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       ${draft.themes || []},
-      'ready'
+      'ready',
+      ${draft.sunday_fit_score ?? null},
+      ${draft.sunday_fit_dimensions ? (typeof draft.sunday_fit_dimensions === 'string' ? draft.sunday_fit_dimensions : JSON.stringify(draft.sunday_fit_dimensions)) : null}::jsonb
     ) RETURNING id
   `;
   return rows[0];
@@ -227,6 +232,48 @@ export async function updateDraft(id: string, updates: Record<string, any>) {
 export async function deleteDraft(id: string) {
   const sql = getSQL();
   await sql`DELETE FROM drafts WHERE id = ${id}`;
+}
+
+// ── Sunday reserve queries ──────────────────────────────────────────────────
+
+export async function getSundayReserve() {
+  const sql = getSQL();
+  const rows = await sql`
+    SELECT id, headline_id, title, subtitle, slug, image_url, ai_image_url,
+           category, antidote, ai_score, source_name,
+           sunday_fit_score, sunday_fit_dimensions, sunday_reserved_for, created_at
+    FROM drafts
+    WHERE sunday_reserved_for IS NOT NULL
+      AND sunday_reserved_for >= CURRENT_DATE
+    ORDER BY sunday_reserved_for ASC, sunday_fit_score DESC
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+export async function getLongFormDraftsForSwap(excludeId?: string) {
+  const sql = getSQL();
+  return sql`
+    SELECT id, title, subtitle, slug, image_url, ai_image_url,
+           sunday_fit_score, sunday_fit_dimensions, created_at
+    FROM drafts
+    WHERE long_form IS NOT NULL
+      AND status IN ('ready', 'editing')
+      AND id != ${excludeId || "00000000-0000-0000-0000-000000000000"}
+    ORDER BY sunday_fit_score DESC NULLS LAST, created_at DESC
+    LIMIT 20
+  `;
+}
+
+export async function setSundayReserve(draftId: string, targetDate: string) {
+  const sql = getSQL();
+  await sql`UPDATE drafts SET sunday_reserved_for = NULL WHERE sunday_reserved_for = ${targetDate}`;
+  await sql`UPDATE drafts SET sunday_reserved_for = ${targetDate} WHERE id = ${draftId}`;
+}
+
+export async function clearSundayReserve(draftId: string) {
+  const sql = getSQL();
+  await sql`UPDATE drafts SET sunday_reserved_for = NULL WHERE id = ${draftId}`;
 }
 
 // ── Article queries ─────────────────────────────────────────────────────────

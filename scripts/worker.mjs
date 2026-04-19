@@ -17,6 +17,7 @@ config({ path: '.env' });
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import postgres from 'postgres';
+import { reconcileSundayReserve } from '../lib/research-write/sunday-reserve.mjs';
 
 const PORT = process.env.WORKER_PORT || 3001;
 const SECRET = process.env.WORKER_SECRET;
@@ -70,13 +71,14 @@ async function createDraft(draft) {
       .replace(/^-|-$/g, '');
   }
 
-  await sql`
+  const rows = await sql`
     INSERT INTO drafts (
       headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
       verification_claims, long_form, ai_image_url, image_prompt, ai_score,
-      initial_score, initial_antidote, initial_category, themes, status
+      initial_score, initial_antidote, initial_category, themes, status,
+      sunday_fit_score, sunday_fit_dimensions
     ) VALUES (
       ${draft.headline_id}, ${draft.title}, ${draft.subtitle || null}, ${draft.body}, ${draft.slug},
       ${draft.image_url || null}, ${draft.category || null}, ${draft.emotions || []}, ${draft.antidote || null},
@@ -89,9 +91,12 @@ async function createDraft(draft) {
       ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       ${draft.themes || []},
-      'ready'
-    )
+      'ready',
+      ${draft.sunday_fit_score ?? null},
+      ${draft.sunday_fit_dimensions ? JSON.stringify(draft.sunday_fit_dimensions) : null}::jsonb
+    ) RETURNING id
   `;
+  return rows[0]?.id || null;
 }
 
 async function addSourceSuggestion(s) {
@@ -185,7 +190,7 @@ async function handleResearchWrite(story) {
     // Save draft
     if (headlineId && result.article) {
       await pickHeadline(headlineId);
-      await createDraft({
+      const draftId = await createDraft({
         headline_id: headlineId,
         title: result.article.title,
         subtitle: result.article.subtitle,
@@ -213,7 +218,21 @@ async function handleResearchWrite(story) {
         verification_claims: result.verification?.claims || [],
         long_form: result.longFormArticle || null,
         themes: Array.isArray(result.deepScore?.themes) ? result.deepScore.themes : [],
+        sunday_fit_score: result.sundayFit?.score ?? null,
+        sunday_fit_dimensions: result.sundayFit
+          ? { dimensions: result.sundayFit.dimensions, rationale: result.sundayFit.rationale }
+          : null,
       });
+
+      // Reconcile Sunday reserve if this draft has long-form + positive score
+      if (draftId && result.longFormArticle && result.sundayFit?.score > 0) {
+        try {
+          const outcome = await reconcileSundayReserve(sql, draftId, result.sundayFit.score);
+          console.log(`[Worker] Sunday reserve: ${outcome.action} (score ${outcome.score}/100, target ${outcome.targetDate || 'n/a'})`);
+        } catch (err) {
+          console.error(`[Worker] Sunday reserve reconcile failed: ${err.message}`);
+        }
+      }
     }
 
     // Source suggestions

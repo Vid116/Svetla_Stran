@@ -2,11 +2,16 @@ import Link from "next/link";
 import { UserMenu } from "@/components/user-menu";
 import { requireAuth } from "@/lib/require-auth";
 import { DraftsView } from "@/components/drafts-view";
+import { SundayReserveCard } from "@/components/sunday-reserve-card";
+import { getSundayReserve, getLongFormDraftsForSwap } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function OsnutkiPage() {
   await requireAuth();
+
+  const reserve = await getSundayReserve();
+  const candidates = await getLongFormDraftsForSwap(reserve?.id);
 
   return (
     <main className="min-h-screen">
@@ -45,6 +50,7 @@ export default async function OsnutkiPage() {
 
       {/* Drafts list */}
       <div className="mx-auto max-w-5xl px-6 py-12">
+        <SundayReserveCard reserve={reserve as any} candidates={candidates as any} />
         <DraftsView />
       </div>
 

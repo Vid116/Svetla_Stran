@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
           const headlineInitialScore = headline?.ai_score ?? null;
 
           await pickHeadline(headlineId);
-          await createDraft({
+          const draftRow = await createDraft({
             headline_id: headlineId,
             title: result.article.title,
             subtitle: result.article.subtitle,
@@ -74,7 +74,24 @@ export async function POST(req: NextRequest) {
             verification_claims: result.verification?.claims || [],
             long_form: result.longFormArticle || null,
             themes: Array.isArray(result.deepScore?.themes) ? result.deepScore.themes : [],
+            sunday_fit_score: result.sundayFit?.score ?? null,
+            sunday_fit_dimensions: result.sundayFit
+              ? { dimensions: result.sundayFit.dimensions, rationale: result.sundayFit.rationale }
+              : null,
           });
+
+          // Reconcile Sunday reserve if this draft has long-form + positive score
+          const draftId = (draftRow as any)?.id;
+          if (draftId && result.longFormArticle && (result.sundayFit?.score ?? 0) > 0) {
+            try {
+              const { reconcileSundayReserve } = await import("@/lib/research-write/sunday-reserve.mjs");
+              const { getSQL } = await import("@/lib/neon");
+              const outcome = await reconcileSundayReserve(getSQL(), draftId, result.sundayFit.score);
+              console.log(`[research-write] Sunday reserve: ${outcome.action} (score ${outcome.score}/100, target ${outcome.targetDate || 'n/a'})`);
+            } catch (err: any) {
+              console.error(`[research-write] Sunday reserve reconcile failed: ${err.message}`);
+            }
+          }
 
           console.log(`[research-write] Draft saved: "${result.article.title}"`);
         }
