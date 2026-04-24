@@ -39,14 +39,16 @@ export function ThemeRibbon({
   size?: "sm" | "md";
 }) {
   if (!theme) return null;
-  // sm: 9px text → ~11px horizontal, ~5px vertical
-  // md: 10px text → ~14px horizontal, ~6px vertical
+  // With leading-none (line-height: 1), all vertical air must come from padding.
+  // Cap height is ~70% of font size, so for breathing, vertical padding ≥ ~0.7× font size.
+  // Horizontal padding ≥ ~1.4× font size to clear the rounded-full corner curve.
+  // Bump fonts up — text-[9px] is squinty regardless of padding.
   const sizing = size === "sm"
-    ? "px-2.5 py-[5px] text-[9px]"
-    : "px-3.5 py-[6px] text-[10px]";
+    ? "px-3 py-1.5 text-[10px]"
+    : "px-4 py-2 text-[11px]";
   return (
     <span
-      className={`${className} inline-flex items-center rounded-full font-semibold tracking-[0.08em] uppercase leading-none shadow-sm backdrop-blur-sm`}
+      className={`${className} inline-flex items-center rounded-full font-semibold tracking-[0.1em] uppercase leading-none shadow-sm backdrop-blur-sm`}
       style={{
         backgroundColor: theme.colors.fill,
         color: theme.colors.activeText,
@@ -68,7 +70,7 @@ export function CommentBadge({
   if (!count || count <= 0) return null;
   return (
     <span
-      className={`${className} inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-[5px] text-[10px] font-medium leading-none text-white backdrop-blur-sm`}
+      className={`${className} inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1.5 text-[10px] font-medium leading-none text-white backdrop-blur-sm`}
       aria-label={`${count} komentarjev`}
     >
       {COMMENT_ICON}
