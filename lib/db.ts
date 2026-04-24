@@ -329,11 +329,18 @@ export async function publishDraft(draftId: string) {
 export async function getPublishedArticles() {
   const sql = getSQL();
   return sql`
-    SELECT id, title, subtitle, body, slug, image_url, ai_image_url, category,
-           antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
-           published_at, created_at
-    FROM articles
-    ORDER BY published_at DESC
+    SELECT a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+           a.antidote, a.antidote_secondary, a.emotions, a.ai_score, a.source_url, a.source_name,
+           a.published_at, a.created_at, a.long_form, a.themes,
+           COALESCE(c.cnt, 0) AS comment_count
+    FROM articles a
+    LEFT JOIN (
+      SELECT article_id, count(*)::int AS cnt
+      FROM comments
+      WHERE status = 'approved'
+      GROUP BY article_id
+    ) c ON c.article_id = a.id
+    ORDER BY a.published_at DESC
     LIMIT 72
   `;
 }
@@ -379,12 +386,19 @@ export async function getRecentThemeCounts(days: number = 14) {
 export async function getArticlesByTag(tag: string, limit: number = 3) {
   const sql = getSQL();
   return sql`
-    SELECT id, title, subtitle, body, slug, image_url, ai_image_url, category,
-           antidote, antidote_secondary, ai_score, source_url, source_name,
-           published_at, created_at
-    FROM articles
-    WHERE ${tag} = ANY(themes)
-    ORDER BY published_at DESC
+    SELECT a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+           a.antidote, a.antidote_secondary, a.ai_score, a.source_url, a.source_name,
+           a.published_at, a.created_at, a.long_form, a.themes,
+           COALESCE(c.cnt, 0) AS comment_count
+    FROM articles a
+    LEFT JOIN (
+      SELECT article_id, count(*)::int AS cnt
+      FROM comments
+      WHERE status = 'approved'
+      GROUP BY article_id
+    ) c ON c.article_id = a.id
+    WHERE ${tag} = ANY(a.themes)
+    ORDER BY a.published_at DESC
     LIMIT ${limit}
   `;
 }
@@ -397,9 +411,15 @@ export async function getArticleBySlug(slug: string) {
 
 export async function getArticlesByTheme(theme: Theme) {
   const sql = getSQL();
-  const cols = `id, title, subtitle, body, slug, image_url, ai_image_url, category,
-                antidote, antidote_secondary, emotions, ai_score, source_url, source_name,
-                published_at, created_at, themes`;
+  const cols = `a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+                a.antidote, a.antidote_secondary, a.emotions, a.ai_score, a.source_url, a.source_name,
+                a.published_at, a.created_at, a.themes, a.long_form,
+                COALESCE(c.cnt, 0) AS comment_count`;
+  const join = `LEFT JOIN (
+                  SELECT article_id, count(*)::int AS cnt
+                  FROM comments WHERE status = 'approved'
+                  GROUP BY article_id
+                ) c ON c.article_id = a.id`;
 
   if (theme.kind === "topical") {
     // Match on PRIMARY antidote only (not secondary) so each article lands in
@@ -409,10 +429,11 @@ export async function getArticlesByTheme(theme: Theme) {
     const catArr = theme.categoryMatch.length > 0 ? theme.categoryMatch : ["__none__"];
     return sql`
       SELECT ${sql.unsafe(cols)}
-      FROM articles
-      WHERE antidote = ANY(${antArr})
-         OR category = ANY(${catArr})
-      ORDER BY published_at DESC
+      FROM articles a
+      ${sql.unsafe(join)}
+      WHERE a.antidote = ANY(${antArr})
+         OR a.category = ANY(${catArr})
+      ORDER BY a.published_at DESC
       LIMIT 72
     `;
   }
@@ -420,9 +441,10 @@ export async function getArticlesByTheme(theme: Theme) {
   if (theme.kind === "tagged") {
     return sql`
       SELECT ${sql.unsafe(cols)}
-      FROM articles
-      WHERE ${theme.slug} = ANY(themes)
-      ORDER BY published_at DESC
+      FROM articles a
+      ${sql.unsafe(join)}
+      WHERE ${theme.slug} = ANY(a.themes)
+      ORDER BY a.published_at DESC
       LIMIT 72
     `;
   }
@@ -431,9 +453,10 @@ export async function getArticlesByTheme(theme: Theme) {
     const days = theme.minAgeDays ?? 90;
     return sql`
       SELECT ${sql.unsafe(cols)}
-      FROM articles
-      WHERE published_at < NOW() - (${days} || ' days')::interval
-      ORDER BY published_at DESC
+      FROM articles a
+      ${sql.unsafe(join)}
+      WHERE a.published_at < NOW() - (${days} || ' days')::interval
+      ORDER BY a.published_at DESC
       LIMIT 72
     `;
   }
@@ -450,14 +473,22 @@ export async function getEmotionMatchedArticles(
   limit: number = 3
 ): Promise<any[]> {
   const sql = getSQL();
-  const cols = `id, title, subtitle, body, slug, image_url, ai_image_url, category, antidote, antidote_secondary, published_at, created_at`;
+  const cols = `a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+                a.antidote, a.antidote_secondary, a.published_at, a.created_at, a.long_form, a.themes,
+                COALESCE(c.cnt, 0) AS comment_count`;
+  const join = `LEFT JOIN (
+                  SELECT article_id, count(*)::int AS cnt
+                  FROM comments WHERE status = 'approved'
+                  GROUP BY article_id
+                ) c ON c.article_id = a.id`;
 
   if (!antidote) {
     return sql`
       SELECT ${sql.unsafe(cols)}
-      FROM articles
-      WHERE slug != ${currentSlug} AND category = ${category}
-      ORDER BY published_at DESC
+      FROM articles a
+      ${sql.unsafe(join)}
+      WHERE a.slug != ${currentSlug} AND a.category = ${category}
+      ORDER BY a.published_at DESC
       LIMIT ${limit}
     `;
   }
@@ -465,24 +496,26 @@ export async function getEmotionMatchedArticles(
   // Best: same antidote + same category
   const bestMatch = await sql`
     SELECT ${sql.unsafe(cols)}
-    FROM articles
-    WHERE slug != ${currentSlug}
-      AND (antidote = ${antidote} OR antidote_secondary = ${antidote})
-      AND category = ${category}
-    ORDER BY published_at DESC
+    FROM articles a
+    ${sql.unsafe(join)}
+    WHERE a.slug != ${currentSlug}
+      AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
+      AND a.category = ${category}
+    ORDER BY a.published_at DESC
     LIMIT ${limit}
   `;
 
   if (bestMatch.length >= limit) return bestMatch;
 
   // Good: same antidote, any category
-  const excludeSlugs = [currentSlug, ...bestMatch.map((a: any) => a.slug)];
+  const excludeSlugs = [currentSlug, ...bestMatch.map((x: any) => x.slug)];
   const antidoteMatch = await sql`
     SELECT ${sql.unsafe(cols)}
-    FROM articles
-    WHERE slug != ALL(${excludeSlugs})
-      AND (antidote = ${antidote} OR antidote_secondary = ${antidote})
-    ORDER BY published_at DESC
+    FROM articles a
+    ${sql.unsafe(join)}
+    WHERE a.slug != ALL(${excludeSlugs})
+      AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
+    ORDER BY a.published_at DESC
     LIMIT ${limit - bestMatch.length}
   `;
 
@@ -490,12 +523,13 @@ export async function getEmotionMatchedArticles(
   if (combined.length >= limit) return combined.slice(0, limit);
 
   // Fallback: category-only
-  const usedSlugs = [currentSlug, ...combined.map((a: any) => a.slug)];
+  const usedSlugs = [currentSlug, ...combined.map((x: any) => x.slug)];
   const categoryFill = await sql`
     SELECT ${sql.unsafe(cols)}
-    FROM articles
-    WHERE slug != ALL(${usedSlugs}) AND category = ${category}
-    ORDER BY published_at DESC
+    FROM articles a
+    ${sql.unsafe(join)}
+    WHERE a.slug != ALL(${usedSlugs}) AND a.category = ${category}
+    ORDER BY a.published_at DESC
     LIMIT ${limit - combined.length}
   `;
 

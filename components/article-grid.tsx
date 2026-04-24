@@ -7,7 +7,9 @@ import type { PublishedArticle } from "@/app/page";
 import {
   formatDate,
   readingTime,
+  readingMinutes,
   zgodbeCount,
+  getThemeForCard,
   THEMES,
   TOPICAL_THEME_ORDER,
   RITUAL_THEME_ORDER,
@@ -22,6 +24,7 @@ import {
 import { SafeImage } from "@/components/safe-image";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
 import { TihoDeloSection } from "@/components/tiho-delo-section";
+import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from "@/components/card-decorations";
 
 // Cloud puffs: [leftPercent, topPercent, size(px)]
 // Circle centers sit ON the button edge (0/100%) — half sticks out, half fills in.
@@ -147,15 +150,19 @@ function CloudLink({
 }
 
 /**
- * Pick the best article for the hero spot.
+ * Pick the hero + 2 secondary stories.
  * Score = ai_score + recency_bonus (5-day decay) + image_bonus + category_diversity.
+ *
+ * Returns: featured (single), secondary (next 2 best, with images preferred),
+ * rest (everything else, sorted by score — featured stays in for search filtering).
  */
 function pickFeatured(articles: PublishedArticle[]): {
   featured: PublishedArticle | undefined;
+  secondary: PublishedArticle[];
   rest: PublishedArticle[];
 } {
-  if (articles.length === 0) return { featured: undefined, rest: [] };
-  if (articles.length === 1) return { featured: articles[0], rest: articles };
+  if (articles.length === 0) return { featured: undefined, secondary: [], rest: [] };
+  if (articles.length === 1) return { featured: articles[0], secondary: [], rest: articles };
 
   const now = Date.now();
 
@@ -179,17 +186,34 @@ function pickFeatured(articles: PublishedArticle[]): {
   for (const c of candidates) {
     const cCount = recentCategories.filter((rc) => rc === c.article.ai.category).length;
     const bestCount = recentCategories.filter((rc) => rc === best.article.ai.category).length;
-    // Prefer less-represented category, or higher score if tied
     if (cCount < bestCount || (cCount === bestCount && c.score > best.score)) {
       best = c;
     }
   }
 
   const featured = best.article;
-  // Sort all articles by the same score logic (score + recency + image)
-  // Featured stays in the list so it shows up in filtered results too
   const sorted = scored.sort((a, b) => b.score - a.score).map((s) => s.article);
-  return { featured, rest: sorted };
+
+  // Secondary: next 2 by score, excluding featured. Prefer those with images;
+  // fall back to anything if not enough.
+  const remaining = sorted.filter((a) => a.slug !== featured.slug);
+  const secondary: PublishedArticle[] = [];
+  for (const a of remaining) {
+    if (secondary.length >= 2) break;
+    if (a.imageUrl) secondary.push(a);
+  }
+  if (secondary.length < 2) {
+    for (const a of remaining) {
+      if (secondary.length >= 2) break;
+      if (!secondary.includes(a)) secondary.push(a);
+    }
+  }
+
+  // Tertiary grid: everything except secondary (featured stays in for filter consistency).
+  const secondarySlugs = new Set(secondary.map((s) => s.slug));
+  const rest = sorted.filter((a) => !secondarySlugs.has(a.slug));
+
+  return { featured, secondary, rest };
 }
 
 function getExcerpt(text: string, chars = 120) {
@@ -265,7 +289,7 @@ export function ArticleGrid({
     });
   }, [articles, searchQuery]);
 
-  const { featured, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
+  const { featured, secondary, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
 
   return (
     <>
@@ -273,7 +297,7 @@ export function ArticleGrid({
       {nedeljskaArticle ? (
         <NedeljskaTakeover article={nedeljskaArticle} />
       ) : featured ? (
-        <RevealOnScroll className="mb-10" skip={hasInteracted.current}>
+        <RevealOnScroll className="mb-6" skip={hasInteracted.current}>
           <Link href={`/clanki/${featured.slug}`} className="group block">
             <article className="relative overflow-hidden rounded-2xl border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="relative h-64 sm:h-80 md:h-[26rem]">
@@ -289,6 +313,12 @@ export function ArticleGrid({
                   )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                <ThemeRibbon
+                  theme={getThemeForCard({ themes: featured.themes, antidote: featured.ai.antidote_for, category: featured.ai.category })}
+                  className="absolute top-4 left-4 z-10"
+                />
+                <CommentBadge count={featured.commentCount ?? 0} className="absolute top-4 right-4 z-10" />
 
                 <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
                   <div className="flex items-center gap-3 mb-4">
@@ -315,6 +345,59 @@ export function ArticleGrid({
           </Link>
         </RevealOnScroll>
       ) : null}
+
+      {/* ── Secondary tier: 2 medium cards under the hero (no Nedeljska day) ── */}
+      {!nedeljskaArticle && secondary.length > 0 && (
+        <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {secondary.map((article) => {
+            const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
+            const longMin = readingMinutes(article.longForm?.body);
+            return (
+              <Link
+                key={article.slug}
+                href={`/clanki/${article.slug}`}
+                className="group block h-full"
+              >
+                <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                  <div className="relative h-56 overflow-hidden">
+                    {article.imageUrl ? (
+                      <SafeImage
+                        src={article.imageUrl}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                        fallback={<CategoryGradient category={article.ai.category} />}
+                      />
+                    ) : (
+                      <CategoryGradient category={article.ai.category} />
+                    )}
+                    <ThemeRibbon theme={theme} />
+                    <CommentBadge count={article.commentCount ?? 0} />
+                  </div>
+                  <div className="flex flex-col flex-1 p-5">
+                    <time className="text-xs text-muted-foreground/60 mb-2 tabular-nums">
+                      {formatDate(article.publishedAt)}
+                    </time>
+                    <h3 className="text-base font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1 line-clamp-3">
+                      {getExcerpt(article.subtitle || article.body, 160)}
+                    </p>
+                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
+                      <span className="text-xs text-muted-foreground/60 truncate">
+                        {article.source.sourceName}
+                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-muted-foreground/50">{readingTime(article.body)}</span>
+                        <GlobljeAnnotation minutes={longMin} />
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
 
       {/* ── Theme navigation — 4 topical theme clouds, 2 visible ritual links (tiho-delo + nedeljska-zgodba have their own spotlight sections) ── */}
@@ -384,60 +467,64 @@ export function ArticleGrid({
       {/* ── Article card grid with stagger ── */}
       {rest.length > 0 && (
         <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" skip={hasInteracted.current}>
-          {rest.map((article) => (
-            <StaggerItem key={article.slug} skip={hasInteracted.current}>
-              <Link
-                href={`/clanki/${article.slug}`}
-                className="group block h-full"
-              >
-                <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                  {/* Card image */}
-                  <div className="relative h-44 overflow-hidden">
-                    {article.imageUrl ? (
-                      <SafeImage
-                        src={article.imageUrl}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                        fallback={<CategoryGradient category={article.ai.category} />}
-                      />
-                    ) : (
-                      <CategoryGradient category={article.ai.category} />
-                    )}
-                  </div>
+          {rest.map((article) => {
+            const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
+            const longMin = readingMinutes(article.longForm?.body);
+            return (
+              <StaggerItem key={article.slug} skip={hasInteracted.current}>
+                <Link
+                  href={`/clanki/${article.slug}`}
+                  className="group block h-full"
+                >
+                  <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                    {/* Card image */}
+                    <div className="relative h-44 overflow-hidden">
+                      {article.imageUrl ? (
+                        <SafeImage
+                          src={article.imageUrl}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                          fallback={<CategoryGradient category={article.ai.category} />}
+                        />
+                      ) : (
+                        <CategoryGradient category={article.ai.category} />
+                      )}
+                      <ThemeRibbon theme={theme} size="sm" />
+                      <CommentBadge count={article.commentCount ?? 0} />
+                    </div>
 
-                  <div className="flex flex-col flex-1 p-5">
-                    <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
-                      {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </time>
+                    <div className="flex flex-col flex-1 p-5">
+                      <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
+                        {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </time>
 
-                    <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
-                      {article.title}
-                    </h3>
+                      <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
+                        {article.title}
+                      </h3>
 
-                    <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
-                      {getExcerpt(article.subtitle || article.body)}
-                    </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
+                        {getExcerpt(article.subtitle || article.body)}
+                      </p>
 
-                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground/50 truncate max-w-[50%]">
-                        {article.source.sourceName}
-                      </span>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-muted-foreground/40">
-                          {readingTime(article.body)}
+                      <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground/50 truncate min-w-0">
+                          {article.source.sourceName}
                         </span>
-                        <span className="text-xs font-medium text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          Preberi →
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-muted-foreground/40">
+                            {readingTime(article.body)}
+                          </span>
+                          <GlobljeAnnotation minutes={longMin} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              </Link>
-            </StaggerItem>
-          ))}
+                  </article>
+                </Link>
+              </StaggerItem>
+            );
+          })}
         </StaggerContainer>
       )}
     </>

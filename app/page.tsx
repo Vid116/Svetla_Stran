@@ -42,6 +42,8 @@ export interface PublishedArticle {
     antidote_for: string | null;
     antidote_secondary: string | null;
   };
+  themes?: string[];
+  commentCount?: number;
   references?: { url: string; title: string }[];
   imagePosition?: number;
   aiImageUrl?: string;
@@ -77,6 +79,9 @@ function rowToArticle(s: any): PublishedArticle {
       antidote_for: s.antidote || null,
       antidote_secondary: s.antidote_secondary || null,
     },
+    themes: s.themes || [],
+    commentCount: s.comment_count ?? 0,
+    longForm: s.long_form || null,
   };
 }
 

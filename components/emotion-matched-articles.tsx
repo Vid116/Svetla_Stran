@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
-import { formatDate, readingTime } from '@/lib/article-helpers';
+import { formatDate, readingTime, readingMinutes, getThemeForCard } from '@/lib/article-helpers';
+import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from '@/components/card-decorations';
 import type { PublishedArticle } from '@/app/page';
 
 /** Gradient fallback when no image available */
@@ -32,6 +33,8 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {articles.map(article => {
           const imageUrl = article.imageUrl || article.aiImageUrl;
+          const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
+          const longMin = readingMinutes(article.longForm?.body);
 
           return (
             <Link key={article.slug} href={`/clanki/${article.slug}`}
@@ -47,14 +50,19 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
                 ) : (
                   <CategoryGradient category={article.ai.category} />
                 )}
+                <ThemeRibbon theme={theme} size="sm" />
+                <CommentBadge count={article.commentCount ?? 0} />
               </div>
               <div className="p-4">
                 <h4 className="mb-1 font-brand text-base font-semibold leading-snug text-foreground/90 line-clamp-2">
                   {article.title}
                 </h4>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {formatDate(article.publishedAt)} · {readingTime(article.body)}
-                </p>
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                  <span>{formatDate(article.publishedAt)}</span>
+                  <span className="text-muted-foreground/30">·</span>
+                  <span>{readingTime(article.body)}</span>
+                  {longMin > 0 && <GlobljeAnnotation minutes={longMin} />}
+                </div>
               </div>
             </Link>
           );

@@ -247,3 +247,26 @@ export function getThemeForArticle(antidote: string | null, category: string | n
   }
   return null;
 }
+
+// Pick the theme to display on a card. Ritual tags (tiho-delo, nedeljska-zgodba)
+// win — they're explicit editorial choices. Falls back to the topical match.
+export function getThemeForCard(args: {
+  themes?: string[] | null;
+  antidote?: string | null;
+  category?: string | null;
+}): Theme | null {
+  if (args.themes && args.themes.length > 0) {
+    for (const slug of args.themes) {
+      if (THEMES[slug]) return THEMES[slug];
+    }
+  }
+  return getThemeForArticle(args.antidote ?? null, args.category ?? null);
+}
+
+// Reading time in whole minutes for a body of text. Returns 0 for empty.
+export function readingMinutes(text: string | null | undefined): number {
+  if (!text) return 0;
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  if (words === 0) return 0;
+  return Math.max(1, Math.round(words / 200));
+}

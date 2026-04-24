@@ -40,6 +40,8 @@ function rowToArticle(s: any): PublishedArticle {
       antidote_for: s.antidote || null,
       antidote_secondary: s.antidote_secondary || null,
     },
+    themes: s.themes || [],
+    commentCount: s.comment_count ?? 0,
     references: s.research_references || undefined,
     imagePosition: s.image_position ?? 50,
     aiImageUrl: s.ai_image_url || undefined,
