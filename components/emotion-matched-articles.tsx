@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { SafeImage } from '@/components/safe-image';
-import { CATEGORY_LABELS, CATEGORY_PILL, formatDate, readingTime } from '@/lib/article-helpers';
+import { formatDate, readingTime } from '@/lib/article-helpers';
 import type { PublishedArticle } from '@/app/page';
 
 /** Gradient fallback when no image available */
@@ -27,13 +27,11 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
   return (
     <section className="py-8">
       <h3 className="mb-4 font-brand text-lg font-semibold text-foreground/80">
-        {heading || 'Če te je ta zgodba ogrela...'}
+        {heading || 'Če te je ta zgodba ogrela…'}
       </h3>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {articles.map(article => {
           const imageUrl = article.imageUrl || article.aiImageUrl;
-          const catLabel = article.ai.category ? CATEGORY_LABELS[article.ai.category] : null;
-          const catPill = article.ai.category ? CATEGORY_PILL[article.ai.category] : null;
 
           return (
             <Link key={article.slug} href={`/clanki/${article.slug}`}
@@ -48,11 +46,6 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
                   />
                 ) : (
                   <CategoryGradient category={article.ai.category} />
-                )}
-                {catLabel && catPill && (
-                  <span className={`absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold ${catPill}`}>
-                    {catLabel}
-                  </span>
                 )}
               </div>
               <div className="p-4">

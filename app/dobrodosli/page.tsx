@@ -2,12 +2,12 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getPublishedArticlesLight } from "@/lib/db";
-import { CATEGORY_LABELS } from "@/lib/article-helpers";
+import { pluralize } from "@/lib/article-helpers";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Dobrodošli | Svetla Stran",
+  title: "Dobrodošli",
   description: "Brez kriminala. Brez politike. Brez drame. Svet ni tak kot ga kažejo.",
 };
 
@@ -93,7 +93,7 @@ export default async function WelcomePage() {
               Odkrij zgodbe
             </Link>
             <p className="text-xs text-muted-foreground/50">
-              {articleCount} preverjenih zgodb in raste
+              {articleCount} {pluralize(articleCount, ["preverjena zgodba", "preverjeni zgodbi", "preverjene zgodbe", "preverjenih zgodb"])} in raste
             </p>
           </div>
         </div>

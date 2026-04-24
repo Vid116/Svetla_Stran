@@ -7,12 +7,12 @@ export async function loginAction(_prev: any, formData: FormData) {
   const password = formData.get("password") as string;
 
   if (!username || !password) {
-    return { error: "Uporabnisko ime in geslo sta obvezna" };
+    return { error: "Uporabniško ime in geslo sta obvezna" };
   }
 
   const result = await signIn(username, password);
   if (!result) {
-    return { error: "Napacno uporabnisko ime ali geslo" };
+    return { error: "Napačno uporabniško ime ali geslo" };
   }
 
   return { success: true };

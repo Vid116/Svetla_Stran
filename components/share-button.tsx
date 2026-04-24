@@ -64,7 +64,7 @@ export function ShareBar({ title }: { title: string }) {
       className="w-full flex items-center justify-between rounded-xl border border-border/40 bg-muted/30 px-6 py-4 cursor-pointer transition-all hover:bg-muted/50 hover:border-border/60 group"
     >
       <p className="text-sm font-medium text-foreground">
-        {copied ? "Povezava kopirana!" : "Vam je bila zgodba všeč? Delite jo naprej."}
+        {copied ? "Povezava kopirana!" : "Ti je bila zgodba všeč? Deli jo naprej."}
       </p>
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 group-hover:text-foreground transition-colors">
         <ShareIcon copied={copied} />

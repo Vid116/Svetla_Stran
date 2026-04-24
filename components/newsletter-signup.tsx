@@ -66,11 +66,11 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
       }
 
       setStatus("success");
-      setMessage(data.message || "Naročeni! Vidimo se v ponedeljek.");
+      setMessage(data.message || "Naročilo sprejeto. Vidimo se jutri zjutraj.");
       setEmail("");
     } catch {
       setStatus("error");
-      setMessage("Nekaj je šlo narobe. Poskusite znova.");
+      setMessage("Nekaj je šlo narobe. Poskusi znova.");
     }
   };
 
@@ -85,7 +85,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
         </div>
         {variant === "hero" && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Prvo pismo pride v ponedeljek zjutraj.
+            Prvo pismo pride jutri zjutraj.
           </p>
         )}
       </div>
@@ -106,7 +106,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="vas@email.si"
+            placeholder="ti@email.si"
             required
             className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
@@ -115,7 +115,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             disabled={status === "loading"}
             className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {status === "loading" ? "..." : "Pošlji mi"}
+            {status === "loading" ? "…" : "Pošlji mi"}
           </button>
         </form>
         {status === "error" && (
@@ -156,7 +156,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             onComplete={() => {
               setShowModal(false);
               setStatus("success");
-              setMessage("Naročeni! Vidimo se v ponedeljek.");
+              setMessage("Naročilo sprejeto. Vidimo se jutri zjutraj.");
               setEmail("");
             }}
           />
@@ -171,18 +171,18 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <Sun className="w-4 h-4 text-gold" aria-hidden />
           <h3 className="text-sm font-semibold text-foreground">
-            Pet zgodb vsak ponedeljek
+            Ena dobra zgodba na dan
           </h3>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-          Kratki članki, preverjene zgodbe. Vsak ponedeljek zjutraj.
+          Kratki članki, preverjene zgodbe. Vsako jutro v tvoj nabiralnik.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="vas@email.si"
+            placeholder="ti@email.si"
             required
             className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
@@ -191,7 +191,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             disabled={status === "loading"}
             className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {status === "loading" ? "..." : "Naroči se"}
+            {status === "loading" ? "…" : "Naroči se"}
           </button>
         </form>
         {status === "error" && (
@@ -232,7 +232,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             onComplete={() => {
               setShowModal(false);
               setStatus("success");
-              setMessage("Naročeni! Vidimo se v ponedeljek.");
+              setMessage("Naročilo sprejeto. Vidimo se jutri zjutraj.");
               setEmail("");
             }}
           />
@@ -260,7 +260,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="vas@email.si"
+            placeholder="ti@email.si"
             required
             className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
@@ -269,7 +269,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
             disabled={status === "loading"}
             className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {status === "loading" ? "..." : "Naroči se"}
+            {status === "loading" ? "…" : "Naroči se"}
           </button>
         </form>
 
@@ -308,7 +308,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
         )}
 
         <p className="mt-6 text-xs text-muted-foreground/50">
-          Enkrat tedensko. Odjavite se kadarkoli.
+          Vsako jutro. Odjavi se kadarkoli.
         </p>
       </div>
       {showModal && (
@@ -317,7 +317,7 @@ export function NewsletterSignup({ variant = "hero", theme }: Props) {
           onComplete={() => {
             setShowModal(false);
             setStatus("success");
-            setMessage("Naročeni! Vidimo se v ponedeljek.");
+            setMessage("Naročilo sprejeto. Vidimo se jutri zjutraj.");
             setEmail("");
           }}
         />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { komentarjiCount } from "@/lib/article-helpers";
 
 interface Comment {
   id: string;
@@ -23,7 +24,7 @@ function relativeDate(dateStr: string): string {
   if (diffMin < 1) return "pravkar";
   if (diffMin < 60) return `pred ${diffMin} min`;
   if (diffHours < 24) return `pred ${diffHours} ${diffHours === 1 ? "uro" : diffHours === 2 ? "urama" : "urami"}`;
-  return `pred ${diffDays} ${diffDays === 1 ? "dnem" : "dnevi"}`;
+  return `pred ${diffDays} ${diffDays === 1 ? "dnem" : diffDays === 2 ? "dnevoma" : "dnevi"}`;
 }
 
 /* ── Self-contained comment form (used for top-level AND replies) ── */
@@ -95,14 +96,14 @@ function CommentForm({
     <form onSubmit={handleSubmit} className={compact ? "" : "mb-10"}>
       {isEditor ? (
         <p className="text-xs text-muted-foreground mb-2">
-          Objavljate kot <span className="font-medium text-foreground">{editorName}</span>
+          Objavljaš kot <span className="font-medium text-foreground">{editorName}</span>
         </p>
       ) : (
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Vaše ime"
+          placeholder="Tvoje ime"
           maxLength={50}
           className={`rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary mb-2 ${
             compact ? "w-full max-w-[200px]" : "w-full max-w-xs"
@@ -114,7 +115,7 @@ function CommentForm({
           ref={textareaRef}
           value={body}
           onChange={(e) => setBody(e.target.value.slice(0, 2000))}
-          placeholder={compact ? "Vaš odgovor..." : "Vaš komentar..."}
+          placeholder={compact ? "Tvoj odgovor…" : "Tvoj komentar…"}
           rows={rows}
           className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
         />
@@ -132,7 +133,7 @@ function CommentForm({
             compact ? "text-xs px-3 py-1.5" : ""
           }`}
         >
-          {posting ? "..." : submitLabel}
+          {posting ? "…" : submitLabel}
         </button>
         {onCancel && (
           <button
@@ -351,9 +352,7 @@ export function CommentSection({ articleId }: { articleId: string }) {
   return (
     <section id="komentarji" className="border-t border-border/30 mt-14 pt-10 mx-auto max-w-3xl px-6 pb-12">
       <h2 className="text-xl font-semibold text-foreground mb-8">
-        {visibleCount > 0
-          ? `${visibleCount} ${visibleCount === 1 ? "komentar" : visibleCount === 2 ? "komentarja" : visibleCount <= 4 ? "komentarji" : "komentarjev"}`
-          : "Komentarji"}
+        {visibleCount > 0 ? komentarjiCount(visibleCount) : "Komentarji"}
       </h2>
 
       {/* Top-level comment form */}
@@ -366,10 +365,10 @@ export function CommentSection({ articleId }: { articleId: string }) {
 
       {/* Comment list */}
       {loading ? (
-        <p className="text-sm text-muted-foreground">Nalaganje...</p>
+        <p className="text-sm text-muted-foreground">Nalagam…</p>
       ) : visibleCount === 0 ? (
         <p className="text-sm text-muted-foreground/60">
-          Še ni komentarjev. Bodite prvi!
+          Še ni komentarjev. Bodi prvi.
         </p>
       ) : (
         <div className="space-y-6">

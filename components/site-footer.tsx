@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { CATEGORY_LABELS } from "@/lib/article-helpers";
-import { CategoryIcon } from "@/lib/category-icons";
+import { THEMES, TOPICAL_THEME_ORDER, RITUAL_THEME_ORDER } from "@/lib/article-helpers";
 
-const ALL_CATEGORIES = [
-  "SPORT", "NARAVA", "SKUPNOST", "PODJETNISTVO", "KULTURA",
-  "JUNAKI", "ZIVALI", "INFRASTRUKTURA", "SLOVENIJA_V_SVETU",
-];
+const FOOTER_THEMES = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
 export function SiteFooter() {
   return (
@@ -24,23 +20,25 @@ export function SiteFooter() {
             </p>
           </div>
 
-          {/* Categories */}
+          {/* Themes */}
           <div>
             <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/50 mb-3">
-              Kategorije
+              Teme
             </p>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              {ALL_CATEGORIES.map((cat) => (
-                <li key={cat}>
-                  <Link
-                    href={`/?kategorija=${cat}`}
-                    className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors inline-flex items-center gap-1.5"
-                  >
-                    <CategoryIcon category={cat} className="w-3.5 h-3.5" />
-                    {CATEGORY_LABELS[cat]}
-                  </Link>
-                </li>
-              ))}
+              {FOOTER_THEMES.map((slug) => {
+                const theme = THEMES[slug];
+                return (
+                  <li key={slug}>
+                    <Link
+                      href={`/tema/${slug}`}
+                      className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
+                    >
+                      {theme.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -53,6 +51,11 @@ export function SiteFooter() {
               <li>
                 <Link href="/o-nas" className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
                   O nas
+                </Link>
+              </li>
+              <li>
+                <Link href="/arhiv" className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
+                  Arhiv
                 </Link>
               </li>
               <li>

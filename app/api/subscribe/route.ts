@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     console.error("[Subscribe]", e);
     return NextResponse.json(
-      { error: "Nekaj je šlo narobe. Poskusite znova." },
+      { error: "Nekaj je šlo narobe. Poskusi znova." },
       { status: 500 }
     );
   }

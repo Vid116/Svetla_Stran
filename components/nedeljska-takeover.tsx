@@ -57,7 +57,7 @@ export function NedeljskaTakeover({ article }: { article: NedeljskaArticle }) {
               className="text-sm italic leading-relaxed max-w-lg mx-auto"
               style={{ color: theme.colors.text, opacity: 0.6 }}
             >
-              &ldquo;{quote.text}&rdquo;
+              „{quote.text}"
             </p>
           )}
         </div>

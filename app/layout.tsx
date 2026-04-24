@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist, Playfair_Display } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,15 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f7faff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0c1119' },
+  ],
 };
 
 export default function RootLayout({

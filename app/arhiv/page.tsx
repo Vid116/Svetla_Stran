@@ -2,14 +2,14 @@ import Link from "next/link";
 import { getArchivedArticles } from "@/lib/db";
 import { LogoLink } from "@/components/logo-link";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORY_LABELS, formatDate } from "@/lib/article-helpers";
+import { CATEGORY_LABELS, formatDate, zgodbeCount } from "@/lib/article-helpers";
 import { SafeImage } from "@/components/safe-image";
 import { CategoryIcon } from "@/lib/category-icons";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Arhiv zgodb | Svetla Stran",
+  title: "Arhiv zgodb",
   description: "Starejše zgodbe iz arhiva Svetle Strani.",
 };
 
@@ -55,7 +55,7 @@ export default async function ArhivPage() {
           Arhiv zgodb
         </h1>
         <p className="text-sm text-muted-foreground mb-12">
-          {articles.length} zgodb iz preteklih dni.
+          {zgodbeCount(articles.length)} iz preteklih dni.
         </p>
 
         {grouped.length === 0 ? (

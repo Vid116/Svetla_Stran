@@ -28,10 +28,10 @@ export async function generateMetadata({
   const { slug } = await params;
   if (THEME_REDIRECTS[slug]) return {};
   const theme = getTheme(slug);
-  if (!theme) return { title: "Tema ni najdena | Svetla Stran" };
+  if (!theme) return { title: "Tema ni najdena" };
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://svetlastran.si";
   return {
-    title: `${theme.label} | Svetla Stran`,
+    title: theme.label,
     description: theme.manifesto,
     openGraph: {
       title: theme.label,
@@ -136,7 +136,7 @@ export default async function ThemePage({
                 className="text-base md:text-lg italic leading-relaxed max-w-xl mx-auto"
                 style={{ color: textColor, opacity: 0.75 }}
               >
-                &ldquo;{quote.text}&rdquo;
+                „{quote.text}"
               </p>
               {(quote.attribution || quote.source) && (
                 <p

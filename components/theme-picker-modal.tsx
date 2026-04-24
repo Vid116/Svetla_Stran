@@ -57,7 +57,7 @@ export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
           <div className="flex items-center gap-2">
             <Sun className="w-5 h-5 text-gold" aria-hidden />
             <h3 className="text-lg font-semibold text-foreground">
-              Katere teme vas zanimajo?
+              Katere teme te zanimajo?
             </h3>
           </div>
           <button
@@ -71,7 +71,7 @@ export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
           </button>
         </div>
         <p className="text-sm text-muted-foreground mb-5">
-          Izberite teme, o katerih želite prejemati zgodbe.
+          Izberi teme, o katerih želiš prejemati zgodbe.
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
@@ -105,7 +105,7 @@ export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
           disabled={submitting}
           className="w-full rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
         >
-          {submitting ? "..." : "Naroči se"}
+          {submitting ? "…" : "Naroči se"}
         </button>
       </div>
     </div>

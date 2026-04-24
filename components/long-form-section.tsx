@@ -24,7 +24,7 @@ export function LongFormSection({
     .filter(Boolean);
 
   return (
-    <div className="mt-14">
+    <div data-longform className="mt-14 scroll-mt-20">
       {/* Divider */}
       <div className="flex items-center gap-4 mb-8">
         <span className="h-px flex-1 bg-border/50" />

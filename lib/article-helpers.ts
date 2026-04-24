@@ -95,6 +95,30 @@ export function readingTime(text: string): string {
   return `${minutes} min branja`;
 }
 
+/**
+ * Slovenian plural — pick form based on count.
+ * forms = [singular(1), dual(2), few(3-4), many(5+)]
+ * e.g. pluralize(3, ["zgodba","zgodbi","zgodbe","zgodb"]) → "zgodbe"
+ */
+export function pluralize(n: number, forms: [string, string, string, string]): string {
+  const abs = Math.abs(n);
+  if (abs === 1) return forms[0];
+  if (abs === 2) return forms[1];
+  if (abs === 3 || abs === 4) return forms[2];
+  return forms[3];
+}
+
+const ZGODBA_FORMS: [string, string, string, string] = ["zgodba", "zgodbi", "zgodbe", "zgodb"];
+const KOMENTAR_FORMS: [string, string, string, string] = ["komentar", "komentarja", "komentarji", "komentarjev"];
+
+export function zgodbeCount(n: number): string {
+  return `${n} ${pluralize(n, ZGODBA_FORMS)}`;
+}
+
+export function komentarjiCount(n: number): string {
+  return `${n} ${pluralize(n, KOMENTAR_FORMS)}`;
+}
+
 // ── Themes (reader-facing destination pages) ────────────────────────
 //
 // Themes live on two axes:

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
 import type { Metadata } from "next";
+import { LogoLink } from "@/components/logo-link";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
-  title: "O nas | Svetla Stran",
+  title: "O nas",
   description: "Portal pozitivnih novic iz Slovenije.",
 };
 
@@ -14,17 +14,12 @@ export default function AboutPage() {
       {/* Nav */}
       <nav className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Logo variant={2} size={28} />
-            <span className="text-lg font-semibold text-foreground" style={{ fontFamily: 'var(--font-brand)' }}>
-              Svetla Stran
-            </span>
-          </Link>
+          <LogoLink />
           <Link
             href="/"
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Vse zgodbe
+            ← Vse zgodbe
           </Link>
         </div>
       </nav>

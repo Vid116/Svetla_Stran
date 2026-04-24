@@ -7,6 +7,7 @@ import type { PublishedArticle } from "@/app/page";
 import {
   formatDate,
   readingTime,
+  zgodbeCount,
   THEMES,
   TOPICAL_THEME_ORDER,
   RITUAL_THEME_ORDER,
@@ -316,7 +317,7 @@ export function ArticleGrid({
       ) : null}
 
 
-      {/* ── Theme navigation — 5 topical theme clouds, 4 ritual links ── */}
+      {/* ── Theme navigation — 4 topical theme clouds, 2 visible ritual links (tiho-delo + nedeljska-zgodba have their own spotlight sections) ── */}
       {articles.length > 0 && (
         <HeroReveal delay={0.4}>
           <nav aria-label="Teme" className="mb-6">
@@ -370,7 +371,7 @@ export function ArticleGrid({
         <p className="text-xs text-muted-foreground/60">
           Preverjene zgodbe o ljudeh, dosežkih in napredku.
           <span className="mx-1.5 text-border/40">·</span>
-          <span className="tabular-nums">{articles.length}</span> zgodb
+          <span className="tabular-nums">{zgodbeCount(articles.length)}</span>
         </p>
       </div>
 
