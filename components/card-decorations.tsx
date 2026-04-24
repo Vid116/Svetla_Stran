@@ -21,7 +21,14 @@ const COMMENT_ICON = (
   </svg>
 );
 
-/** All-caps theme tag — sits over the card image, top-left. */
+/** All-caps theme tag — sits over the card image, top-left.
+ *
+ *  Padding rules for rounded-full pills with uppercase tracked text:
+ *  - horizontal padding ≥ ~1.2× font size (to clear the curve eating the corners)
+ *  - vertical padding ≥ ~0.5× font size
+ *  - tracking in em, not px (px tracking on small text is too aggressive)
+ *  - leading-none so the box height is predictable from padding
+ */
 export function ThemeRibbon({
   theme,
   className = "absolute top-3 left-3 z-10",
@@ -32,10 +39,14 @@ export function ThemeRibbon({
   size?: "sm" | "md";
 }) {
   if (!theme) return null;
-  const padding = size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]";
+  // sm: 9px text → ~11px horizontal, ~5px vertical
+  // md: 10px text → ~14px horizontal, ~6px vertical
+  const sizing = size === "sm"
+    ? "px-2.5 py-[5px] text-[9px]"
+    : "px-3.5 py-[6px] text-[10px]";
   return (
     <span
-      className={`${className} inline-flex items-center rounded-full font-semibold tracking-[1.5px] uppercase shadow-sm backdrop-blur-sm`}
+      className={`${className} inline-flex items-center rounded-full font-semibold tracking-[0.08em] uppercase leading-none shadow-sm backdrop-blur-sm`}
       style={{
         backgroundColor: theme.colors.fill,
         color: theme.colors.activeText,
@@ -57,7 +68,7 @@ export function CommentBadge({
   if (!count || count <= 0) return null;
   return (
     <span
-      className={`${className} inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm`}
+      className={`${className} inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-[5px] text-[10px] font-medium leading-none text-white backdrop-blur-sm`}
       aria-label={`${count} komentarjev`}
     >
       {COMMENT_ICON}
