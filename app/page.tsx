@@ -7,7 +7,6 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
 import { NavSearch } from "@/components/nav-search";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
-import { TihoDeloSection } from "@/components/tiho-delo-section";
 import { getPublishedArticles, getArticlesByTag } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -104,10 +103,9 @@ export default async function HomePage({
   const isSunday = dayInSlovenia === "Sun";
 
   // Fetch data in parallel
-  const [rows, nedeljskaRows, tihoDeloRows] = await Promise.all([
+  const [rows, nedeljskaRows] = await Promise.all([
     getPublishedArticles(),
     isSunday ? getArticlesByTag("nedeljska-zgodba", 1) : Promise.resolve([]),
-    getArticlesByTag("tiho-delo", 3),
   ]);
 
   const articles = rows
@@ -115,7 +113,6 @@ export default async function HomePage({
     .map(rowToArticle);
 
   const nedeljskaArticle = (nedeljskaRows as any[])[0] || null;
-  const tihoDeloArticles = (tihoDeloRows as any[]).filter((a: any) => a.title && a.slug);
 
   return (
     <main className="min-h-screen">
@@ -145,7 +142,6 @@ export default async function HomePage({
           <ArticleGrid
             articles={articles}
             nedeljskaArticle={nedeljskaArticle}
-            tihoDeloArticles={tihoDeloArticles}
           />
         )}
 

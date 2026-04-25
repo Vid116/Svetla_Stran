@@ -9,7 +9,7 @@ import {
   zgodbeCount,
   getThemeForCard,
   THEMES,
-  TOPICAL_THEME_ORDER,
+  CLOUD_THEME_ORDER,
   RITUAL_THEME_ORDER,
 } from "@/lib/article-helpers";
 import { CategoryIcon } from "@/lib/category-icons";
@@ -21,7 +21,6 @@ import {
 } from "@/components/motion-wrappers";
 import { SafeImage } from "@/components/safe-image";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
-import { TihoDeloSection } from "@/components/tiho-delo-section";
 import { ThemeRibbon, CommentBadge } from "@/components/card-decorations";
 import { OverlayCard } from "@/components/overlay-card";
 
@@ -268,11 +267,9 @@ function matchesSearch(searchText: string, query: string): boolean {
 export function ArticleGrid({
   articles,
   nedeljskaArticle,
-  tihoDeloArticles,
 }: {
   articles: PublishedArticle[];
   nedeljskaArticle?: any;
-  tihoDeloArticles?: any[];
 }) {
   const searchParams = useSearchParams();
   const hasInteracted = useRef(false);
@@ -374,12 +371,12 @@ export function ArticleGrid({
       )}
 
 
-      {/* ── Theme navigation — 4 topical theme clouds, 2 visible ritual links (tiho-delo + nedeljska-zgodba have their own spotlight sections) ── */}
+      {/* ── Theme navigation — 5 cloud-shape themes, 2 ritual chips for Iz arhiva + Dogodki ── */}
       {articles.length > 0 && (
         <HeroReveal delay={0.4}>
           <nav aria-label="Teme" className="mb-6">
             <div className="flex flex-wrap gap-5 justify-center">
-              {TOPICAL_THEME_ORDER.map((slug, i) => {
+              {CLOUD_THEME_ORDER.map((slug, i) => {
                 const theme = THEMES[slug];
                 return (
                   <CloudLink
@@ -416,11 +413,6 @@ export function ArticleGrid({
             </div>
           </nav>
         </HeroReveal>
-      )}
-
-      {/* ── Tiho delo spotlight ── */}
-      {tihoDeloArticles && tihoDeloArticles.length > 0 && (
-        <TihoDeloSection articles={tihoDeloArticles} />
       )}
 
       {/* ── Tagline ── */}

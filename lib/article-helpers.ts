@@ -227,6 +227,11 @@ export const TOPICAL_THEME_ORDER = ["med-nami", "naprej", "heroji", "drobne-rado
 export const RITUAL_THEME_ORDER = ["tiho-delo", "nedeljska-zgodba", "iz-arhiva", "dogodki"];
 export const ALL_THEME_SLUGS = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
+// UI navigation order — clouds get equal visual prominence on the homepage.
+// Tiho-delo lives here even though its kind is "tagged" — readers shouldn't
+// have to know that distinction; they just see "another theme to click."
+export const CLOUD_THEME_ORDER = ["med-nami", "naprej", "heroji", "drobne-radosti", "tiho-delo"];
+
 export function getTheme(slug: string): Theme | null {
   return THEMES[slug] ?? null;
 }
