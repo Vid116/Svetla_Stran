@@ -43,7 +43,7 @@ export function ThemeRibbon({
     : "px-4 py-2 text-[12px]";
   return (
     <span
-      className={`${className} ${sizing} inline-flex items-center rounded-full font-medium italic lowercase leading-none shadow-sm backdrop-blur-sm`}
+      className={`${className} ${sizing} inline-flex items-center rounded-full font-medium italic leading-none shadow-sm backdrop-blur-sm`}
       style={{
         backgroundColor: theme.colors.fill,
         color: theme.colors.activeText,
