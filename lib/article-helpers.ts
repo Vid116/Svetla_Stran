@@ -188,7 +188,7 @@ export const THEMES: Record<string, Theme> = {
     slug: "tiho-delo",
     label: "Tiha dela",
     manifesto: "Medicinske sestre na nočni izmeni. Cestarji ob šestih zjutraj. Knjižničarke, vzgojiteljice, voznice rešilcev. Slovenija stoji, ker nekdo zgodaj vstane.",
-    colors: { soft: "#e8e2d6", fill: "#a89878", text: "#5a4a30", activeText: "#2a1d08", whisper: "#9a8868" },
+    colors: { soft: "#ebedf0", fill: "#c0c4ca", text: "#50545c", activeText: "#25282e", whisper: "#898e96" },
     kind: "tagged",
     antidoteMatch: [],
     categoryMatch: [],
