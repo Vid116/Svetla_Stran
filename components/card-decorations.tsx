@@ -21,13 +21,12 @@ const COMMENT_ICON = (
   </svg>
 );
 
-/** All-caps theme tag — sits over the card image, top-left.
+/** Theme tag — lowercase italic, sits over the card image, top-left.
  *
- *  Padding rules for rounded-full pills with uppercase tracked text:
- *  - horizontal padding ≥ ~1.2× font size (to clear the curve eating the corners)
- *  - vertical padding ≥ ~0.5× font size
- *  - tracking in em, not px (px tracking on small text is too aggressive)
- *  - leading-none so the box height is predictable from padding
+ *  Style decision: lowercase + italic + medium weight + no tracking. Picked from
+ *  the /design/tags playground (variation F3) for the intimate, on-brand voice.
+ *  Lowercase reads ~1px smaller than caps at the same nominal size, so the
+ *  font-size is bumped 1px vs an all-caps pill at the same padding.
  */
 export function ThemeRibbon({
   theme,
@@ -39,16 +38,12 @@ export function ThemeRibbon({
   size?: "sm" | "md";
 }) {
   if (!theme) return null;
-  // With leading-none (line-height: 1), all vertical air must come from padding.
-  // Cap height is ~70% of font size, so for breathing, vertical padding ≥ ~0.7× font size.
-  // Horizontal padding ≥ ~1.4× font size to clear the rounded-full corner curve.
-  // Bump fonts up — text-[9px] is squinty regardless of padding.
   const sizing = size === "sm"
-    ? "px-3 py-1.5 text-[10px]"
-    : "px-4 py-2 text-[11px]";
+    ? "px-3 py-1.5 text-[11px]"
+    : "px-4 py-2 text-[12px]";
   return (
     <span
-      className={`${className} ${sizing} inline-flex items-center rounded-full font-semibold tracking-[0.1em] uppercase leading-none shadow-sm backdrop-blur-sm`}
+      className={`${className} ${sizing} inline-flex items-center rounded-full font-medium italic lowercase leading-none shadow-sm backdrop-blur-sm`}
       style={{
         backgroundColor: theme.colors.fill,
         color: theme.colors.activeText,
