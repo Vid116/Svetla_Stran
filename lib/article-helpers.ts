@@ -197,7 +197,7 @@ export const THEMES: Record<string, Theme> = {
     slug: "nedeljska-zgodba",
     label: "Nedeljska zgodba",
     manifesto: "Ena zgodba, vsako nedeljo. Dolga, počasi napisana, vredna kave. Za jutra, ki se jim ne mudi.",
-    colors: { soft: "#ede4d8", fill: "#c8a878", text: "#6b4a20", activeText: "#3a2410", whisper: "#b09870" },
+    colors: { soft: "#f5ead0", fill: "#d4af37", text: "#5a4220", activeText: "#2a1d08", whisper: "#b89a35" },
     kind: "tagged",
     antidoteMatch: [],
     categoryMatch: [],
