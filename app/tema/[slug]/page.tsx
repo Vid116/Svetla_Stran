@@ -12,12 +12,11 @@ import {
   TOPICAL_THEME_ORDER,
   RITUAL_THEME_ORDER,
   formatDate,
-  readingTime,
-  readingMinutes,
   getThemeForCard,
 } from "@/lib/article-helpers";
 import { getQuoteForToday } from "@/lib/theme-quotes";
-import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from "@/components/card-decorations";
+import { CommentBadge } from "@/components/card-decorations";
+import { OverlayCard } from "@/components/overlay-card";
 
 const SUB_NAV_THEMES = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
@@ -57,13 +56,6 @@ export async function generateMetadata({
       description: theme.manifesto,
     },
   };
-}
-
-function getExcerpt(text: string, chars = 120) {
-  if (!text) return "";
-  const plain = text.replace(/\n+/g, " ").trim();
-  if (plain.length <= chars) return plain;
-  return plain.slice(0, chars).replace(/\s+\S*$/, "") + " …";
 }
 
 export default async function ThemePage({
@@ -263,57 +255,25 @@ export default async function ThemePage({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {rest.map((article) => {
                 const cardTheme = getThemeForCard({ themes: article.themes, antidote: article.antidote, category: article.category });
-                const longMin = readingMinutes(article.long_form?.body);
                 return (
-                  <Link
+                  <OverlayCard
                     key={article.slug}
-                    href={`/clanki/${article.slug}`}
-                    className="group block h-full"
-                  >
-                    <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                      <div className="relative h-44 overflow-hidden">
-                        {article.ai_image_url || article.image_url ? (
-                          <SafeImage
-                            src={article.ai_image_url || article.image_url}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                            fallback={<div className="w-full h-full" style={{ backgroundColor: soft }} />}
-                          />
-                        ) : (
-                          <div className="w-full h-full" style={{ backgroundColor: soft }} />
-                        )}
-                        {/* Theme ribbon only when the article belongs to a different theme than this page */}
-                        {cardTheme && cardTheme.slug !== slug && (
-                          <ThemeRibbon theme={cardTheme} size="sm" />
-                        )}
-                        <CommentBadge count={article.comment_count ?? 0} />
-                      </div>
-                      <div className="flex flex-col flex-1 p-5">
-                        <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
-                          {new Date(article.published_at || article.created_at).toLocaleDateString("sl-SI", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </time>
-                        <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
-                          {article.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
-                          {getExcerpt(article.subtitle || article.body)}
-                        </p>
-                        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                          <span className="text-xs text-muted-foreground/50 truncate min-w-0">
-                            {article.source_name}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs text-muted-foreground/40">
-                              {readingTime(article.body || "")}
-                            </span>
-                            <GlobljeAnnotation minutes={longMin} />
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  </Link>
+                    tier="tertiary"
+                    theme={cardTheme}
+                    hideThemeRibbon={cardTheme?.slug === slug}
+                    article={{
+                      slug: article.slug,
+                      title: article.title,
+                      subtitle: article.subtitle,
+                      body: article.body,
+                      publishedAt: article.published_at || article.created_at,
+                      imageUrl: article.ai_image_url || article.image_url,
+                      source: article.source_name,
+                      longFormBody: article.long_form?.body,
+                      commentCount: article.comment_count,
+                    }}
+                    imageFallback={<div className="w-full h-full" style={{ backgroundColor: soft }} />}
+                  />
                 );
               })}
             </div>

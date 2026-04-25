@@ -1,7 +1,5 @@
-import Link from 'next/link';
-import { SafeImage } from '@/components/safe-image';
-import { formatDate, readingTime, readingMinutes, getThemeForCard } from '@/lib/article-helpers';
-import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from '@/components/card-decorations';
+import { getThemeForCard } from '@/lib/article-helpers';
+import { OverlayCard } from '@/components/overlay-card';
 import type { PublishedArticle } from '@/app/page';
 
 /** Gradient fallback when no image available */
@@ -32,39 +30,25 @@ export function EmotionMatchedArticles({ articles, heading }: { articles: Publis
       </h3>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {articles.map(article => {
-          const imageUrl = article.imageUrl || article.aiImageUrl;
           const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
-          const longMin = readingMinutes(article.longForm?.body);
-
           return (
-            <Link key={article.slug} href={`/clanki/${article.slug}`}
-              className="group overflow-hidden rounded-xl border border-border/30 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-              <div className="relative h-40 bg-gradient-to-br from-heaven via-heaven-glow/30 to-sky/10 overflow-hidden">
-                {imageUrl ? (
-                  <SafeImage
-                    src={imageUrl}
-                    alt={article.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-[1.02]"
-                    fallback={<CategoryGradient category={article.ai.category} />}
-                  />
-                ) : (
-                  <CategoryGradient category={article.ai.category} />
-                )}
-                <ThemeRibbon theme={theme} size="sm" />
-                <CommentBadge count={article.commentCount ?? 0} />
-              </div>
-              <div className="p-4">
-                <h4 className="mb-1 font-brand text-base font-semibold leading-snug text-foreground/90 line-clamp-2">
-                  {article.title}
-                </h4>
-                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                  <span>{formatDate(article.publishedAt)}</span>
-                  <span className="text-muted-foreground/30">·</span>
-                  <span>{readingTime(article.body)}</span>
-                  {longMin > 0 && <GlobljeAnnotation minutes={longMin} />}
-                </div>
-              </div>
-            </Link>
+            <OverlayCard
+              key={article.slug}
+              tier="tertiary"
+              theme={theme}
+              article={{
+                slug: article.slug,
+                title: article.title,
+                subtitle: article.subtitle,
+                body: article.body,
+                publishedAt: article.publishedAt,
+                imageUrl: article.imageUrl || article.aiImageUrl,
+                source: article.source.sourceName,
+                longFormBody: article.longForm?.body,
+                commentCount: article.commentCount,
+              }}
+              imageFallback={<CategoryGradient category={article.ai.category} />}
+            />
           );
         })}
       </div>

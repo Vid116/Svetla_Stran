@@ -6,8 +6,6 @@ import { useSearchParams } from "next/navigation";
 import type { PublishedArticle } from "@/app/page";
 import {
   formatDate,
-  readingTime,
-  readingMinutes,
   zgodbeCount,
   getThemeForCard,
   THEMES,
@@ -24,7 +22,8 @@ import {
 import { SafeImage } from "@/components/safe-image";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
 import { TihoDeloSection } from "@/components/tiho-delo-section";
-import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from "@/components/card-decorations";
+import { ThemeRibbon, CommentBadge } from "@/components/card-decorations";
+import { OverlayCard } from "@/components/overlay-card";
 
 // Cloud puffs: [leftPercent, topPercent, size(px)]
 // Circle centers sit ON the button edge (0/100%) — half sticks out, half fills in.
@@ -346,54 +345,29 @@ export function ArticleGrid({
         </RevealOnScroll>
       ) : null}
 
-      {/* ── Secondary tier: 2 medium cards under the hero (no Nedeljska day) ── */}
+      {/* ── Secondary tier: 2 medium overlay cards under the hero (no Nedeljska day) ── */}
       {!nedeljskaArticle && secondary.length > 0 && (
         <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-5">
           {secondary.map((article) => {
             const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
-            const longMin = readingMinutes(article.longForm?.body);
             return (
-              <Link
+              <OverlayCard
                 key={article.slug}
-                href={`/clanki/${article.slug}`}
-                className="group block h-full"
-              >
-                <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                  <div className="relative h-56 overflow-hidden">
-                    {article.imageUrl ? (
-                      <SafeImage
-                        src={article.imageUrl}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                        fallback={<CategoryGradient category={article.ai.category} />}
-                      />
-                    ) : (
-                      <CategoryGradient category={article.ai.category} />
-                    )}
-                    <ThemeRibbon theme={theme} />
-                    <CommentBadge count={article.commentCount ?? 0} />
-                  </div>
-                  <div className="flex flex-col flex-1 p-5">
-                    <time className="text-xs text-muted-foreground/60 mb-2 tabular-nums">
-                      {formatDate(article.publishedAt)}
-                    </time>
-                    <h3 className="text-base font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1 line-clamp-3">
-                      {getExcerpt(article.subtitle || article.body, 160)}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                      <span className="text-xs text-muted-foreground/60 truncate">
-                        {article.source.sourceName}
-                      </span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs text-muted-foreground/50">{readingTime(article.body)}</span>
-                        <GlobljeAnnotation minutes={longMin} />
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              </Link>
+                tier="secondary"
+                theme={theme}
+                article={{
+                  slug: article.slug,
+                  title: article.title,
+                  subtitle: article.subtitle,
+                  body: article.body,
+                  publishedAt: article.publishedAt,
+                  imageUrl: article.imageUrl,
+                  source: article.source.sourceName,
+                  longFormBody: article.longForm?.body,
+                  commentCount: article.commentCount,
+                }}
+                imageFallback={<CategoryGradient category={article.ai.category} />}
+              />
             );
           })}
         </div>
@@ -464,64 +438,29 @@ export function ArticleGrid({
         </p>
       )}
 
-      {/* ── Article card grid with stagger ── */}
+      {/* ── Article card grid with stagger (overlay cards) ── */}
       {rest.length > 0 && (
         <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" skip={hasInteracted.current}>
           {rest.map((article) => {
             const theme = getThemeForCard({ themes: article.themes, antidote: article.ai.antidote_for, category: article.ai.category });
-            const longMin = readingMinutes(article.longForm?.body);
             return (
               <StaggerItem key={article.slug} skip={hasInteracted.current}>
-                <Link
-                  href={`/clanki/${article.slug}`}
-                  className="group block h-full"
-                >
-                  <article className="relative h-full flex flex-col overflow-hidden rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-                    {/* Card image */}
-                    <div className="relative h-44 overflow-hidden">
-                      {article.imageUrl ? (
-                        <SafeImage
-                          src={article.imageUrl}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                          fallback={<CategoryGradient category={article.ai.category} />}
-                        />
-                      ) : (
-                        <CategoryGradient category={article.ai.category} />
-                      )}
-                      <ThemeRibbon theme={theme} size="sm" />
-                      <CommentBadge count={article.commentCount ?? 0} />
-                    </div>
-
-                    <div className="flex flex-col flex-1 p-5">
-                      <time className="text-xs text-muted-foreground/50 mb-2 tabular-nums">
-                        {new Date(article.publishedAt).toLocaleDateString("sl-SI", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </time>
-
-                      <h3 className="text-sm font-semibold leading-snug text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-3">
-                        {article.title}
-                      </h3>
-
-                      <p className="text-xs text-muted-foreground leading-relaxed flex-1 line-clamp-3">
-                        {getExcerpt(article.subtitle || article.body)}
-                      </p>
-
-                      <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                        <span className="text-xs text-muted-foreground/50 truncate min-w-0">
-                          {article.source.sourceName}
-                        </span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-muted-foreground/40">
-                            {readingTime(article.body)}
-                          </span>
-                          <GlobljeAnnotation minutes={longMin} />
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
+                <OverlayCard
+                  tier="tertiary"
+                  theme={theme}
+                  article={{
+                    slug: article.slug,
+                    title: article.title,
+                    subtitle: article.subtitle,
+                    body: article.body,
+                    publishedAt: article.publishedAt,
+                    imageUrl: article.imageUrl,
+                    source: article.source.sourceName,
+                    longFormBody: article.longForm?.body,
+                    commentCount: article.commentCount,
+                  }}
+                  imageFallback={<CategoryGradient category={article.ai.category} />}
+                />
               </StaggerItem>
             );
           })}

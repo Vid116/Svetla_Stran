@@ -74,11 +74,20 @@ export function CommentBadge({
   );
 }
 
-/** Inline "+X min globlje" annotation — for card metadata footer. */
-export function GlobljeAnnotation({ minutes }: { minutes: number }) {
+/** Inline "+X min globlje" annotation — for card metadata footer.
+ *  tone="light" for white card backgrounds (default), tone="dark" for overlay cards.
+ */
+export function GlobljeAnnotation({
+  minutes,
+  tone = "light",
+}: {
+  minutes: number;
+  tone?: "light" | "dark";
+}) {
   if (!minutes || minutes <= 0) return null;
+  const color = tone === "light" ? "text-amber-700/80" : "text-amber-300/90";
   return (
-    <span className="text-[11px] text-amber-700/80 whitespace-nowrap">
+    <span className={`text-[11px] ${color} whitespace-nowrap`}>
       +{minutes} min globlje
     </span>
   );
