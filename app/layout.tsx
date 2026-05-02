@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist, Playfair_Display } from "next/font/google";
+import { Geist, Playfair_Display, Newsreader, Fraunces } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const playfair = Playfair_Display({subsets:['latin'],weight:['400','600'],variable:'--font-brand'});
+const newsreader = Newsreader({subsets:['latin','latin-ext'],weight:['400','500'],style:['normal','italic'],variable:'--font-longform-body'});
+const fraunces = Fraunces({subsets:['latin','latin-ext'],weight:['400','500','600','700'],style:['normal','italic'],axes:['SOFT','opsz'],variable:'--font-longform-display'});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://svetlastran.si'),
@@ -46,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="sl" className={cn("font-sans", geist.variable, playfair.variable)}>
+    <html lang="sl" className={cn("font-sans", geist.variable, playfair.variable, newsreader.variable, fraunces.variable)}>
       <head>
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <script

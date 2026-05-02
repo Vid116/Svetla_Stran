@@ -177,4 +177,26 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Long-form typography utilities */
+  .font-longform-body {
+    font-family: var(--font-longform-body), Georgia, "Times New Roman", serif;
+    font-feature-settings: "liga", "kern", "calt";
+  }
+  .font-longform-display {
+    font-family: var(--font-longform-display), Georgia, serif;
+    font-feature-settings: "liga", "kern", "calt", "ss01";
+  }
+
+  /* Drop cap for the first paragraph of a long-form lede */
+  .longform-lede::first-letter {
+    font-family: var(--font-longform-display), Georgia, serif;
+    font-weight: 600;
+    font-size: 4.6em;
+    line-height: 0.85;
+    float: left;
+    margin: 0.06em 0.08em 0 -0.04em;
+    color: var(--gold);
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
 }

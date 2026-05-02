@@ -11,7 +11,7 @@ import {
   getThemeForArticle,
 } from "@/lib/article-helpers";
 import { ShareButton, ShareBar } from "@/components/share-button";
-import { LongFormSection } from "@/components/long-form-section";
+import { LongFormTopCta, LongFormBottomCta } from "@/components/long-form-cta";
 import { CommentSection } from "@/components/comment-section";
 import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
 import { SiteFooter } from "@/components/site-footer";
@@ -194,6 +194,15 @@ export default async function ArticlePage({
       <main className="mx-auto max-w-3xl px-6 py-12">
         <div className={`h-[3px] w-16 rounded-full ${accentBar} opacity-50 mb-10`} />
 
+        {/* Top CTA — surfaces the long form before the reader commits to the short */}
+        {article.longForm && (
+          <LongFormTopCta
+            slug={article.slug}
+            longForm={article.longForm}
+            accentBar={accentBar}
+          />
+        )}
+
         <div className="space-y-6">
           {paragraphs.map((p, i) => (
             <div key={i}>
@@ -209,9 +218,13 @@ export default async function ArticlePage({
           ))}
         </div>
 
-        {/* Long-form deep read */}
+        {/* Bottom CTA — for readers who finished the short and want more */}
         {article.longForm && (
-          <LongFormSection longForm={article.longForm} accentBar={accentBar} />
+          <LongFormBottomCta
+            slug={article.slug}
+            longForm={article.longForm}
+            accentBar={accentBar}
+          />
         )}
 
         {/* Sources */}
