@@ -13,6 +13,7 @@ import { DraftActions } from "./draft-actions";
 import { DraftThemeTags } from "./draft-theme-tags";
 import { ImageAdder } from "./image-adder";
 import { RemoveImageButton } from "./remove-image-button";
+import { ImageVariantPicker, type ImageVariants } from "./image-variant-picker";
 import { ResearchDetails } from "@/components/research-details";
 import { LongFormSection } from "@/components/long-form-section";
 
@@ -44,6 +45,16 @@ export default async function DraftPreviewPage({
   const verificationClaims = safeArray(draft.verification_claims);
   const longForm = typeof draft.long_form === 'string' ? (() => { try { return JSON.parse(draft.long_form); } catch { return null; } })() : draft.long_form;
 
+  const aiImageVariants: ImageVariants | null = (() => {
+    const v = draft.ai_image_variants;
+    if (!v) return null;
+    const parsed = typeof v === 'string' ? (() => { try { return JSON.parse(v); } catch { return null; } })() : v;
+    if (!parsed) return null;
+    if (!parsed.watercolor && !parsed.photo) return null;
+    return parsed as ImageVariants;
+  })();
+  const showVariantPicker = !!aiImageVariants && (!!aiImageVariants.watercolor && !!aiImageVariants.photo);
+
   return (
     <div className="min-h-screen">
       {/* Hero image with adjustable position, or image adder */}
@@ -56,6 +67,9 @@ export default async function DraftPreviewPage({
             style={{ objectPosition: `center ${draft.image_position ?? 50}%` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          {showVariantPicker && aiImageVariants && (
+            <ImageVariantPicker draftId={draft.id} variants={aiImageVariants} />
+          )}
           <RemoveImageButton draftId={draft.id} />
         </div>
       ) : (

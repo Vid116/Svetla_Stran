@@ -76,7 +76,7 @@ async function createDraft(draft) {
       headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
-      verification_claims, long_form, ai_image_url, image_prompt, ai_score,
+      verification_claims, long_form, ai_image_url, ai_image_variants, image_prompt, ai_score,
       initial_score, initial_antidote, initial_category, themes, status,
       sunday_fit_score, sunday_fit_dimensions
     ) VALUES (
@@ -88,7 +88,7 @@ async function createDraft(draft) {
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
-      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
+      ${draft.ai_image_url || null}, ${draft.ai_image_variants ? JSON.stringify(draft.ai_image_variants) : null}::jsonb, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       ${draft.themes || []},
       'ready',
@@ -198,6 +198,7 @@ async function handleResearchWrite(story) {
         slug: result.article.slug,
         image_url: result.imageUrl || null,
         ai_image_url: result.aiImageUrl || null,
+        ai_image_variants: result.aiImageVariants || null,
         image_prompt: result.imagePrompt || null,
         category: result.deepScore?.category || story.ai_category,
         emotions: story.ai_emotions || [],

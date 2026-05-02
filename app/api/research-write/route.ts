@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
             slug: result.article.slug,
             image_url: result.imageUrl || null,
             ai_image_url: result.aiImageUrl || null,
+            ai_image_variants: result.aiImageVariants || null,
             image_prompt: result.imagePrompt || null,
             category: result.deepScore?.category || story.ai_category,
             emotions: story.ai_emotions || [],

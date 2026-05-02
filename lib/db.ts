@@ -135,6 +135,7 @@ export async function createDraft(draft: {
   verification_claims?: any;
   long_form?: { title: string; subtitle: string; body: string; slug: string };
   ai_image_url?: string;
+  ai_image_variants?: { watercolor: { url: string; prompt: string } | null; photo: { url: string; prompt: string } | null; chosen: 'watercolor' | 'photo' | null } | null;
   image_prompt?: string;
   ai_score?: number | null;
   initial_score?: number | null;
@@ -161,7 +162,7 @@ export async function createDraft(draft: {
       headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
       antidote_secondary, source_name, source_url, research_queries, research_sources_found,
       research_sources_used, research_references, verification_passed, verification_summary,
-      verification_claims, long_form, ai_image_url, image_prompt, ai_score,
+      verification_claims, long_form, ai_image_url, ai_image_variants, image_prompt, ai_score,
       initial_score, initial_antidote, initial_category, themes, status,
       sunday_fit_score, sunday_fit_dimensions
     ) VALUES (
@@ -173,7 +174,7 @@ export async function createDraft(draft: {
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${draft.verification_claims ? (typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims)) : null}::jsonb,
       ${draft.long_form ? (typeof draft.long_form === 'string' ? draft.long_form : JSON.stringify(draft.long_form)) : null}::jsonb,
-      ${draft.ai_image_url || null}, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
+      ${draft.ai_image_url || null}, ${draft.ai_image_variants ? JSON.stringify(draft.ai_image_variants) : null}::jsonb, ${draft.image_prompt || null}, ${draft.ai_score != null ? Math.round(draft.ai_score) : null},
       ${draft.initial_score ?? null}, ${draft.initial_antidote ?? null}, ${draft.initial_category ?? null},
       ${draft.themes || []},
       'ready',
@@ -220,6 +221,7 @@ export async function updateDraft(id: string, updates: Record<string, any>) {
       antidote = CASE WHEN ${has('antidote')} THEN ${updates.antidote ?? null}::text ELSE antidote END,
       antidote_secondary = CASE WHEN ${has('antidote_secondary')} THEN ${updates.antidote_secondary ?? null}::text ELSE antidote_secondary END,
       ai_image_url = CASE WHEN ${has('ai_image_url')} THEN ${updates.ai_image_url ?? null}::text ELSE ai_image_url END,
+      ai_image_variants = CASE WHEN ${has('ai_image_variants')} THEN ${updates.ai_image_variants ? JSON.stringify(updates.ai_image_variants) : null}::jsonb ELSE ai_image_variants END,
       image_prompt = CASE WHEN ${has('image_prompt')} THEN ${updates.image_prompt ?? null}::text ELSE image_prompt END,
       ai_score = CASE WHEN ${has('ai_score')} THEN ${updates.ai_score != null ? Math.round(updates.ai_score) : null}::int ELSE ai_score END,
       status = CASE WHEN ${has('status')} THEN ${updates.status ?? null}::text ELSE status END,
@@ -298,7 +300,7 @@ export async function publishDraft(draftId: string) {
     INSERT INTO articles (
       headline_id, title, subtitle, body, slug, image_url, category, emotions, antidote,
       antidote_secondary, source_name, source_url, image_position, research_references,
-      raw_title, ai_score, initial_score, initial_antidote, initial_category, ai_image_url,
+      raw_title, ai_score, initial_score, initial_antidote, initial_category, ai_image_url, ai_image_variants,
       verification_passed, verification_summary, verification_claims,
       research_queries, research_sources_found, research_sources_used, long_form, themes
     ) VALUES (
@@ -309,6 +311,7 @@ export async function publishDraft(draftId: string) {
       ${draft.raw_title || null}, ${draft.ai_score || headlineScore || 0},
       ${draft.initial_score || null}, ${draft.initial_antidote || null}, ${draft.initial_category || null},
       ${draft.ai_image_url || null},
+      ${draft.ai_image_variants ? (typeof draft.ai_image_variants === 'string' ? draft.ai_image_variants : JSON.stringify(draft.ai_image_variants)) : null}::jsonb,
       ${draft.verification_passed ?? null}, ${draft.verification_summary || null},
       ${typeof draft.verification_claims === 'string' ? draft.verification_claims : JSON.stringify(draft.verification_claims || [])}::jsonb,
       ${draft.research_queries || []}, ${draft.research_sources_found ?? null},
