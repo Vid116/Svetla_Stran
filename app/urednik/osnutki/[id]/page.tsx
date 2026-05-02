@@ -163,7 +163,11 @@ export default async function DraftPreviewPage({
 
         {/* Long-form article (if available) */}
         {longForm && (
-          <LongFormSection longForm={longForm} accentBar={accentBar} />
+          <LongFormSection
+            longForm={longForm}
+            accentBar={accentBar}
+            previewHref={`/urednik/osnutki/${draft.id}/cela-zgodba`}
+          />
         )}
 
         {/* Sources */}

@@ -12,9 +12,12 @@ interface LongFormData {
 export function LongFormSection({
   longForm,
   accentBar,
+  previewHref,
 }: {
   longForm: LongFormData;
   accentBar: string;
+  /** When set (editor draft view), shows a link to the typography preview page. */
+  previewHref?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -33,6 +36,21 @@ export function LongFormSection({
         </span>
         <span className="h-px flex-1 bg-border/50" />
       </div>
+
+      {/* Preview link — only shown in editor draft view */}
+      {previewHref && (
+        <div className="mb-6 flex justify-end">
+          <a
+            href={previewHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold-soft/40 px-3 py-1.5 text-xs font-medium text-gold-foreground hover:bg-gold-soft/70 transition-colors"
+          >
+            <span>✨ Pogled cele zgodbe (urejena tipografija)</span>
+            <span aria-hidden>↗</span>
+          </a>
+        </div>
+      )}
 
       {!expanded ? (
         /* Collapsed: teaser card */
