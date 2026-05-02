@@ -76,6 +76,7 @@ export const THEME_QUOTES: Record<string, ThemeQuote[]> = {
     { text: "Kar je dobro za panj, je dobro za čebelo.", attribution: "Mark Avrelij", source: "iz Samemu sebi" },
     { text: "Velike stvari se ne zgodijo nenadoma — sestavljene so iz majhnih, ki se združijo.", attribution: "Vincent van Gogh" },
     { text: "Brez ponižnosti pri delu ni resnične velikosti.", attribution: "Booker T. Washington" },
+    { text: "Delaj dobro in pusti vrabčkom čivkati!", attribution: "sv. Janez Bosko" },
   ],
 
   "nedeljska-zgodba": [
