@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const playfair = Playfair_Display({subsets:['latin'],weight:['400','600'],variable:'--font-brand'});
 const newsreader = Newsreader({subsets:['latin','latin-ext'],weight:['400','500'],style:['normal','italic'],variable:'--font-longform-body'});
-const fraunces = Fraunces({subsets:['latin','latin-ext'],weight:['400','500','600','700'],style:['normal','italic'],axes:['SOFT','opsz'],variable:'--font-longform-display'});
+const fraunces = Fraunces({subsets:['latin','latin-ext'],weight:['400','500','600','700'],style:['normal','italic'],variable:'--font-longform-display'});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://svetlastran.si'),
