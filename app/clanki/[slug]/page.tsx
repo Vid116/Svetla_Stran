@@ -18,7 +18,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { MidArticleCta } from "@/components/mid-article-cta";
 import { ScrollToTop } from "@/components/scroll-to-top";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 function rowToArticle(s: any): PublishedArticle {
   return {

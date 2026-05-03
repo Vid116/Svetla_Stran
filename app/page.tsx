@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Sun } from "lucide-react";
 import { LogoLink } from "@/components/logo-link";
 import { ArticleGrid } from "@/components/article-grid";
@@ -9,18 +8,7 @@ import { NavSearch } from "@/components/nav-search";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
 import { getPublishedArticles, getArticlesByTag } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
-
-// Legacy ?antidote=X query param → /tema/{slug} (antidote is now hidden matcher)
-const ANTIDOTE_TO_THEME: Record<string, string> = {
-  jeza: "med-nami",
-  cinizem: "med-nami",
-  skrb: "naprej",
-  obup: "naprej",
-  osamljenost: "med-nami",
-  strah: "heroji",
-  dolgcas: "drobne-radosti",
-};
+export const revalidate = 300;
 
 export interface PublishedArticle {
   title: string;
@@ -84,16 +72,7 @@ function rowToArticle(s: any): PublishedArticle {
   };
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ antidote?: string }>;
-}) {
-  const params = (await searchParams) || {};
-  if (params.antidote && ANTIDOTE_TO_THEME[params.antidote]) {
-    redirect(`/tema/${ANTIDOTE_TO_THEME[params.antidote]}`);
-  }
-
+export default async function HomePage() {
   // Check if today is Sunday in Slovenia
   const now = new Date();
   const dayInSlovenia = new Intl.DateTimeFormat("en-US", {

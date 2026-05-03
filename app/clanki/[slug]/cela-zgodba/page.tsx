@@ -11,7 +11,7 @@ import {
 import { ShareButton } from "@/components/share-button";
 import { SiteFooter } from "@/components/site-footer";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 // Parse the long-form body into structured blocks. The pipeline emits a
 // markdown-ish string: paragraphs separated by blank lines, `## ` for section

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAuthAPI, getAuthEditor } from "@/lib/require-auth-api";
 import {
   getCommentsByArticle,
@@ -7,6 +8,17 @@ import {
   deleteComment,
 } from "@/lib/db";
 import { getSQL } from "@/lib/neon";
+
+async function revalidateArticleByCommentId(commentId: string) {
+  const sql = getSQL();
+  const rows = await sql`
+    SELECT a.slug FROM articles a
+    JOIN comments c ON c.article_id = a.id
+    WHERE c.id = ${commentId}
+  `;
+  const slug = rows[0]?.slug;
+  if (slug) revalidatePath(`/clanki/${slug}`);
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -83,6 +95,7 @@ export async function PUT(req: NextRequest) {
 
     if (action === "approve") {
       await moderateComment(commentId, "approved");
+      await revalidateArticleByCommentId(commentId);
     } else if (action === "reject") {
       await moderateComment(commentId, "rejected", rejectionReason);
     } else if (action === "reply") {
@@ -109,6 +122,7 @@ export async function PUT(req: NextRequest) {
         body,
         status: "approved",
       });
+      await revalidateArticleByCommentId(commentId);
     } else {
       return NextResponse.json({ error: "Neznana akcija" }, { status: 400 });
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAuthAPI } from "@/lib/require-auth-api";
 import { publishDraft, getDraftById, deleteDraft, updateDraft } from "@/lib/db";
 
@@ -13,9 +14,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Draft ID je obvezen" }, { status: 400 });
     }
 
-    // Get slug before publishing (draft gets deleted after)
+    // Snapshot draft fields before publishing — the draft row gets deleted.
     const draft = await getDraftById(draftId);
     await publishDraft(draftId);
+
+    // Bust ISR caches so the new article appears immediately instead of
+    // waiting for the 5-min revalidate tick.
+    revalidatePath("/");
+    revalidatePath("/arhiv");
+    revalidatePath("/dobrodosli");
+    if (draft?.slug) {
+      revalidatePath(`/clanki/${draft.slug}`);
+      if (draft.long_form) revalidatePath(`/clanki/${draft.slug}/cela-zgodba`);
+    }
+    const themes: string[] = draft?.themes || [];
+    for (const t of themes) revalidatePath(`/tema/${t}`);
+
     return NextResponse.json({ ok: true, slug: draft?.slug });
   } catch (err: any) {
     console.error("Publish API error:", err);

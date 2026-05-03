@@ -6,7 +6,7 @@ import { CATEGORY_LABELS, formatDate, zgodbeCount } from "@/lib/article-helpers"
 import { SafeImage } from "@/components/safe-image";
 import { CategoryIcon } from "@/lib/category-icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Arhiv zgodb",

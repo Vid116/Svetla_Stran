@@ -4,7 +4,7 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import { getPublishedArticlesLight } from "@/lib/db";
 import { pluralize } from "@/lib/article-helpers";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Dobrodošli",
