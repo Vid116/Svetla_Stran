@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist, Playfair_Display, Newsreader, Fraunces } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -49,17 +50,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="sl" className={cn("font-sans", geist.variable, playfair.variable, newsreader.variable, fraunces.variable)}>
-      <head>
-        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
-          <script
-            defer
-            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
-            src="https://plausible.io/js/script.js"
-          />
-        )}
-      </head>
       <body className="min-h-screen bg-background antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   );

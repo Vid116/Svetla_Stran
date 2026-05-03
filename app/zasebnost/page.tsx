@@ -43,7 +43,7 @@ export default function ZasebnostPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">Analitika</h2>
-            <p>Za razumevanje obiskanosti uporabljamo Plausible Analytics, ki je popolnoma anonimen in ne uporablja piškotkov. Nobeni osebni podatki se ne zbirajo.</p>
+            <p>Za razumevanje obiskanosti uporabljamo Vercel Web Analytics, ki je popolnoma anonimen in ne uporablja piškotkov. Nobeni osebni podatki se ne zbirajo.</p>
           </section>
 
           <section>
