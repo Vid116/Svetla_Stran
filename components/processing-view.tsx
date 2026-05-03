@@ -379,15 +379,19 @@ function ProcessingCard({
           <div className="mb-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">{error}</div>
         )}
 
-        {/* Actions */}
-        {isStuck && (
+        {/* Actions for processing headlines — always show rerun, escalate styling when stuck */}
+        {isProcessing && (
           <div className="flex flex-wrap gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={handleRerun}
               disabled={rerunning}
-              className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-all hover:bg-destructive/20 disabled:opacity-50"
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
+                isStuck
+                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
             >
-              {rerunning ? "Ponavljam..." : "Ponovi (obtičalo)"}
+              {rerunning ? "Ponavljam..." : isStuck ? "Ponovi (obtičalo)" : "Ponovi"}
             </button>
             <a
               href={headline.source_url}

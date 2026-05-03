@@ -271,6 +271,36 @@ async function handleResearchWrite(story) {
   }
 }
 
+// ── Job queue ────────────────────────────────────────────────────────────────
+// Pipelines are heavy (Claude SDK + web research + image gen) and have OOM'd
+// the worker when run in parallel. Process serially: jobs queue up and drain
+// one at a time. Editor's POST returns immediately ("queued"); worker chugs
+// through them in arrival order.
+
+const jobQueue = [];
+let queueDraining = false;
+
+async function drainQueue() {
+  if (queueDraining) return;
+  queueDraining = true;
+  while (jobQueue.length > 0) {
+    const story = jobQueue.shift();
+    console.log(`[Worker] Starting job (${jobQueue.length} still queued): "${story.rawTitle?.slice(0, 60)}"`);
+    try {
+      await handleResearchWrite(story);
+    } catch (err) {
+      console.error(`[Worker] Job threw: ${err.message}`);
+    }
+  }
+  queueDraining = false;
+}
+
+function enqueueJob(story) {
+  jobQueue.push(story);
+  drainQueue();
+  return { queueLength: jobQueue.length, draining: queueDraining };
+}
+
 // ── HTTP Server ──────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
@@ -302,12 +332,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Respond immediately — job runs in background
+    // Enqueue and respond immediately — queue drains serially in background
+    const queueState = enqueueJob(story);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, queued: true }));
-
-    // Run in background
-    handleResearchWrite(story);
+    res.end(JSON.stringify({ ok: true, queued: true, ...queueState }));
     return;
   }
 
