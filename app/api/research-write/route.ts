@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         if (headlineId) {
           const { getSQL } = await import("@/lib/neon");
           const sql = getSQL();
-          await sql`UPDATE headlines SET status = 'new' WHERE id = ${headlineId}`;
+          await sql`UPDATE headlines SET status = 'new', processing_started_at = NULL WHERE id = ${headlineId}`;
           console.log(`[research-write] Pipeline failed, headline ${headlineId} reset to 'new'`);
         }
         throw err;

@@ -50,8 +50,11 @@ interface ProcessedHeadline {
   ai_antidote: string | null;
   ai_emotions: string[];
   scraped_at: string;
+  processing_started_at: string | null;
   drafts: Draft[];
 }
+
+const STUCK_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {
   SPORT: { label: "Sport", color: "bg-sky text-sky-foreground" },
@@ -152,6 +155,9 @@ function ProcessingCard({
   const [expanded, setExpanded] = useState(false);
 
   const isProcessing = headline.status === "processing";
+  const isStuck = isProcessing
+    && headline.processing_started_at != null
+    && Date.now() - new Date(headline.processing_started_at).getTime() > STUCK_THRESHOLD_MS;
   const draft = headline.drafts?.[0] || null;
   const catInfo = CATEGORIES[headline.ai_category || ""] || { label: headline.ai_category || "Drugo", color: "bg-muted" };
 
@@ -230,13 +236,19 @@ function ProcessingCard({
         {/* Status row */}
         <div className="mb-2 flex items-center gap-2">
           {isProcessing ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-sky/10 px-2 py-0.5 text-xs font-semibold text-sky-foreground">
-              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-              </svg>
-              Raziskujem
-            </span>
+            isStuck ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                Obtičalo
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-sky/10 px-2 py-0.5 text-xs font-semibold text-sky-foreground">
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                </svg>
+                Raziskujem
+              </span>
+            )
           ) : (
             <span className="inline-flex items-center gap-1 rounded-full bg-nature/10 px-2 py-0.5 text-xs font-semibold text-nature">
               Zakljuceno
@@ -368,6 +380,25 @@ function ProcessingCard({
         )}
 
         {/* Actions */}
+        {isStuck && (
+          <div className="flex flex-wrap gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleRerun}
+              disabled={rerunning}
+              className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-all hover:bg-destructive/20 disabled:opacity-50"
+            >
+              {rerunning ? "Ponavljam..." : "Ponovi (obtičalo)"}
+            </button>
+            <a
+              href={headline.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+            >
+              Vir
+            </a>
+          </div>
+        )}
         {!isProcessing && (
           <div className="flex flex-wrap gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
             {draft && (

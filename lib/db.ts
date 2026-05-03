@@ -30,12 +30,12 @@ export async function dismissHeadline(id: string, reason?: string) {
 
 export async function pickHeadline(id: string) {
   const sql = getSQL();
-  await sql`UPDATE headlines SET status = 'picked' WHERE id = ${id}`;
+  await sql`UPDATE headlines SET status = 'picked', processing_started_at = NULL WHERE id = ${id}`;
 }
 
 export async function setHeadlineProcessing(id: string) {
   const sql = getSQL();
-  await sql`UPDATE headlines SET status = 'processing' WHERE id = ${id}`;
+  await sql`UPDATE headlines SET status = 'processing', processing_started_at = NOW() WHERE id = ${id}`;
 }
 
 export async function getProcessedHeadlines(categories?: string[]) {
@@ -46,7 +46,7 @@ export async function getProcessedHeadlines(categories?: string[]) {
   if (categories && categories.length > 0) {
     headlines = await sql`
       SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
-             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at
+             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at, processing_started_at
       FROM headlines
       WHERE status IN ('processing', 'picked') AND ai_category = ANY(${categories})
       ORDER BY scraped_at DESC
@@ -54,7 +54,7 @@ export async function getProcessedHeadlines(categories?: string[]) {
   } else {
     headlines = await sql`
       SELECT id, status, source_url, source_name, raw_title, raw_content, full_content,
-             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at
+             ai_score, ai_category, ai_headline, ai_antidote, ai_emotions, scraped_at, processing_started_at
       FROM headlines
       WHERE status IN ('processing', 'picked')
       ORDER BY scraped_at DESC

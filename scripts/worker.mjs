@@ -31,11 +31,11 @@ if (!SECRET) {
 // ── DB helpers (same logic as lib/db.ts) ─────────────────────────────────────
 
 async function setHeadlineProcessing(id) {
-  await sql`UPDATE headlines SET status = 'processing' WHERE id = ${id}`;
+  await sql`UPDATE headlines SET status = 'processing', processing_started_at = NOW() WHERE id = ${id}`;
 }
 
 async function pickHeadline(id) {
-  await sql`UPDATE headlines SET status = 'picked' WHERE id = ${id}`;
+  await sql`UPDATE headlines SET status = 'picked', processing_started_at = NULL WHERE id = ${id}`;
 }
 
 async function deleteDraftsByHeadlineId(id) {
@@ -56,7 +56,7 @@ async function dismissHeadline(id, reason) {
 }
 
 async function resetHeadline(id) {
-  await sql`UPDATE headlines SET status = 'new' WHERE id = ${id}`;
+  await sql`UPDATE headlines SET status = 'new', processing_started_at = NULL WHERE id = ${id}`;
 }
 
 async function createDraft(draft) {
@@ -118,6 +118,10 @@ async function addSourceSuggestion(s) {
 
 // ── Pipeline runner ──────────────────────────────────────────────────────────
 
+// Hard timeout: kill any pipeline that runs longer than this. Healthy runs
+// finish well under this; anything past it is a hung Claude/SDK call.
+const PIPELINE_TIMEOUT_MS = 30 * 60 * 1000; // 30 min
+
 function runResearchScript(story) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', ['lib/research-write/run.mjs'], {
@@ -127,6 +131,13 @@ function runResearchScript(story) {
         Object.entries(process.env).filter(([k]) => k !== 'CLAUDECODE' && k !== 'ANTHROPIC_API_KEY')
       ),
     });
+
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      console.error(`[Worker] Pipeline timeout after ${PIPELINE_TIMEOUT_MS / 60000}min, killing child PID ${child.pid}`);
+      child.kill('SIGKILL');
+    }, PIPELINE_TIMEOUT_MS);
 
     child.stdin.write(JSON.stringify(story));
     child.stdin.end();
@@ -141,6 +152,11 @@ function runResearchScript(story) {
     });
 
     child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        reject(new Error(`Pipeline killed after ${PIPELINE_TIMEOUT_MS / 60000}min timeout`));
+        return;
+      }
       if (code !== 0) {
         reject(new Error(`Pipeline failed (code ${code}): ${Buffer.concat(stderr).toString().slice(-300)}`));
         return;
@@ -152,7 +168,10 @@ function runResearchScript(story) {
       }
     });
 
-    child.on('error', (err) => reject(new Error(`Spawn failed: ${err.message}`)));
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(new Error(`Spawn failed: ${err.message}`));
+    });
   });
 }
 
