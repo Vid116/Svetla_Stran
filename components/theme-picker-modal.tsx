@@ -50,7 +50,7 @@ export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onComplete}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative bg-card rounded-2xl border border-border/50 shadow-2xl p-6 sm:p-8 max-w-md w-full"
+        className="relative bg-card rounded-2xl border border-border/50 shadow-2xl p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-2">
@@ -62,7 +62,7 @@ export function ThemePickerModal({ email, onComplete, initialTheme }: Props) {
           </div>
           <button
             onClick={onComplete}
-            className="text-muted-foreground/40 hover:text-foreground transition-colors cursor-pointer p-1 -mr-1"
+            className="flex items-center justify-center w-10 h-10 -mr-2 rounded-full text-muted-foreground/40 hover:text-foreground transition-colors cursor-pointer"
             aria-label="Zapri"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

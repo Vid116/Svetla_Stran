@@ -476,67 +476,39 @@ export async function getEmotionMatchedArticles(
   limit: number = 3
 ): Promise<any[]> {
   const sql = getSQL();
-  const cols = `a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
-                a.antidote, a.antidote_secondary, a.published_at, a.created_at, a.long_form, a.themes,
-                COALESCE(c.cnt, 0) AS comment_count`;
-  const join = `LEFT JOIN (
-                  SELECT article_id, count(*)::int AS cnt
-                  FROM comments WHERE status = 'approved'
-                  GROUP BY article_id
-                ) c ON c.article_id = a.id`;
-
-  if (!antidote) {
-    return sql`
-      SELECT ${sql.unsafe(cols)}
+  // Rank-and-pick in a single round trip: rank 0 = same antidote + category,
+  // rank 1 = same antidote, rank 2 = category fallback. Ranks > 2 excluded.
+  return sql`
+    WITH ranked AS (
+      SELECT
+        a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+        a.antidote, a.antidote_secondary, a.published_at, a.created_at, a.long_form, a.themes,
+        COALESCE(c.cnt, 0) AS comment_count,
+        CASE
+          WHEN ${antidote}::text IS NOT NULL
+            AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
+            AND a.category = ${category}
+            THEN 0
+          WHEN ${antidote}::text IS NOT NULL
+            AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
+            THEN 1
+          WHEN a.category = ${category}
+            THEN 2
+          ELSE 99
+        END AS match_rank
       FROM articles a
-      ${sql.unsafe(join)}
-      WHERE a.slug != ${currentSlug} AND a.category = ${category}
-      ORDER BY a.published_at DESC
-      LIMIT ${limit}
-    `;
-  }
-
-  // Best: same antidote + same category
-  const bestMatch = await sql`
-    SELECT ${sql.unsafe(cols)}
-    FROM articles a
-    ${sql.unsafe(join)}
-    WHERE a.slug != ${currentSlug}
-      AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
-      AND a.category = ${category}
-    ORDER BY a.published_at DESC
+      LEFT JOIN (
+        SELECT article_id, count(*)::int AS cnt
+        FROM comments WHERE status = 'approved'
+        GROUP BY article_id
+      ) c ON c.article_id = a.id
+      WHERE a.slug != ${currentSlug}
+    )
+    SELECT * FROM ranked
+    WHERE match_rank < 99
+    ORDER BY match_rank ASC, published_at DESC
     LIMIT ${limit}
   `;
-
-  if (bestMatch.length >= limit) return bestMatch;
-
-  // Good: same antidote, any category
-  const excludeSlugs = [currentSlug, ...bestMatch.map((x: any) => x.slug)];
-  const antidoteMatch = await sql`
-    SELECT ${sql.unsafe(cols)}
-    FROM articles a
-    ${sql.unsafe(join)}
-    WHERE a.slug != ALL(${excludeSlugs})
-      AND (a.antidote = ${antidote} OR a.antidote_secondary = ${antidote})
-    ORDER BY a.published_at DESC
-    LIMIT ${limit - bestMatch.length}
-  `;
-
-  const combined = [...bestMatch, ...antidoteMatch];
-  if (combined.length >= limit) return combined.slice(0, limit);
-
-  // Fallback: category-only
-  const usedSlugs = [currentSlug, ...combined.map((x: any) => x.slug)];
-  const categoryFill = await sql`
-    SELECT ${sql.unsafe(cols)}
-    FROM articles a
-    ${sql.unsafe(join)}
-    WHERE a.slug != ALL(${usedSlugs}) AND a.category = ${category}
-    ORDER BY a.published_at DESC
-    LIMIT ${limit - combined.length}
-  `;
-
-  return [...combined, ...categoryFill].slice(0, limit);
 }
 
 // ── Sources queries ──────────────────────────────────────────────────────────

@@ -192,11 +192,48 @@ body {
   .longform-lede::first-letter {
     font-family: var(--font-longform-display), Georgia, serif;
     font-weight: 600;
-    font-size: 4.6em;
+    font-size: 3.2em;
     line-height: 0.85;
     float: left;
     margin: 0.06em 0.08em 0 -0.04em;
     color: var(--gold);
     font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  @media (min-width: 640px) {
+    .longform-lede::first-letter {
+      font-size: 4.6em;
+    }
+  }
+
+  /* Reveal-on-scroll animation primitives (replaces motion/react wrappers) */
+  @keyframes svetla-reveal {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes svetla-stagger {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes svetla-hero {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .anim-reveal { opacity: 0; }
+  .anim-reveal.anim-reveal-in {
+    animation: svetla-reveal 0.5s ease-out both;
+  }
+  .anim-stagger-item { opacity: 0; }
+  .anim-stagger-fire > .anim-stagger-item {
+    animation: svetla-stagger 0.45s ease-out both;
+  }
+  .anim-hero {
+    animation: svetla-hero 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .anim-reveal, .anim-hero, .anim-stagger-item {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }

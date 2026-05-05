@@ -77,12 +77,13 @@ export default async function ArhivPage() {
                       className="flex items-center gap-4 rounded-xl border border-border/50 bg-card/80 p-4 transition-all hover:shadow-md hover:border-border"
                     >
                       {/* Thumbnail */}
-                      <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-muted">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-muted">
                         {(a.ai_image_url || a.image_url) ? (
                           <SafeImage
                             src={a.ai_image_url || a.image_url}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="object-cover"
+                            sizes="64px"
                             fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground/40"><CategoryIcon category={a.category} className="w-6 h-6" /></div>}
                           />
                         ) : (

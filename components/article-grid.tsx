@@ -140,7 +140,7 @@ function CloudLink({
           backgroundColor: bg,
         }}
       />
-      <span className="relative z-10 inline-flex items-center gap-2 px-8 py-4 text-sm font-medium whitespace-nowrap">
+      <span className="relative z-10 inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-4 text-sm font-medium whitespace-nowrap">
         {children}
       </span>
     </Link>
@@ -301,7 +301,9 @@ export function ArticleGrid({
                   {featured.imageUrl ? (
                     <SafeImage
                       src={featured.imageUrl}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                      className="object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                      sizes="(min-width: 1152px) 1104px, 100vw"
+                      priority
                       fallback={<CategoryGradient category={featured.ai.category} />}
                     />
                   ) : (
@@ -375,7 +377,7 @@ export function ArticleGrid({
       {articles.length > 0 && (
         <HeroReveal delay={0.4}>
           <nav aria-label="Teme" className="mb-6">
-            <div className="flex flex-wrap gap-5 justify-center">
+            <div className="flex flex-wrap gap-3 sm:gap-5 justify-center">
               {CLOUD_THEME_ORDER.map((slug, i) => {
                 const theme = THEMES[slug];
                 return (

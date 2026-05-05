@@ -50,7 +50,7 @@ export function NavSearch({ basePath = "/" }: { basePath?: string }) {
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground cursor-pointer p-0.5"
+            className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground/40 hover:text-foreground cursor-pointer"
             aria-label="Zapri iskanje"
           >
             <X className="w-3.5 h-3.5" />

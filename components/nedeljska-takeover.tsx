@@ -68,7 +68,9 @@ export function NedeljskaTakeover({ article }: { article: NedeljskaArticle }) {
             {imageUrl ? (
               <SafeImage
                 src={imageUrl}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                className="object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                sizes="(min-width: 1152px) 1104px, 100vw"
+                priority
                 fallback={
                   <div className="absolute inset-0" style={{ backgroundColor: theme.colors.soft }} />
                 }

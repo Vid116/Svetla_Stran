@@ -46,7 +46,7 @@ export function ShareButton({ title }: { title: string }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+      className="inline-flex items-center gap-1.5 px-2 py-2 -mx-2 -my-2 text-xs text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
       aria-label="Deli zgodbo"
     >
       <ShareIcon copied={copied} />

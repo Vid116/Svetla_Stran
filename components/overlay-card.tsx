@@ -35,6 +35,7 @@ const TIER_STYLES = {
     subtitleSize: "text-xs sm:text-sm",
     subtitleClamp: "line-clamp-1",
     ribbonSize: "md" as const,
+    sizes: "(min-width: 1152px) 542px, (min-width: 768px) 50vw, 100vw",
   },
   tertiary: {
     height: "h-56",
@@ -45,6 +46,7 @@ const TIER_STYLES = {
     subtitleSize: "",
     subtitleClamp: "",
     ribbonSize: "sm" as const,
+    sizes: "(min-width: 1152px) 352px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   },
 } as const;
 
@@ -72,7 +74,8 @@ export function OverlayCard({
           {article.imageUrl ? (
             <SafeImage
               src={article.imageUrl}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              sizes={s.sizes}
               fallback={imageFallback}
             />
           ) : (

@@ -184,7 +184,7 @@ export default async function ArticlePage({
             {article.title}
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light">
+          <p className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed font-light">
             {article.subtitle}
           </p>
         </div>

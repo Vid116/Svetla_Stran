@@ -1,7 +1,37 @@
 "use client";
 
-import { motion, stagger } from "motion/react";
-import type { ReactNode } from "react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from "react";
+
+function useInView(rootMargin = "-80px") {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [rootMargin]);
+  return { ref, inView };
+}
 
 /** Fade + slide up on scroll into view. Set skip=true to render instantly. */
 export function RevealOnScroll({
@@ -17,16 +47,27 @@ export function RevealOnScroll({
 }) {
   if (skip) return <div className={className}>{children}</div>;
 
+  return <RevealInner className={className} delay={delay}>{children}</RevealInner>;
+}
+
+function RevealInner({
+  children,
+  className,
+  delay,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay: number;
+}) {
+  const { ref, inView } = useInView("-80px");
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
-      className={className}
+    <div
+      ref={ref}
+      className={`anim-reveal${inView ? " anim-reveal-in" : ""}${className ? ` ${className}` : ""}`}
+      style={delay ? { animationDelay: `${delay}s` } : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -45,22 +86,37 @@ export function StaggerContainer({
   if (skip) return <div className={className}>{children}</div>;
 
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-60px" }}
-      variants={{
-        hidden: {},
-        visible: {
-          transition: {
-            delayChildren: stagger(staggerDelay),
-          },
-        },
-      }}
-      className={className}
-    >
+    <StaggerInner className={className} staggerDelay={staggerDelay}>
       {children}
-    </motion.div>
+    </StaggerInner>
+  );
+}
+
+function StaggerInner({
+  children,
+  className,
+  staggerDelay,
+}: {
+  children: ReactNode;
+  className?: string;
+  staggerDelay: number;
+}) {
+  const { ref, inView } = useInView("-60px");
+  const cloned = Children.map(children, (child, i) => {
+    if (!isValidElement(child)) return child;
+    const childEl = child as ReactElement<{ style?: CSSProperties }>;
+    const existingStyle = childEl.props.style ?? {};
+    return cloneElement(childEl, {
+      style: { ...existingStyle, animationDelay: `${i * staggerDelay}s` },
+    });
+  });
+  return (
+    <div
+      ref={ref}
+      className={`${inView ? "anim-stagger-fire " : ""}${className ?? ""}`}
+    >
+      {cloned}
+    </div>
   );
 }
 
@@ -75,26 +131,14 @@ export function StaggerItem({
   skip?: boolean;
 }) {
   if (skip) return <div className={className}>{children}</div>;
-
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 20, scale: 0.97 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          transition: { duration: 0.45, ease: "easeOut" },
-        },
-      }}
-      className={className}
-    >
+    <div className={`anim-stagger-item${className ? ` ${className}` : ""}`}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
-/** Hero text entrance — fade up with spring */
+/** Hero text entrance — fade up with easing, fires on mount. */
 export function HeroReveal({
   children,
   className,
@@ -105,13 +149,11 @@ export function HeroReveal({
   delay?: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
-      className={className}
+    <div
+      className={`anim-hero${className ? ` ${className}` : ""}`}
+      style={delay ? { animationDelay: `${delay}s` } : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

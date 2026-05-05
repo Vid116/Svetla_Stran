@@ -192,7 +192,9 @@ export default async function ThemePage({
                   {featured.ai_image_url || featured.image_url ? (
                     <SafeImage
                       src={featured.ai_image_url || featured.image_url}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                      className="object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                      sizes="(min-width: 1152px) 1104px, 100vw"
+                      priority
                       fallback={<div className="w-full h-full" style={{ backgroundColor: soft }} />}
                     />
                   ) : (

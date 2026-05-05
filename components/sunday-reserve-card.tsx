@@ -132,7 +132,8 @@ export function SundayReserveCard({
           {imageUrl ? (
             <SafeImage
               src={imageUrl}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="object-cover"
+              sizes="(min-width: 768px) 224px, 100vw"
               fallback={<div className="absolute inset-0" style={{ backgroundColor: theme.colors.soft }} />}
             />
           ) : (

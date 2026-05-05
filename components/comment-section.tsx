@@ -391,7 +391,7 @@ export function CommentSection({ articleId }: { articleId: string }) {
 
                 {/* Inline reply form */}
                 {replyingTo === comment.id && (
-                  <div className="ml-8 pl-4 border-l-2 border-border/30 mt-3">
+                  <div className="ml-4 sm:ml-8 pl-2 sm:pl-4 border-l-2 border-border/30 mt-3">
                     <CommentForm
                       isEditor={isEditor}
                       editorName={editorName}
@@ -408,7 +408,7 @@ export function CommentSection({ articleId }: { articleId: string }) {
                   const isMyReply = myPendingIds.has(reply.id);
                   if (!isEditor && reply.status !== "approved" && !isMyReply) return null;
                   return (
-                    <div key={reply.id} className={`ml-8 pl-4 border-l-2 border-border/30 mt-3 ${isMyReply && reply.status === "pending" ? "opacity-75" : ""}`}>
+                    <div key={reply.id} className={`ml-4 sm:ml-8 pl-2 sm:pl-4 border-l-2 border-border/30 mt-3 ${isMyReply && reply.status === "pending" ? "opacity-75" : ""}`}>
                       {isMyReply && reply.status === "pending" && (
                         <p className="text-[11px] text-muted-foreground/50 mb-1">Čaka na odobritev</p>
                       )}
