@@ -310,30 +310,32 @@ export function ArticleGrid({
                     <CategoryGradient category={featured.ai.category} />
                   )}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                {/* Stronger gradient on mobile so title stays legible against busy images */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent sm:from-black/70 sm:via-black/30" />
 
                 <ThemeRibbon
                   theme={getThemeForCard({ themes: featured.themes, antidote: featured.ai.antidote_for, category: featured.ai.category })}
-                  className="absolute top-4 left-4 z-10"
+                  className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10"
+                  size="sm"
                 />
-                <CommentBadge count={featured.commentCount ?? 0} className="absolute top-4 right-4 z-10" />
+                <CommentBadge count={featured.commentCount ?? 0} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10" />
 
-                <div className="absolute bottom-0 inset-x-0 p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <time className="text-xs text-white/70">
+                <div className="absolute bottom-0 inset-x-0 p-5 sm:p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-2 sm:mb-4">
+                    <time className="text-[11px] sm:text-xs text-white/70">
                       {formatDate(featured.publishedAt)}
                     </time>
                   </div>
 
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-3">
+                  <h2 className="text-xl sm:text-3xl md:text-4xl font-semibold leading-tight text-white mb-2 sm:mb-3 max-w-3xl group-hover:text-white/90 transition-colors line-clamp-2 sm:line-clamp-3">
                     {featured.title}
                   </h2>
 
-                  <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
+                  <p className="hidden sm:block text-sm md:text-base text-white/75 leading-relaxed max-w-2xl mb-4 line-clamp-2">
                     {featured.subtitle}
                   </p>
 
-                  <div className="inline-flex items-center gap-2 text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
+                  <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white/90 group-hover:gap-3 transition-all">
                     <span>Preberi zgodbo</span>
                     <span aria-hidden>→</span>
                   </div>
