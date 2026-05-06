@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getArticleBySlug, getArticleWithMatches } from "@/lib/db";
-import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
   CATEGORY_ACCENT_BAR,
@@ -12,17 +11,21 @@ import {
   getThemeForArticle,
 } from "@/lib/article-helpers";
 import { ShareButton, ShareBar } from "@/components/share-button";
-import { LongFormTopCta, LongFormBottomCta } from "@/components/long-form-cta";
-import { CommentSection } from "@/components/comment-section";
-import { EmotionMatchedArticles } from "@/components/emotion-matched-articles";
+import { LongFormTopCta } from "@/components/long-form-cta";
 import { SiteFooter } from "@/components/site-footer";
-import { MidArticleCta } from "@/components/mid-article-cta";
-import { ScrollToTop } from "@/components/scroll-to-top";
+import {
+  LazyCommentSection,
+  LazyEmotionMatchedArticles,
+  LazyMidArticleCta,
+  LazyLongFormBottomCta,
+  LazyNewsletterSignup,
+  LazyScrollToTop,
+} from "@/components/lazy";
 
-// Edge runtime would be ideal for TTFB but the article-page bundle (comment
-// section, long-form CTAs, share button, all the article helpers) breezes
-// past Vercel's 1 MB hobby-plan ceiling. Stays on Node until either we slim
-// the bundle (lazy-load CommentSection etc.) or move to a higher plan.
+// Below-fold + interactive components are lazy-imported (see components/lazy)
+// so they never enter this page's edge-function bundle. Keeps us under
+// Vercel's 1 MB ceiling so this page can run on the edge.
+export const runtime = "edge";
 export const revalidate = 300;
 
 function rowToArticle(s: any): PublishedArticle {
@@ -213,14 +216,14 @@ export default async function ArticlePage({
               >
                 {p}
               </p>
-              {i === 2 && paragraphs.length > 4 && <MidArticleCta theme={articleTheme?.slug} />}
+              {i === 2 && paragraphs.length > 4 && <LazyMidArticleCta theme={articleTheme?.slug} />}
             </div>
           ))}
         </div>
 
         {/* Bottom CTA — for readers who finished the short and want more */}
         {article.longForm && (
-          <LongFormBottomCta
+          <LazyLongFormBottomCta
             slug={article.slug}
             longForm={article.longForm}
             accentBar={accentBar}
@@ -299,24 +302,24 @@ export default async function ArticlePage({
       {/* Emotion-matched next reads */}
       {relatedArticles.length > 0 && (
         <div className="mx-auto max-w-6xl px-6 py-8">
-          <EmotionMatchedArticles articles={relatedArticles} />
+          <LazyEmotionMatchedArticles articles={relatedArticles} />
         </div>
       )}
 
       {/* Newsletter signup */}
       <div className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <NewsletterSignup variant="afterglow" theme={articleTheme?.slug} />
+        <LazyNewsletterSignup variant="afterglow" theme={articleTheme?.slug} />
       </div>
 
       {/* Comments */}
       <div className="mx-auto max-w-3xl px-6 pb-8">
-        <CommentSection articleId={row.id} />
+        <LazyCommentSection articleId={row.id} />
       </div>
 
       <SiteFooter />
 
       {/* Scroll to top — small floating button */}
-      <ScrollToTop />
+      <LazyScrollToTop />
     </div>
   );
 }
