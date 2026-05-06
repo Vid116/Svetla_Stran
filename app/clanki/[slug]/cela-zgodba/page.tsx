@@ -253,21 +253,49 @@ export default async function CelaZgodbaPage({
           <span className="text-foreground/25 tracking-[0.5em] text-sm">∗ ∗ ∗</span>
         </div>
 
-        {/* Source */}
-        {row.source_url && (
-          <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground/70 mb-1">Izvor</p>
-            <a
-              href={row.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-foreground/60 hover:text-foreground/90 transition-colors underline-offset-2 hover:underline"
-            >
-              {row.source_name}
-              <span className="ml-1" aria-hidden>↗</span>
-            </a>
-          </div>
-        )}
+        {/* Sources — full list, same shape as the short article */}
+        <div className="mt-6 p-5 rounded-xl bg-muted/40 border border-border/40">
+          <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/60 mb-3">
+            Viri
+          </p>
+          <ol className="space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-xs font-medium text-muted-foreground/50 mt-0.5 shrink-0">1.</span>
+              <div className="min-w-0">
+                <p className="text-sm text-foreground/80">{row.source_name}</p>
+                {row.source_url && (
+                  <a
+                    href={row.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline underline-offset-2 line-clamp-1"
+                  >
+                    {row.raw_title || row.source_url}
+                    <span className="ml-0.5" aria-hidden>↗</span>
+                  </a>
+                )}
+              </div>
+            </li>
+            {(row.research_references as { url: string; title: string }[] | null | undefined)
+              ?.filter((ref) => ref.url !== row.source_url)
+              .map((ref, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-xs font-medium text-muted-foreground/50 mt-0.5 shrink-0">{i + 2}.</span>
+                  <div className="min-w-0">
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-foreground/80 hover:text-primary transition-colors line-clamp-1"
+                    >
+                      {ref.title}
+                      <span className="ml-0.5 text-xs text-primary" aria-hidden>↗</span>
+                    </a>
+                  </div>
+                </li>
+              ))}
+          </ol>
+        </div>
 
         {/* Back to short */}
         <div className="mt-12 text-center">
