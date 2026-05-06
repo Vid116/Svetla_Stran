@@ -432,6 +432,62 @@ export async function getArchivedArticles() {
   `;
 }
 
+/**
+ * Archive page query: full archive, paginated, with optional q + theme filter.
+ * One round trip — COUNT(*) OVER() returns total alongside the page slice so
+ * we can render "Stran X od Y" without a second query.
+ *
+ * Slim listing shape (no body/long_form blob — reading minutes pre-computed).
+ * Same Slovenian-declension variant matching as /api/search.
+ */
+export async function getFilteredArchive({
+  q,
+  theme,
+  page = 1,
+  perPage = 30,
+}: {
+  q?: string;
+  theme?: string;
+  page?: number;
+  perPage?: number;
+}): Promise<{ items: any[]; totalCount: number }> {
+  const sql = getSQL();
+  const _page = Math.max(1, page);
+  const _perPage = Math.max(1, Math.min(100, perPage));
+  const offset = (_page - 1) * _perPage;
+
+  // Build search variant arrays (same logic as /api/search route).
+  const words = (q ?? "").trim().split(/\s+/).filter((w) => w.length >= 3);
+  const gids: number[] = [];
+  const patterns: string[] = [];
+  words.forEach((word, gid) => {
+    const w = word.toLowerCase();
+    gids.push(gid); patterns.push(`%${w}%`);
+    if (w.length >= 5) { gids.push(gid); patterns.push(`%${w.slice(0, -1)}%`); }
+    if (w.length >= 6) { gids.push(gid); patterns.push(`%${w.slice(0, -2)}%`); }
+  });
+  const numWords = words.length;
+
+  const rows = await sql`
+    SELECT ${sql.unsafe(LISTING_COLS)},
+           COUNT(*) OVER () AS total_count
+    FROM articles a
+    ${sql.unsafe(COMMENT_COUNT_JOIN)}
+    WHERE
+      (${numWords}::int = 0 OR (
+        SELECT COUNT(DISTINCT u.gid)
+        FROM unnest(${gids}::int[], ${patterns}::text[]) AS u(gid, pat)
+        WHERE LOWER(a.title || ' ' || coalesce(a.subtitle, '') || ' ' || a.body) LIKE u.pat
+      ) = ${numWords}::int)
+      AND (${theme}::text IS NULL OR ${theme}::text = ANY(a.themes))
+    ORDER BY a.published_at DESC
+    LIMIT ${_perPage} OFFSET ${offset}
+  `;
+
+  const totalCount = (rows[0] as any)?.total_count ?? 0;
+  return { items: rows as any[], totalCount: Number(totalCount) };
+}
+
 export async function getPublishedArticlesLight() {
   const sql = getSQL();
   return sql`
