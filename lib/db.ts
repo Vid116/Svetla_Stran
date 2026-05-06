@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getSQL } from "./neon";
 import type { Theme } from "./article-helpers";
 
@@ -477,10 +478,71 @@ export async function getArticlesByTag(tag: string, limit: number = 3) {
   `;
 }
 
-export async function getArticleBySlug(slug: string) {
+// React cache() dedupes within a single render pass — generateMetadata and
+// the page component each call this for the same slug, this collapses them
+// to one DB roundtrip.
+export const getArticleBySlug = cache(async (slug: string) => {
   const sql = getSQL();
   const rows = await sql`SELECT * FROM articles WHERE slug = ${slug}`;
   return rows[0] || null;
+});
+
+/**
+ * Single-roundtrip fetch: article row + ranked emotion-matched articles.
+ *
+ * Replaces the prior pattern of getArticleBySlug() then
+ * getEmotionMatchedArticles() — saves one DB roundtrip per article view
+ * (~30-50 ms). Same ranking semantics as getEmotionMatchedArticles.
+ */
+export async function getArticleWithMatches(slug: string, limit: number = 3) {
+  const sql = getSQL();
+  const rows = await sql`
+    WITH src AS (
+      SELECT * FROM articles WHERE slug = ${slug}
+    ),
+    ranked AS (
+      SELECT
+        a.id, a.title, a.subtitle, a.body, a.slug, a.image_url, a.ai_image_url, a.category,
+        a.antidote, a.antidote_secondary, a.published_at, a.created_at, a.long_form, a.themes,
+        COALESCE(c.cnt, 0) AS comment_count,
+        CASE
+          WHEN s.antidote IS NOT NULL
+            AND (a.antidote = s.antidote OR a.antidote_secondary = s.antidote)
+            AND a.category = s.category
+            THEN 0
+          WHEN s.antidote IS NOT NULL
+            AND (a.antidote = s.antidote OR a.antidote_secondary = s.antidote)
+            THEN 1
+          WHEN a.category = s.category
+            THEN 2
+          ELSE 99
+        END AS match_rank
+      FROM articles a
+      CROSS JOIN src s
+      LEFT JOIN (
+        SELECT article_id, count(*)::int AS cnt
+        FROM comments WHERE status = 'approved'
+        GROUP BY article_id
+      ) c ON c.article_id = a.id
+      WHERE a.slug != s.slug
+    )
+    SELECT
+      (SELECT row_to_json(src) FROM src) AS article,
+      COALESCE(
+        (SELECT jsonb_agg(matches.*)
+         FROM (
+           SELECT * FROM ranked
+           WHERE match_rank < 99
+           ORDER BY match_rank ASC, published_at DESC
+           LIMIT ${limit}
+         ) matches),
+        '[]'::jsonb
+      ) AS matches
+  `;
+  return {
+    article: (rows[0]?.article ?? null) as any | null,
+    matches: (rows[0]?.matches ?? []) as any[],
+  };
 }
 
 export async function getArticlesByTheme(theme: Theme) {

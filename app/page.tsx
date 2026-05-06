@@ -9,6 +9,7 @@ import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
 import { getPublishedArticleListings, getArticlesByTag } from "@/lib/db";
 import { rowToListing } from "@/lib/article-listings";
 
+export const runtime = "edge";
 export const revalidate = 300;
 
 /** Full article shape — still used by /clanki/[slug] and emotion-matched cards.

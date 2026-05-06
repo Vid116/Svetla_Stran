@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { getArticleBySlug, getEmotionMatchedArticles } from "@/lib/db";
+import { getArticleBySlug, getArticleWithMatches } from "@/lib/db";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import type { PublishedArticle } from "@/app/page";
 import {
@@ -19,6 +19,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { MidArticleCta } from "@/components/mid-article-cta";
 import { ScrollToTop } from "@/components/scroll-to-top";
 
+export const runtime = "edge";
 export const revalidate = 300;
 
 function rowToArticle(s: any): PublishedArticle {
@@ -101,19 +102,11 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const row = await getArticleBySlug(slug);
+  const { article: row, matches } = await getArticleWithMatches(slug, 3);
   if (!row) notFound();
 
   const article = rowToArticle(row);
-
-  // Antidote-matched related articles
-  const emotionMatched = await getEmotionMatchedArticles(
-    article.slug,
-    article.ai.antidote_for,
-    article.ai.category || null,
-    3
-  );
-  const relatedArticles = emotionMatched.map(rowToArticle);
+  const relatedArticles = matches.map(rowToArticle);
 
   const paragraphs = article.body
     .split(/\n\n+/)
