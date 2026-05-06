@@ -22,6 +22,10 @@ export interface OverlayCardArticle {
   imageUrl?: string | null;
   source?: string | null;
   longFormBody?: string | null;
+  /** Pre-computed reading minutes — preferred over body when listing pages
+   *  ship body-free payloads. */
+  bodyMinutes?: number;
+  longFormMinutes?: number;
   commentCount?: number;
 }
 
@@ -65,7 +69,13 @@ export function OverlayCard({
   hideThemeRibbon?: boolean;
 }) {
   const s = TIER_STYLES[tier];
-  const longMin = readingMinutes(article.longFormBody);
+  const longMin = article.longFormMinutes ?? readingMinutes(article.longFormBody);
+  const bodyReadingStr =
+    article.bodyMinutes != null
+      ? `${article.bodyMinutes} min branja`
+      : article.body
+      ? readingTime(article.body)
+      : null;
 
   return (
     <Link href={`/clanki/${article.slug}`} className="group block h-full">
@@ -118,11 +128,11 @@ export function OverlayCard({
               {article.source && (
                 <span className="truncate min-w-0">{article.source}</span>
               )}
-              {article.source && article.body && (
+              {article.source && bodyReadingStr && (
                 <span className="text-white/30 shrink-0">·</span>
               )}
-              {article.body && (
-                <span className="shrink-0">{readingTime(article.body)}</span>
+              {bodyReadingStr && (
+                <span className="shrink-0">{bodyReadingStr}</span>
               )}
               <GlobljeAnnotation minutes={longMin} tone="dark" />
             </div>

@@ -348,6 +348,77 @@ export async function getPublishedArticles() {
   `;
 }
 
+/**
+ * Slim list query for the homepage and search — same display fields as
+ * getPublishedArticles but without body/long_form blobs. Reading minutes are
+ * pre-computed server-side so the client never sees article text.
+ */
+const LISTING_COLS = `
+  a.id, a.title, a.subtitle, a.slug, a.image_url, a.ai_image_url, a.category,
+  a.antidote, a.antidote_secondary, a.ai_score, a.source_name,
+  a.published_at, a.created_at, a.themes,
+  COALESCE(c.cnt, 0) AS comment_count,
+  GREATEST(1, ROUND(
+    coalesce(array_length(string_to_array(a.body, ' '), 1), 0)::numeric / 200
+  ))::int AS body_minutes,
+  CASE
+    WHEN a.long_form IS NULL THEN 0
+    ELSE GREATEST(1, ROUND(
+      coalesce(array_length(string_to_array(a.long_form->>'body', ' '), 1), 0)::numeric / 200
+    ))::int
+  END AS long_form_minutes,
+  (a.long_form IS NOT NULL) AS has_long_form
+`;
+const COMMENT_COUNT_JOIN = `
+  LEFT JOIN (
+    SELECT article_id, count(*)::int AS cnt
+    FROM comments
+    WHERE status = 'approved'
+    GROUP BY article_id
+  ) c ON c.article_id = a.id
+`;
+
+export async function getPublishedArticleListings() {
+  const sql = getSQL();
+  return sql`
+    SELECT ${sql.unsafe(LISTING_COLS)}
+    FROM articles a
+    ${sql.unsafe(COMMENT_COUNT_JOIN)}
+    ORDER BY a.published_at DESC
+    LIMIT 72
+  `;
+}
+
+/**
+ * Server-side search across published articles.
+ *
+ * The pattern arrays come from JS-side variant generation
+ * (full word + 1-trim + 2-trim for Slovenian declensions). Each variant is
+ * tagged with its word group (gid). An article matches when at least one
+ * variant from EVERY word group hits the haystack.
+ */
+export async function searchArticles(
+  gids: number[],
+  patterns: string[],
+  numWords: number,
+  limit: number = 50,
+) {
+  if (numWords === 0 || gids.length === 0) return [];
+  const sql = getSQL();
+  return sql`
+    SELECT ${sql.unsafe(LISTING_COLS)}
+    FROM articles a
+    ${sql.unsafe(COMMENT_COUNT_JOIN)}
+    WHERE (
+      SELECT COUNT(DISTINCT u.gid)
+      FROM unnest(${gids}::int[], ${patterns}::text[]) AS u(gid, pat)
+      WHERE LOWER(a.title || ' ' || coalesce(a.subtitle, '') || ' ' || a.body) LIKE u.pat
+    ) = ${numWords}
+    ORDER BY a.published_at DESC
+    LIMIT ${limit}
+  `;
+}
+
 export async function getArchivedArticles() {
   const sql = getSQL();
   return sql`

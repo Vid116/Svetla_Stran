@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import type { PublishedArticle } from "@/app/page";
+import { type ArticleListing, rowToListing } from "@/lib/article-listings";
 import {
   formatDate,
   zgodbeCount,
@@ -154,10 +154,10 @@ function CloudLink({
  * Returns: featured (single), secondary (next 2 best, with images preferred),
  * rest (everything else, sorted by score — featured stays in for search filtering).
  */
-function pickFeatured(articles: PublishedArticle[]): {
-  featured: PublishedArticle | undefined;
-  secondary: PublishedArticle[];
-  rest: PublishedArticle[];
+function pickFeatured(articles: ArticleListing[]): {
+  featured: ArticleListing | undefined;
+  secondary: ArticleListing[];
+  rest: ArticleListing[];
 } {
   if (articles.length === 0) return { featured: undefined, secondary: [], rest: [] };
   if (articles.length === 1) return { featured: articles[0], secondary: [], rest: articles };
@@ -195,7 +195,7 @@ function pickFeatured(articles: PublishedArticle[]): {
   // Secondary: next 2 by score, excluding featured. Prefer those with images;
   // fall back to anything if not enough.
   const remaining = sorted.filter((a) => a.slug !== featured.slug);
-  const secondary: PublishedArticle[] = [];
+  const secondary: ArticleListing[] = [];
   for (const a of remaining) {
     if (secondary.length >= 2) break;
     if (a.imageUrl) secondary.push(a);
@@ -212,12 +212,6 @@ function pickFeatured(articles: PublishedArticle[]): {
   const rest = sorted.filter((a) => !secondarySlugs.has(a.slug));
 
   return { featured, secondary, rest };
-}
-
-function getExcerpt(text: string, chars = 120) {
-  const plain = text.replace(/\n+/g, " ").trim();
-  if (plain.length <= chars) return plain;
-  return plain.slice(0, chars).replace(/\s+\S*$/, "") + " …";
 }
 
 /** Gradient fallback when no image available */
@@ -242,33 +236,11 @@ function CategoryGradient({ category }: { category: string }) {
   );
 }
 
-/** Generate search variants for a word — trim last 1-2 chars for Slovenian declensions */
-function searchVariants(word: string): string[] {
-  const w = word.toLowerCase();
-  if (w.length < 3) return [];
-  const variants = [w];
-  if (w.length >= 5) variants.push(w.slice(0, -1));
-  if (w.length >= 6) variants.push(w.slice(0, -2));
-  return variants;
-}
-
-/** Check if text matches all search words (AND logic, with declension variants) */
-function matchesSearch(searchText: string, query: string): boolean {
-  const words = query.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return true;
-  const haystack = searchText.toLowerCase();
-  return words.every((word) => {
-    const variants = searchVariants(word);
-    if (variants.length === 0) return true;
-    return variants.some((v) => haystack.includes(v));
-  });
-}
-
 export function ArticleGrid({
   articles,
   nedeljskaArticle,
 }: {
-  articles: PublishedArticle[];
+  articles: ArticleListing[];
   nedeljskaArticle?: any;
 }) {
   const searchParams = useSearchParams();
@@ -276,16 +248,32 @@ export function ArticleGrid({
 
   // Read search query from URL (?q=)
   const searchQuery = searchParams.get("q") ?? "";
+  const trimmedQ = searchQuery.trim();
 
-  const filtered = useMemo(() => {
-    if (searchQuery.trim().length < 3) return articles;
-    return articles.filter((a) => {
-      const searchText = `${a.title} ${a.subtitle} ${a.body}`;
-      return matchesSearch(searchText, searchQuery);
-    });
-  }, [articles, searchQuery]);
+  // Server-side search: when q has 3+ chars, fetch matching listings.
+  // While fetching, keep showing the previous results so the layout doesn't
+  // flash empty — feels snappier than skeletons for a sub-100ms query.
+  const [searchResults, setSearchResults] = useState<ArticleListing[] | null>(null);
 
-  const { featured, secondary, rest } = useMemo(() => pickFeatured(filtered), [filtered]);
+  useEffect(() => {
+    if (trimmedQ.length < 3) {
+      setSearchResults(null);
+      return;
+    }
+    const ac = new AbortController();
+    fetch(`/api/search?q=${encodeURIComponent(trimmedQ)}`, { signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: any[]) => {
+        setSearchResults(data.map(rowToListing));
+      })
+      .catch(() => {
+        // network error / abort — leave current results in place
+      });
+    return () => ac.abort();
+  }, [trimmedQ]);
+
+  const visible = searchResults ?? articles;
+  const { featured, secondary, rest } = useMemo(() => pickFeatured(visible), [visible]);
 
   return (
     <>
@@ -360,11 +348,11 @@ export function ArticleGrid({
                   slug: article.slug,
                   title: article.title,
                   subtitle: article.subtitle,
-                  body: article.body,
                   publishedAt: article.publishedAt,
                   imageUrl: article.imageUrl,
-                  source: article.source.sourceName,
-                  longFormBody: article.longForm?.body,
+                  source: article.sourceName,
+                  bodyMinutes: article.bodyMinutes,
+                  longFormMinutes: article.longFormMinutes,
                   commentCount: article.commentCount,
                 }}
                 imageFallback={<CategoryGradient category={article.ai.category} />}
@@ -428,7 +416,7 @@ export function ArticleGrid({
         </p>
       </div>
 
-      {filtered.length === 0 && (
+      {visible.length === 0 && (
         <p className="py-12 text-center text-lg text-muted-foreground">
           {searchQuery.length >= 3 ? "Ni zadetkov za to iskanje." : "Ni zgodb."}
         </p>
@@ -448,11 +436,11 @@ export function ArticleGrid({
                     slug: article.slug,
                     title: article.title,
                     subtitle: article.subtitle,
-                    body: article.body,
                     publishedAt: article.publishedAt,
                     imageUrl: article.imageUrl,
-                    source: article.source.sourceName,
-                    longFormBody: article.longForm?.body,
+                    source: article.sourceName,
+                    bodyMinutes: article.bodyMinutes,
+                    longFormMinutes: article.longFormMinutes,
                     commentCount: article.commentCount,
                   }}
                   imageFallback={<CategoryGradient category={article.ai.category} />}

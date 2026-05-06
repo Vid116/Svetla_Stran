@@ -6,10 +6,13 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SiteFooter } from "@/components/site-footer";
 import { NavSearch } from "@/components/nav-search";
 import { NedeljskaTakeover } from "@/components/nedeljska-takeover";
-import { getPublishedArticles, getArticlesByTag } from "@/lib/db";
+import { getPublishedArticleListings, getArticlesByTag } from "@/lib/db";
+import { rowToListing } from "@/lib/article-listings";
 
 export const revalidate = 300;
 
+/** Full article shape — still used by /clanki/[slug] and emotion-matched cards.
+ *  Homepage no longer ships this (see ArticleListing in lib/article-listings). */
 export interface PublishedArticle {
   title: string;
   subtitle: string;
@@ -47,31 +50,6 @@ export interface PublishedArticle {
   };
 }
 
-function rowToArticle(s: any): PublishedArticle {
-  return {
-    title: s.title,
-    subtitle: s.subtitle || "",
-    body: s.body,
-    slug: s.slug,
-    imageUrl: s.ai_image_url || s.image_url || undefined,
-    publishedAt: s.published_at || s.created_at,
-    source: {
-      sourceUrl: s.source_url,
-      sourceName: s.source_name,
-    },
-    ai: {
-      score: s.ai_score || 0,
-      category: s.category || "",
-      emotions: s.emotions || [],
-      antidote_for: s.antidote || null,
-      antidote_secondary: s.antidote_secondary || null,
-    },
-    themes: s.themes || [],
-    commentCount: s.comment_count ?? 0,
-    longForm: s.long_form || null,
-  };
-}
-
 export default async function HomePage() {
   // Check if today is Sunday in Slovenia
   const now = new Date();
@@ -83,13 +61,13 @@ export default async function HomePage() {
 
   // Fetch data in parallel
   const [rows, nedeljskaRows] = await Promise.all([
-    getPublishedArticles(),
+    getPublishedArticleListings(),
     isSunday ? getArticlesByTag("nedeljska-zgodba", 1) : Promise.resolve([]),
   ]);
 
-  const articles = rows
-    .filter((s: any) => s.title && s.body)
-    .map(rowToArticle);
+  const articles = (rows as any[])
+    .filter((s) => s.title)
+    .map(rowToListing);
 
   const nedeljskaArticle = (nedeljskaRows as any[])[0] || null;
 
