@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { getSQL } from "./neon";
-import type { Theme } from "./article-helpers";
+import { THEMES, type Theme } from "./article-helpers";
 
 // ── Headline queries ────────────────────────────────────────────────────────
 
@@ -468,6 +468,25 @@ export async function getFilteredArchive({
   });
   const numWords = words.length;
 
+  // Theme membership rules differ by kind: topical themes match by antidote
+  // or category, tagged themes match the slug in a.themes, archive matches
+  // by age. Mirrors getArticlesByTheme — without it, filtering by topical
+  // themes (med-nami, naprej, heroji, drobne-radosti) returns 0 hits because
+  // those slugs aren't actually stored in a.themes.
+  const themeObj: Theme | null = theme ? THEMES[theme] ?? null : null;
+  const themeKind: string | null = themeObj?.kind ?? null;
+  const themeAntidotes =
+    themeObj?.kind === "topical" && themeObj.antidoteMatch.length > 0
+      ? themeObj.antidoteMatch
+      : ["__none__"];
+  const themeCategories =
+    themeObj?.kind === "topical" && themeObj.categoryMatch.length > 0
+      ? themeObj.categoryMatch
+      : ["__none__"];
+  const themeTaggedSlug = themeObj?.kind === "tagged" ? themeObj.slug : null;
+  const themeArchiveDays =
+    themeObj?.kind === "archive" ? themeObj.minAgeDays ?? 90 : 0;
+
   const rows = await sql`
     SELECT ${sql.unsafe(LISTING_COLS)},
            COUNT(*) OVER () AS total_count
@@ -479,7 +498,23 @@ export async function getFilteredArchive({
         FROM unnest(${gids}::int[], ${patterns}::text[]) AS u(gid, pat)
         WHERE LOWER(a.title || ' ' || coalesce(a.subtitle, '') || ' ' || a.body) LIKE u.pat
       ) = ${numWords}::int)
-      AND (${theme}::text IS NULL OR ${theme}::text = ANY(a.themes))
+      AND (
+        ${themeKind}::text IS NULL
+        OR (
+          ${themeKind}::text = 'topical' AND (
+            a.antidote = ANY(${themeAntidotes}::text[])
+            OR a.category = ANY(${themeCategories}::text[])
+          )
+        )
+        OR (
+          ${themeKind}::text = 'tagged'
+          AND ${themeTaggedSlug}::text = ANY(a.themes)
+        )
+        OR (
+          ${themeKind}::text = 'archive'
+          AND a.published_at < NOW() - (${themeArchiveDays}::int || ' days')::interval
+        )
+      )
     ORDER BY a.published_at DESC
     LIMIT ${_perPage} OFFSET ${offset}
   `;
