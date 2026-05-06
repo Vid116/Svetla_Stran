@@ -19,7 +19,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { MidArticleCta } from "@/components/mid-article-cta";
 import { ScrollToTop } from "@/components/scroll-to-top";
 
-export const runtime = "edge";
+// Edge runtime would be ideal for TTFB but the article-page bundle (comment
+// section, long-form CTAs, share button, all the article helpers) breezes
+// past Vercel's 1 MB hobby-plan ceiling. Stays on Node until either we slim
+// the bundle (lazy-load CommentSection etc.) or move to a higher plan.
 export const revalidate = 300;
 
 function rowToArticle(s: any): PublishedArticle {
