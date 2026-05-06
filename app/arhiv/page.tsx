@@ -8,7 +8,10 @@ import { CategoryIcon } from "@/lib/category-icons";
 import { ArchiveSearch } from "@/components/archive-search";
 import { ArchiveThemeFilter } from "@/components/archive-theme-filter";
 
-export const revalidate = 300;
+// Reading searchParams makes this page inherently dynamic — opt out of ISR
+// so each ?q / ?theme / ?page combo is computed fresh and the client
+// doesn't hydrate to a stale prerendered page-1 view.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Arhiv zgodb",
