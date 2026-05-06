@@ -431,6 +431,7 @@ export function ArticleGrid({
               <StaggerItem key={article.slug} skip={hasInteracted.current}>
                 <OverlayCard
                   tier="tertiary"
+                  prefetchMode="intent"
                   theme={theme}
                   article={{
                     slug: article.slug,

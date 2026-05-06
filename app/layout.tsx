@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import ReactDOM from "react-dom";
 import "./globals.css";
 import { Geist, Playfair_Display, Newsreader, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
+
+const R2_ORIGIN = process.env.R2_PUBLIC_URL ?? "https://pub-e799b0ecc3b54685a8c2d29386529664.r2.dev";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const playfair = Playfair_Display({subsets:['latin'],weight:['400','600'],variable:'--font-brand'});
@@ -48,6 +51,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Hand the browser an early hint to set up the R2 connection before the
+  // first <Image> needs it — saves ~50–150 ms on the first image fetch.
+  ReactDOM.preconnect(R2_ORIGIN);
+  ReactDOM.prefetchDNS(R2_ORIGIN);
+
   return (
     <html lang="sl" className={cn("font-sans", geist.variable, playfair.variable, newsreader.variable, fraunces.variable)}>
       <body className="min-h-screen bg-background antialiased">

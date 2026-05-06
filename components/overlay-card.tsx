@@ -7,11 +7,11 @@
  *  Hierarchy across tiers comes from size, padding, and how much metadata is
  *  shown — not from styling differences.
  */
-import Link from "next/link";
 import type { Theme } from "@/lib/article-helpers";
 import { formatDate, readingTime, readingMinutes } from "@/lib/article-helpers";
 import { SafeImage } from "@/components/safe-image";
 import { ThemeRibbon, CommentBadge, GlobljeAnnotation } from "@/components/card-decorations";
+import { CardLink } from "@/components/card-link";
 
 export interface OverlayCardArticle {
   slug: string;
@@ -60,6 +60,7 @@ export function OverlayCard({
   tier,
   imageFallback,
   hideThemeRibbon = false,
+  prefetchMode = "eager",
 }: {
   article: OverlayCardArticle;
   theme: Theme | null;
@@ -67,6 +68,9 @@ export function OverlayCard({
   imageFallback: React.ReactNode;
   /** True on theme pages where the card already shares the page's theme. */
   hideThemeRibbon?: boolean;
+  /** "intent" defers prefetch to hover/touchstart — use for below-fold cards
+   *  to avoid blanket-prefetching dozens of routes on phones. */
+  prefetchMode?: "eager" | "intent";
 }) {
   const s = TIER_STYLES[tier];
   const longMin = article.longFormMinutes ?? readingMinutes(article.longFormBody);
@@ -78,7 +82,7 @@ export function OverlayCard({
       : null;
 
   return (
-    <Link href={`/clanki/${article.slug}`} className="group block h-full">
+    <CardLink href={`/clanki/${article.slug}`} className="group block h-full" prefetchMode={prefetchMode}>
       <article className="relative h-full overflow-hidden rounded-xl border border-border/50 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
         <div className={`relative ${s.height} overflow-hidden`}>
           {article.imageUrl ? (
@@ -139,6 +143,6 @@ export function OverlayCard({
           </div>
         </div>
       </article>
-    </Link>
+    </CardLink>
   );
 }

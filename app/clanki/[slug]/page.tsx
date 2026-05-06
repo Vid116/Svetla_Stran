@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getArticleBySlug, getEmotionMatchedArticles } from "@/lib/db";
 import { NewsletterSignup } from "@/components/newsletter-signup";
@@ -127,10 +128,13 @@ export default async function ArticlePage({
       {/* Hero image */}
       {article.imageUrl && (
         <div className="relative h-64 sm:h-80 md:h-[28rem] overflow-hidden">
-          <img
+          <Image
             src={article.imageUrl}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover"
+            fill
+            sizes="100vw"
+            priority
+            className="object-cover"
             style={{ objectPosition: `center ${article.imagePosition ?? 50}%` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
