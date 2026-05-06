@@ -20,16 +20,13 @@ import { OverlayCard } from "@/components/overlay-card";
 
 const SUB_NAV_THEMES = [...TOPICAL_THEME_ORDER, ...RITUAL_THEME_ORDER];
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 // Merged/retired themes → redirect to their new home
 const THEME_REDIRECTS: Record<string, string> = {
   skupaj: "med-nami",
 };
-
-export async function generateStaticParams() {
-  return Object.keys(THEMES).map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,

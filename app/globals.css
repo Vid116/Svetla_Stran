@@ -236,4 +236,18 @@ body {
       transform: none !important;
     }
   }
+
+  /* View Transitions API — soften card→article cross-fade. Browsers without
+     support (e.g. Firefox, Safari < 18) fall through to instant navigation. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
 }
