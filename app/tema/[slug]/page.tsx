@@ -115,10 +115,11 @@ export default async function ThemePage({
             {SUB_NAV_THEMES.map((s) => {
               const t = THEMES[s];
               const active = s === slug;
+              const href = s === "iz-arhiva" ? "/arhiv" : `/tema/${s}`;
               return (
                 <Link
                   key={s}
-                  href={`/tema/${s}`}
+                  href={href}
                   className="shrink-0 rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-all whitespace-nowrap"
                   style={
                     active

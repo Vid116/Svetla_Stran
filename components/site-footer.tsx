@@ -28,10 +28,11 @@ export function SiteFooter() {
             <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {FOOTER_THEMES.map((slug) => {
                 const theme = THEMES[slug];
+                const href = slug === "iz-arhiva" ? "/arhiv" : `/tema/${slug}`;
                 return (
                   <li key={slug}>
                     <Link
-                      href={`/tema/${slug}`}
+                      href={href}
                       className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
                     >
                       {theme.label}
