@@ -174,19 +174,18 @@ function pickFeatured(articles: ArticleListing[]): {
 
   scored.sort((a, b) => b.score - a.score);
 
-  // Top 5 candidates
-  const candidates = scored.slice(0, 5);
-
-  // Category diversity: count how often each category appears in the 3 most recent articles
+  // Diversity: within the top 5, prefer rarer-category candidates — but only
+  // when the score gap is small (≤2). Without this cap, a stale article with
+  // a rare category would beat a fresh high-scoring one, pinning the hero
+  // for days. Score wins; diversity only nudges close races.
   const recentCategories = articles.slice(0, 3).map((a) => a.ai.category);
-
+  const candidates = scored.slice(0, 5);
   let best = candidates[0];
-  for (const c of candidates) {
+  for (const c of candidates.slice(1)) {
+    if (best.score - c.score > 2) break;
     const cCount = recentCategories.filter((rc) => rc === c.article.ai.category).length;
     const bestCount = recentCategories.filter((rc) => rc === best.article.ai.category).length;
-    if (cCount < bestCount || (cCount === bestCount && c.score > best.score)) {
-      best = c;
-    }
+    if (cCount < bestCount) best = c;
   }
 
   const featured = best.article;
