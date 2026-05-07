@@ -387,10 +387,14 @@ export function ArticleGrid({
                 .filter((slug) => slug !== "tiho-delo" && slug !== "nedeljska-zgodba")
                 .map((slug) => {
                   const theme = THEMES[slug];
+                  // "Iz arhiva" chip routes to the real /arhiv page so users
+                  // see every old story, not the 90-day-cutoff topic page
+                  // (which is empty until the site is older).
+                  const href = slug === "iz-arhiva" ? "/arhiv" : `/tema/${slug}`;
                   return (
                     <Link
                       key={slug}
-                      href={`/tema/${slug}`}
+                      href={href}
                       className="rounded-full px-5 py-2 text-xs font-medium border shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
                       style={{
                         backgroundColor: theme.colors.soft,
